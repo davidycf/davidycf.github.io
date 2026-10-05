@@ -1,0 +1,1371 @@
+[
+ {
+  "code": "T",
+  "city": "tokyo",
+  "sign": "新御徒町",
+  "kana": "しんおかちまち",
+  "ro": "Shin-Okachimachi",
+  "stay": "MONday Apart 上野新御徒町",
+  "dates": "3/14–3/19",
+  "nights": 5,
+  "days": [
+   2,
+   3,
+   4,
+   5,
+   6
+  ],
+  "lead": "酒店在新御徒町站旁的老街区：往西是御徒町和上野的热闹，往东是鸟越、藏前的下町。门口的筑波快线一站到秋叶原，反方向一站到浅草。",
+  "hint": "步行时间为成年人单程粗估。营业时间核对于 2026/10，出发前再看官网。",
+  "tip": "上午孩子精神好，去上野或アメ横；下午补觉醒来（或者根本没睡）就到竹町公园跑一跑、晒晒太阳，帮着倒时差；晚饭在吉池食堂或买回房吃。爸爸的夜晚最适合 3/16、3/17，3/18 要收行李，寿湯也休息。",
+  "rings": [
+   [
+    "出门 5 分钟",
+    "0–5 MIN",
+    "早餐补给、孩子放电，下楼就到。"
+   ],
+   [
+    "步行 15 分钟内",
+    "≤15 MIN",
+    "御徒町、上野、鸟越、藏前，散步就能到。"
+   ],
+   [
+    "再远一点",
+    "1 STOP",
+    "筑波快线一站到浅草和秋叶原，或沿隅田川走一段。"
+   ]
+  ],
+  "entries": [
+   {
+    "name": "竹町公園",
+    "k": [
+     "kids"
+    ],
+    "ring": 0,
+    "walk": "约 4 分",
+    "hours": "全天开放",
+    "body": "1928 年开园的街区公园，入口站着一只猫头鹰雕塑。有好几段滑梯的组合游具、秋千、沙坑和弹簧摇摇，大小两个孩子都能玩。早饭后或傍晚来跑 20 分钟。",
+    "note": "有厕所和换尿布台。放学后小学生多，妹妹玩小的那几样就好。",
+    "links": [
+     {
+      "label": "公园介绍（いこーよ）",
+      "url": "https://iko-yo.net/facilities/11848"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E7%AB%B9%E7%94%BA%E5%85%AC%E5%9C%92+%E5%8F%B0%E6%9D%B14-21-3",
+    "id": "T01"
+   },
+   {
+    "name": "佐竹商店街",
+    "k": [
+     "see",
+     "snack",
+     "night"
+    ],
+    "ring": 0,
+    "walk": "约 5 分",
+    "hours": "小店各自营业，多为白天，周日休的不少",
+    "body": "自称日本第二古老的商店街，1936 年就有了顶棚街的样子。人形烧、外带寿司、可乐饼、老食堂和风铃店挤在一条街上。白天全家买点零食，晚上你一个人来拍关门后的老街。",
+    "note": "每家营业时间不同，别专门为某一家跑一趟，路过开着就进。",
+    "links": [
+     {
+      "label": "佐竹商店街",
+      "url": "https://satakeshotengai.com/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E4%BD%90%E7%AB%B9%E5%95%86%E5%BA%97%E8%A1%97",
+    "id": "T02"
+   },
+   {
+    "name": "ライフ 新御徒町店",
+    "k": [
+     "shop",
+     "night"
+    ],
+    "ring": 0,
+    "walk": "约 3–5 分",
+    "hours": "9:30–24:00",
+    "body": "牛奶、水果、面包、熟食一次买齐。房间有厨房，买点早餐和简单晚饭回去，比每天出门找早餐省事。",
+    "note": "地址小岛 2‑8‑7。晚上熟食可能卖完，饮料零食稳定。",
+    "links": [
+     {
+      "label": "ライフ新御徒町店",
+      "url": "https://store.lifecorp.jp/detail/east617/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E3%83%A9%E3%82%A4%E3%83%95+%E6%96%B0%E5%BE%A1%E5%BE%92%E7%94%BA%E5%BA%97",
+    "id": "T03"
+   },
+   {
+    "name": "便利店：セブン‐イレブン 東上野1丁目店 等",
+    "k": [
+     "eat",
+     "night"
+    ],
+    "ring": 0,
+    "walk": "约 3–5 分",
+    "hours": "多为 24 小时",
+    "body": "日本版的随手吃：饭团、7-11 的蛋沙拉三明治、FamilyMart 的炸鸡ファミチキ、Lawson 的からあげクン。早餐、加餐、孩子半夜要喝的牛奶都靠它兜底。新御徒町站旁还有一家 FamilyMart。",
+    "note": "7-11 店里的 ATM 可以用外国卡取日元。街上垃圾桶少，便利店门口的垃圾桶按分类扔。",
+    "links": [],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E3%82%BB%E3%83%96%E3%83%B3%E3%82%A4%E3%83%AC%E3%83%96%E3%83%B3+%E6%9D%B1%E4%B8%8A%E9%87%8E1%E4%B8%81%E7%9B%AE%E5%BA%97",
+    "id": "T31"
+   },
+   {
+    "name": "下谷神社",
+    "k": [
+     "see"
+    ],
+    "ring": 1,
+    "walk": "约 8 分",
+    "hours": "境内随时可进",
+    "body": "730 年创建，东京最古老的稻荷神社之一，地铁“稻荷町”站就是因它得名。拜殿天井有横山大观画的龙；江户第一家说书场“寄席”也诞生在这里，立着纪念碑。",
+    "note": "小神社，10 分钟就够。天井画能不能看到看当天。",
+    "links": [
+     {
+      "label": "东京都神社厅：下谷神社",
+      "url": "http://www.tokyo-jinjacho.or.jp/taito/3047"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E4%B8%8B%E8%B0%B7%E7%A5%9E%E7%A4%BE+%E6%9D%B1%E4%B8%8A%E9%87%8E3-29-8",
+    "id": "T04"
+   },
+   {
+    "name": "多慶屋",
+    "k": [
+     "shop"
+    ],
+    "ring": 1,
+    "walk": "约 8 分",
+    "hours": "10:00–20:00",
+    "body": "紫色大楼的老牌折扣店，食品、日用品、家电、玩具分好几栋。比药妆店和唐吉诃德更像本地家庭采购，零食和日用品价格也看得过来。",
+    "note": "楼栋多，先看门口楼层图再进。",
+    "links": [
+     {
+      "label": "店铺信息（じゃらん）",
+      "url": "https://www.jalan.net/kankou/spt_guide000000151708/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E5%A4%9A%E6%85%B6%E5%B1%8B+%E5%BE%A1%E5%BE%92%E7%94%BA%E6%9C%AC%E5%BA%97",
+    "id": "T05"
+   },
+   {
+    "name": "鳥越神社＋おかず横丁",
+    "k": [
+     "see",
+     "snack"
+    ],
+    "ring": 1,
+    "walk": "约 10 分",
+    "hours": "神社随时；横丁多为白天，周日休的多",
+    "body": "传说 651 年创建的老神社，6 月的鸟越祭抬的是东京最重的神轿之一。往南的おかず横丁是战后留下的熟食小街，煮物、腌菜、鱼店，看看东京人家的日常餐桌。",
+    "note": "横丁资料较旧，店家去留以现场为准；适合上午散步。",
+    "links": [
+     {
+      "label": "鸟越神社（维基）",
+      "url": "https://ja.wikipedia.org/wiki/%E9%B3%A5%E8%B6%8A%E7%A5%9E%E7%A4%BE"
+     },
+     {
+      "label": "おかず横丁散步",
+      "url": "https://asakusakanko.com/okazu-satake/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E9%B3%A5%E8%B6%8A%E7%A5%9E%E7%A4%BE",
+    "id": "T06"
+   },
+   {
+    "name": "高級喫茶 古城",
+    "k": [
+     "snack",
+     "eat"
+    ],
+    "ring": 1,
+    "walk": "约 10 分",
+    "hours": "9:30–20:00 · 周日、节假日休",
+    "body": "1963 年开业的地下纯喫茶，水晶吊灯和彩色玻璃像一座城堡。早上吃份早餐，下午来杯奶油苏打或芭菲，午饭的拿坡里意面也有名。",
+    "note": "**3/14 周日休息。**",
+    "links": [
+     {
+      "label": "古城介绍",
+      "url": "https://jyohoku.follow-up.co.jp/gourmet/cafe/taito-kojyo-w530-20240520/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E5%8F%A4%E5%9F%8E+%E6%9D%B1%E4%B8%8A%E9%87%8E3-39-10",
+    "id": "T07"
+   },
+   {
+    "name": "2k540 AKI‑OKA ARTISAN",
+    "k": [
+     "shop",
+     "see"
+    ],
+    "ring": 1,
+    "walk": "约 10 分",
+    "hours": "11:00–19:00 · 周三休",
+    "body": "御徒町和秋叶原之间的高架下，约 50 家工艺小店：皮件、木器、饰品、布。有的店可以当场做个小东西。",
+    "note": "**3/17 周三休息。**",
+    "links": [
+     {
+      "label": "台东区观光：2k540",
+      "url": "https://t-navi.city.taito.lg.jp/spot/1038"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=2k540+AKI-OKA+ARTISAN",
+    "id": "T08"
+   },
+   {
+    "name": "吉池 本店＋9F 吉池食堂",
+    "k": [
+     "eat",
+     "shop"
+    ],
+    "ring": 1,
+    "walk": "约 10 分",
+    "hours": "食堂 11:00–22:00",
+    "body": "御徒町站旁的老牌鱼货超市，楼下买刺身和熟食回房吃。9F 的吉池食堂把定食、荞麦面、寿司和居酒屋菜放在一个大食堂里，四个人各点各的，窗外能看到晴空塔。",
+    "note": "",
+    "links": [
+     {
+      "label": "吉池食堂",
+      "url": "https://www.yoshiike-group.co.jp/restaurant.html"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E5%90%89%E6%B1%A0+%E5%BE%A1%E5%BE%92%E7%94%BA",
+    "id": "T09"
+   },
+   {
+    "name": "人形町今半 上野広小路店",
+    "k": [
+     "eat"
+    ],
+    "ring": 1,
+    "walk": "约 12 分",
+    "hours": "建议预约",
+    "body": "想认真吃一顿和牛寿喜烧，酒店附近就有。在松坂屋对面的楼里，和逛上野、御徒町接得上。",
+    "note": "订位时报两大两小和孩子年龄。3/15 的纪念日晚饭订在这里：记念日甜点（带巧克力写字牌）¥1,980 或只要写字牌 ¥880，特制儿童便当 ¥4,070，都要提前 3 天订；有儿童椅和儿童餐具。另收 12% 服务费，包间另收费。核对于 2026/10/4。",
+    "links": [
+     {
+      "label": "今半上野广小路店",
+      "url": "https://restaurant.imahan.com/ueno/"
+     },
+     {
+      "label": "今半上野广小路：记念日与儿童服务",
+      "url": "https://restaurant.imahan.com/post_special/ningyochomahan-ueno-grys2025/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E4%BA%BA%E5%BD%A2%E7%94%BA%E4%BB%8A%E5%8D%8A+%E4%B8%8A%E9%87%8E%E5%BA%83%E5%B0%8F%E8%B7%AF%E5%BA%97",
+    "id": "T10"
+   },
+   {
+    "name": "アメ横",
+    "k": [
+     "see",
+     "shop",
+     "snack",
+     "night"
+    ],
+    "ring": 1,
+    "walk": "约 10–15 分",
+    "hours": "零售多到 20:00 前后；高架下酒馆更晚",
+    "body": "从御徒町到上野的高架下市场街。白天看鱼干、零食、水果串和一路吆喝，晚上变成灯笼和小酒馆的街。",
+    "note": "人多路窄，推车走两侧。上野广小路西边的仲町通揽客多，不往里拐。",
+    "links": [
+     {
+      "label": "アメ横商店街",
+      "url": "https://www.ameyoko.net/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E3%82%A2%E3%83%A1%E6%A8%AA%E5%95%86%E5%BA%97%E8%A1%97",
+    "id": "T11"
+   },
+   {
+    "name": "らーめん 鴨to葱",
+    "k": [
+     "eat"
+    ],
+    "ring": 1,
+    "walk": "约 12 分",
+    "hours": "10:00–22:30",
+    "body": "高架下的鸭汤拉面，鸭油香、两种葱自选。只有 11 个吧台座，最适合你一个人来，或者全家分两批。",
+    "note": "常排队，吧台座带小孩不方便。",
+    "links": [
+     {
+      "label": "店铺介绍（散歩の達人）",
+      "url": "https://san-tatsu.jp/articles/243986/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E3%82%89%E3%83%BC%E3%82%81%E3%82%93+%E9%B4%A8to%E8%91%B1+%E4%B8%8A%E9%87%8E%E5%BE%A1%E5%BE%92%E7%94%BA%E6%9C%AC%E5%BA%97",
+    "id": "T12"
+   },
+   {
+    "name": "名代 宇奈とと 上野店",
+    "k": [
+     "eat"
+    ],
+    "ring": 1,
+    "walk": "约 12 分",
+    "hours": "不接受座位预约",
+    "body": "想尝一碗鳗鱼饭又不想吃整套高价鳗鱼，这家最轻松。逛アメ横时顺路看排队。",
+    "note": "甜咸酱汁配饭比较好入口；怕刺的话自己判断。",
+    "links": [
+     {
+      "label": "宇奈とと上野店",
+      "url": "https://www.unatoto.com/shop/ueno/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E5%90%8D%E4%BB%A3+%E5%AE%87%E5%A5%88%E3%81%A8%E3%81%A8+%E4%B8%8A%E9%87%8E%E5%BA%97",
+    "id": "T13"
+   },
+   {
+    "name": "もつ焼 大統領",
+    "k": [
+     "eat",
+     "night"
+    ],
+    "ring": 1,
+    "walk": "约 12 分",
+    "hours": "10:00–24:00 · 全年无休",
+    "body": "アメ横高架下的老牌大众酒场，1925 年创业，招牌是一直没变过味道的马内脏炖煮和串烧。和你们在旅馆要玩的「大統領」花札同名，拍张招牌回去讲给哥哥听。",
+    "note": "本店门口常排队，附近有支店。座位窄、气氛热闹，一个人坐一会儿正好。",
+    "links": [
+     {
+      "label": "アメ横官网：大統領",
+      "url": "https://www.ameyoko.net/shop/280"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E3%82%82%E3%81%A4%E7%84%BC+%E5%A4%A7%E7%B5%B1%E9%A0%98+%E6%9C%AC%E5%BA%97+%E4%B8%8A%E9%87%8E6-10-14",
+    "id": "T14"
+   },
+   {
+    "name": "御徒町高架下：章鱼烧与串烧",
+    "k": [
+     "snack",
+     "night"
+    ],
+    "ring": 1,
+    "walk": "约 10–15 分",
+    "hours": "章鱼烧到 22:00；山贼海贼到午夜",
+    "body": "零售店收摊后，高架下的小吃还开着。散步途中买一份章鱼烧，或者坐下吃两串。",
+    "note": "刚出炉的章鱼烧很烫，稍凉再给孩子。",
+    "links": [
+     {
+      "label": "アメ横章鱼烧店",
+      "url": "https://ameyoko-center.jp/shop/contents.html?id=38&l=1"
+     },
+     {
+      "label": "アメ横山贼海贼",
+      "url": "https://ameyoko-center.jp/shop/contents.html?id=49&l=1"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E5%B1%B1%E8%B3%8A%E6%B5%B7%E8%B3%8A+%E3%82%A2%E3%83%A1%E6%A8%AA",
+    "id": "T15"
+   },
+   {
+    "name": "二木の菓子",
+    "k": [
+     "snack",
+     "shop"
+    ],
+    "ring": 1,
+    "walk": "约 12 分",
+    "hours": "10:00–20:00",
+    "body": "アメ横的零食批发老店，日本各地的糖果饼干堆满一大片。买孩子路上吃的、带回家分的，这里最省事。",
+    "note": "",
+    "links": [
+     {
+      "label": "二木の菓子",
+      "url": "http://www.nikinokashi.co.jp/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E4%BA%8C%E6%9C%A8%E3%81%AE%E8%8F%93%E5%AD%90+%E3%83%93%E3%83%83%E3%82%AF%E9%A4%A8",
+    "id": "T16"
+   },
+   {
+    "name": "志村商店：巧克力叫卖",
+    "k": [
+     "snack",
+     "kids"
+    ],
+    "ring": 1,
+    "walk": "约 13 分",
+    "hours": "10:00–17:30 · 全年无休",
+    "body": "店员一边吆喝“入れちゃえ入れちゃえ”，一边往袋子里狂塞巧克力和点心，一袋 ¥1,000。买不买都值得站着看一场，孩子会笑。",
+    "note": "2026 年一袋约 11 件，比以前少了，图的是热闹。",
+    "links": [
+     {
+      "label": "アメ横官网：志村商店",
+      "url": "https://www.ameyoko.net/shop/300"
+     },
+     {
+      "label": "2026 年实测",
+      "url": "https://rocketnews24.com/2026/07/01/2777454/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E5%BF%97%E6%9D%91%E5%95%86%E5%BA%97+%E3%82%A2%E3%83%A1%E6%A8%AA",
+    "id": "T17"
+   },
+   {
+    "name": "うさぎや",
+    "k": [
+     "snack"
+    ],
+    "ring": 1,
+    "walk": "约 13 分",
+    "hours": "9:00–18:00 · 周三休 · 只收现金",
+    "body": "1913 年创业，东京三大铜锣烧之一。当天做的最好吃，保质期只到第二天，买回房当下午点心。",
+    "note": "**3/17 周三休息。**傍晚常卖完，上午去稳。",
+    "links": [
+     {
+      "label": "店铺信息",
+      "url": "https://salaryman-lunch.com/archives/39667978.html"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E3%81%86%E3%81%95%E3%81%8E%E3%82%84+%E4%B8%8A%E9%87%8E1-10-10",
+    "id": "T18"
+   },
+   {
+    "name": "あんみつ みはし 上野本店",
+    "k": [
+     "snack"
+    ],
+    "ring": 1,
+    "walk": "约 13 分",
+    "hours": "10:30–21:00（最后点单 20:30）",
+    "body": "上野的老牌甜品店，蜜豆、红豆汤、冰淇淋都有。两层 70 个座位，也能外带回房。",
+    "note": "不定休。",
+    "links": [
+     {
+      "label": "みはし",
+      "url": "https://www.mihashi.co.jp/about/shop.html"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E3%81%82%E3%82%93%E3%81%BF%E3%81%A4+%E3%81%BF%E3%81%AF%E3%81%97+%E4%B8%8A%E9%87%8E%E6%9C%AC%E5%BA%97",
+    "id": "T19"
+   },
+   {
+    "name": "ヤマシロヤ",
+    "k": [
+     "shop",
+     "kids"
+    ],
+    "ring": 1,
+    "walk": "约 15 分",
+    "hours": "10:00–21:30",
+    "body": "上野站广小路口对面，一整栋楼都是玩具：角色周边、卡牌、拼图、儿童玩具和熊猫。下雨天也能逛很久，可以免税。",
+    "note": "",
+    "links": [
+     {
+      "label": "ヤマシロヤ",
+      "url": "https://e-yamashiroya.com/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E3%83%A4%E3%83%9E%E3%82%B7%E3%83%AD%E3%83%A4+%E4%B8%8A%E9%87%8E6-14-6",
+    "id": "T20"
+   },
+   {
+    "name": "東上野 寿湯（銭湯）",
+    "k": [
+     "see",
+     "night"
+    ],
+    "ring": 1,
+    "walk": "约 15 分",
+    "hours": "营业到深夜 · 每月第三个周四休",
+    "body": "走了一天，晚上去泡一次东京的街区钱汤。男汤有都内数一数二大的露天风吕，还有两种桑拿和两个冷水池，洗发水沐浴露免费用。",
+    "note": "**2027/3/18 正好是第三个周四，休息。**最后入场时间各处写法不一（23 点多到凌晨 1 点多），出门前查。毛巾自带或现场买；桑拿另收费；可刷交通卡。",
+    "links": [
+     {
+      "label": "东京钱汤：寿湯",
+      "url": "https://www.1010.or.jp/mag-tokyosento-kotobukiyu/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E6%9D%B1%E4%B8%8A%E9%87%8E+%E5%AF%BF%E6%B9%AF+%E6%9D%B1%E4%B8%8A%E9%87%8E5-4-17",
+    "id": "T21"
+   },
+   {
+    "name": "パンのペリカン",
+    "k": [
+     "snack"
+    ],
+    "ring": 1,
+    "walk": "约 12–15 分",
+    "hours": "8:00–17:00 · 周日、节假日休",
+    "body": "1942 年创业，只卖吐司和小餐包两样，常常中午前卖完，可以先打电话预订。买一条回去，房间里烤着当早餐。",
+    "note": "**3/14 周日休息。**附近还有用它家面包的ペリカンカフェ。",
+    "links": [
+     {
+      "label": "店铺介绍（メシ通）",
+      "url": "https://www.hotpepper.jp/mesitsu/entry/editorial/17-00315"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E3%83%91%E3%83%B3%E3%81%AE%E3%83%9A%E3%83%AA%E3%82%AB%E3%83%B3+%E5%AF%BF4-7-4",
+    "id": "T22"
+   },
+   {
+    "name": "ダンデライオン・チョコレート 蔵前",
+    "k": [
+     "snack"
+    ],
+    "ring": 1,
+    "walk": "约 15 分",
+    "hours": "10:00–19:00",
+    "body": "旧金山来的精品巧克力工坊。一楼隔着玻璃看做巧克力，二楼喝热巧克力、吃布朗尼。也可以坐大江户线一站到蔵前。",
+    "note": "",
+    "links": [
+     {
+      "label": "ファクトリー&カフェ蔵前",
+      "url": "https://dandelionchocolate.jp/pages/factory-cafe-kuramae"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E3%83%80%E3%83%B3%E3%83%87%E3%83%A9%E3%82%A4%E3%82%AA%E3%83%B3%E3%83%BB%E3%83%81%E3%83%A7%E3%82%B3%E3%83%AC%E3%83%BC%E3%83%88+%E3%83%95%E3%82%A1%E3%82%AF%E3%83%88%E3%83%AA%E3%83%BC%26%E3%82%AB%E3%83%95%E3%82%A7%E8%94%B5%E5%89%8D",
+    "id": "T23"
+   },
+   {
+    "name": "一蘭 アトレ上野山下口店",
+    "k": [
+     "eat",
+     "night"
+    ],
+    "ring": 1,
+    "walk": "约 15–20 分",
+    "hours": "24 小时",
+    "body": "想吃一碗明确的深夜拉面，上野站这家可以做备选，不用为了夜宵跑新宿或涩谷。",
+    "note": "不要误搜成其他上野分店。",
+    "links": [
+     {
+      "label": "一兰上野店",
+      "url": "https://ichiran.com/shop/tokyo/ueno/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E4%B8%80%E8%98%AD+%E3%82%A2%E3%83%88%E3%83%AC%E4%B8%8A%E9%87%8E%E5%B1%B1%E4%B8%8B%E5%8F%A3%E5%BA%97",
+    "id": "T24"
+   },
+   {
+    "name": "珈琲 王城",
+    "k": [
+     "snack",
+     "eat"
+    ],
+    "ring": 1,
+    "walk": "约 15 分",
+    "hours": "8:00–19:00；休息日以店家公告为准",
+    "body": "1975 年开业的老喫茶，藏在上野丸井后面，离上野站约 2 分钟。至今用炭火烘豆，酸度低、口感厚重，是美国很难喝到的那种日式深烘。吊灯和欧式装潢都还是昭和的样子，复古芭菲也有名。",
+    "note": "店里按东京条例全面禁烟，可以带孩子。8 点开门，头几天倒时差一早醒，3/15 去上野公园前先来这里。核对于 2026/10/3，出发前再看店家公告。",
+    "links": [
+     {
+      "label": "珈琲王城官方 X",
+      "url": "https://x.com/coffeeoujou"
+     },
+     {
+      "label": "上野咖啡店介绍（Coffee Labo）",
+      "url": "https://coffee-labo.co.jp/recommended-coffee-shops-in-ueno/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E7%8F%88%E7%90%B2%E7%8E%8B%E5%9F%8E%20%E4%B8%8A%E9%87%8E",
+    "id": "T29"
+   },
+   {
+    "name": "アールイーカメラ",
+    "k": [
+     "shop"
+    ],
+    "ring": 1,
+    "walk": "约 5–10 分",
+    "hours": "11:00–19:00 · 周日、节假日休",
+    "body": "新品和中古相机、镜头都有，可以免税。就在酒店和御徒町之间，3/15–3/18 都开门，散步时顺路进去看看。",
+    "note": "3/14 到达那天是周日，不开。想多看几家，3/18 去「买 · 銀座」。核对于 2026/10/4，出发前再看官网。",
+    "links": [
+     {
+      "label": "アールイーカメラ 店铺信息",
+      "url": "https://re-camera-shop.com/about/index.jsp"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E3%82%A2%E3%83%BC%E3%83%AB%E3%82%A4%E3%83%BC%E3%82%AB%E3%83%A1%E3%83%A9+%E5%8F%B0%E6%9D%B14-31-2",
+    "id": "T32"
+   },
+   {
+    "name": "隅田川テラス（蔵前橋一带）",
+    "k": [
+     "see",
+     "kids"
+    ],
+    "ring": 2,
+    "walk": "约 20 分",
+    "hours": "全天",
+    "body": "沿河步道上能看到晴空塔和一座座桥，孩子可以放开跑。从ペリカン或ダンデライオン顺路走过去，往北一直走就是浅草。",
+    "note": "台东区把这一段列为晴空塔观景点之一。",
+    "links": [
+     {
+      "label": "台东区：晴空塔观景点",
+      "url": "https://www.city.taito.lg.jp/bunka_kanko/kankoinfo/midokoro/sumidatanoshimi/skytree/index.html"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E8%94%B5%E5%89%8D%E6%A9%8B+%E9%9A%85%E7%94%B0%E5%B7%9D%E3%83%86%E3%83%A9%E3%82%B9",
+    "id": "T25"
+   },
+   {
+    "name": "合羽橋道具街",
+    "k": [
+     "shop",
+     "see"
+    ],
+    "ring": 2,
+    "walk": "约 20 分",
+    "hours": "多数店傍晚就关，周日不少店休",
+    "body": "餐具、厨具、灯笼招牌和仿真食物模型的专门街。孩子看到假的拉面、寿司会很兴奋，你们也可以挑一件家里真会用的碗或筷子。",
+    "note": "资料没逐家核对，去之前看想去那家的营业日。",
+    "links": [],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E3%81%8B%E3%81%A3%E3%81%B1%E6%A9%8B%E9%81%93%E5%85%B7%E8%A1%97",
+    "id": "T26"
+   },
+   {
+    "name": "浅草寺の夜（筑波快线一站）",
+    "k": [
+     "see",
+     "night"
+    ],
+    "ring": 2,
+    "walk": "约 10–15 分",
+    "hours": "点灯：日落到 23:00",
+    "body": "本堂、五重塔、宝藏门、雷门都亮着灯。本堂 17 点关门，但院内可以走，人比白天少得多，仲见世拉下的卷帘门上还有画。3/18 白天全家来过，夜里是完全不同的画面。",
+    "note": "新御徒町坐筑波快线一站到浅草约 2 分钟，出站步行 5–10 分钟；也可以直接走 20–25 分钟。旁边ホッピー通り的居酒屋多数开到 23 点前后。回程打车约 10 分钟。",
+    "links": [
+     {
+      "label": "浅草寺点灯",
+      "url": "https://www.senso-ji.jp/info/lightup.html"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E6%B5%85%E8%8D%89%E5%AF%BA",
+    "id": "T27"
+   },
+   {
+    "name": "秋葉原（筑波快线一站）",
+    "k": [
+     "shop",
+     "night",
+     "kids"
+    ],
+    "ring": 2,
+    "walk": "约 10 分",
+    "hours": "营业：游戏中心多到 23:30，ヨドバシ到 22:00｜孩子：16 岁以下 18:00 后须家长陪同、最晚 22:00",
+    "body": "电器街的招牌夜里最好拍。中央通上的 Hey（Taito）以复古射击和格斗机台出名，开到 23:30。ヨドバシAkiba 开到 22:00，8F 餐厅到 23:00。白天的中古游戏店和吃饭见「买 · 秋葉原」。",
+    "note": "Super Potato 这类中古店晚上 8 点左右就关。GiGO 秋叶原 1 号馆已在 2025 年 8 月闭馆。 关门时间不等于孩子能待到关门：按 Taito 公布的东京规则，16 岁以下 18:00 后须家长陪同、陪同也只到 22:00，18 岁以下 22:00 后不能入场，个别门店更早。带哥哥妹妹去放在傍晚以前；九点以后是爸爸一个人的时间。核对于 2026/10/3，出发前再看门店告示。",
+    "links": [
+     {
+      "label": "Hey 店铺信息",
+      "url": "https://www.taito.co.jp/store/00001703"
+     },
+     {
+      "label": "ヨドバシAkiba 营业时间",
+      "url": "https://www.yodobashi-akiba.com/information/index.html"
+     },
+     {
+      "label": "Taito：未成年入场时间规定",
+      "url": "https://www.taito.co.jp/gc/special/new_regulation"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=Hey+%E7%A7%8B%E8%91%89%E5%8E%9F+%E5%A4%96%E7%A5%9E%E7%94%B01-10-5",
+    "id": "T28"
+   },
+   {
+    "name": "カフェ・バッハ（南千住）",
+    "k": [
+     "snack"
+    ],
+    "ring": 2,
+    "walk": "地铁约 20 分",
+    "hours": "10:30–18:30（L.O. 18:15）；周二、每月第 2 和第 4 个周三休",
+    "body": "日本自家烘焙咖啡的源头之一，烘度从中到深都有，算朝圣性质的一家。从仲御徒町坐日比谷线到南千住，几站就到，出站再步行约 10 分钟。",
+    "note": "东京这几天里，3/16 周二休息；3/15、3/17、3/18 都开（3/17 是第 3 个周三）。适合你一个人去，店里也能买豆子带回美国。核对于 2026/10/3，出发前再看店家公告。",
+    "links": [
+     {
+      "label": "カフェ・バッハ官网",
+      "url": "https://www.bach-kaffee.co.jp/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E3%82%AB%E3%83%95%E3%82%A7%E3%83%BB%E3%83%90%E3%83%83%E3%83%8F%20%E5%8F%B0%E6%9D%B1%E5%8C%BA%E6%97%A5%E6%9C%AC%E5%A0%A41-23-9",
+    "id": "T30"
+   }
+  ]
+ },
+ {
+  "code": "O",
+  "city": "osaka",
+  "sign": "心斎橋",
+  "kana": "しんさいばし",
+  "ro": "Shinsaibashi",
+  "stay": "MONday apart 心斋桥",
+  "dates": "3/21–3/26",
+  "nights": 5,
+  "days": [
+   9,
+   10,
+   11,
+   12,
+   13
+  ],
+  "lead": "酒店在东心斋桥，离心斋桥站三四分钟。北边是长堀通和地下街，西边是大丸和商店街，往南走十分钟就到道顿堀。吃和逛几乎都在步行圈里。",
+  "hint": "步行时间为成年人单程粗估。营业时间核对于 2026/10，出发前再看官网。",
+  "tip": "附近缺的是公园：孩子要跑就去难波千日前公园或难波公园屋顶。房间有厨房和洗烘衣机，大丸 B2、AEON 买回来吃很省力。爸爸的夜晚 3/22–3/24 都行，3/25 要收拾去羽田。",
+  "rings": [
+   [
+    "出门 5 分钟",
+    "0–5 MIN",
+    "大丸、PARCO、商店街、地下街和 24 小时超市。"
+   ],
+   [
+    "步行 15 分钟内",
+    "≤15 MIN",
+    "道顿堀、法善寺、美国村、难波戎桥筋和黑门。"
+   ],
+   [
+    "再远一点",
+    "1–3 STOPS",
+    "难波公园、裏なんば，或坐御堂筋线去梅田看夜景。"
+   ]
+  ],
+  "entries": [
+   {
+    "name": "大丸心斎橋店 本館",
+    "k": [
+     "shop",
+     "kids",
+     "eat"
+    ],
+    "ring": 0,
+    "walk": "约 5–7 分",
+    "hours": "10:00–20:00；B2 美食区、10F 餐厅到 22:00",
+    "body": "9F 是宝可梦中心 OSAKA DX 和宝可梦咖啡，离酒店最近的“孩子目的地”。B2 地下美食街有熟食和便当，买回房用厨房热一热，就是一顿晚饭。",
+    "note": "宝可梦咖啡只能网上预约，不接电话订位；商店可以随时进。",
+    "links": [
+     {
+      "label": "宝可梦中心 & 咖啡",
+      "url": "https://www.daimaru.co.jp/shinsaibashi/shop/pokemon.html"
+     },
+     {
+      "label": "大丸营业时间",
+      "url": "https://www.daimaru.co.jp/shinsaibashi/hours.html"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E5%A4%A7%E4%B8%B8%E5%BF%83%E6%96%8E%E6%A9%8B%E5%BA%97+%E6%9C%AC%E9%A4%A8",
+    "id": "O01"
+   },
+   {
+    "name": "心斎橋PARCO",
+    "k": [
+     "shop",
+     "eat"
+    ],
+    "ring": 0,
+    "walk": "约 5 分",
+    "hours": "10:00–21:00；餐饮各店不同",
+    "body": "6F 是流行文化楼层，有卡普空、哥斯拉、吉卜力等角色店，还有和无脸男一起坐电车的拍照点。B2 的「心斎橋ネオン食堂街」满墙霓虹，二十几家小吃摊，像一条室内的昭和夜市。",
+    "note": "食堂街偏大人酒馆气氛，带孩子早点去。楼层店铺以官网为准。",
+    "links": [
+     {
+      "label": "心斎橋PARCO",
+      "url": "https://shinsaibashi.parco.jp/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E5%BF%83%E6%96%8E%E6%A9%8BPARCO",
+    "id": "O02"
+   },
+   {
+    "name": "心斎橋筋商店街",
+    "k": [
+     "shop",
+     "see"
+    ],
+    "ring": 0,
+    "walk": "约 3–5 分",
+    "hours": "店铺多 10:00–21:00 前后",
+    "body": "带顶棚的购物街，从长堀通一路通到道顿堀，药妆、服饰、点心店连成一线。下雨天也能一直走到戎桥。",
+    "note": "人流大，推车靠边走；比价可以隔天再买，你们住五晚。",
+    "links": [
+     {
+      "label": "心斋桥筋商店街",
+      "url": "https://www.shinsaibashi.or.jp/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E5%BF%83%E6%96%8E%E6%A9%8B%E7%AD%8B%E5%95%86%E5%BA%97%E8%A1%97",
+    "id": "O03"
+   },
+   {
+    "name": "クリスタ長堀",
+    "k": [
+     "shop",
+     "kids"
+    ],
+    "ring": 0,
+    "walk": "约 3–5 分",
+    "hours": "商店 11:00–21:00（周日到 20:30）；餐饮到 22:00",
+    "body": "长堀通下面的地下街，连着心斋桥站、四桥站和长堀桥站。下雨天走地下就能到大丸和商店街，中间有天窗和流水的广场。",
+    "note": "",
+    "links": [
+     {
+      "label": "营业时间与交通",
+      "url": "https://www.crystaweb.jp/access/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E3%82%AF%E3%83%AA%E3%82%B9%E3%82%BF%E9%95%B7%E5%A0%80",
+    "id": "O04"
+   },
+   {
+    "name": "イオンフードスタイル 東心斎橋店",
+    "k": [
+     "shop",
+     "night"
+    ],
+    "ring": 0,
+    "walk": "约 5 分",
+    "hours": "24 小时",
+    "body": "1F 食品熟食和牛奶饮料，2F 零食调料和日用品。给全家买早餐，给自己买夜宵，都在这里。",
+    "note": "是两层的食品超市，不是 AEON Mall。晚上熟食可能卖完。",
+    "links": [
+     {
+      "label": "イオンフードスタイル 东心斋桥",
+      "url": "https://www.daiei.co.jp/stores/d0820/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E3%82%A4%E3%82%AA%E3%83%B3%E3%83%95%E3%83%BC%E3%83%89%E3%82%B9%E3%82%BF%E3%82%A4%E3%83%AB%E6%9D%B1%E5%BF%83%E6%96%8E%E6%A9%8B%E5%BA%97",
+    "id": "O05"
+   },
+   {
+    "name": "東心斎橋の路地",
+    "k": [
+     "see",
+     "night"
+    ],
+    "ring": 0,
+    "walk": "15–30 分钟一圈",
+    "hours": "随时",
+    "body": "小店招牌、居酒屋门口和街口灯光，每晚走一条不同的小街。不用每次都走到道顿堀才算出门拍照，回程顺路进 AEON。",
+    "note": "",
+    "links": [],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E6%9D%B1%E5%BF%83%E6%96%8E%E6%A9%8B",
+    "id": "O06"
+   },
+   {
+    "name": "便利店：ローソン 東心斎橋一丁目 等",
+    "k": [
+     "eat",
+     "night"
+    ],
+    "ring": 0,
+    "walk": "约 2–5 分",
+    "hours": "多为 24 小时",
+    "body": "饭团、炸鸡、热饮和牛奶，下楼就能买。AEON 也开 24 小时，便利店负责更近的那一口；长堀通一侧还有 7-11。",
+    "note": "7-11 店里的 ATM 可以用外国卡取日元。街上垃圾桶少，便利店门口的垃圾桶按分类扔。",
+    "links": [],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E3%83%AD%E3%83%BC%E3%82%BD%E3%83%B3+%E6%9D%B1%E5%BF%83%E6%96%8E%E6%A9%8B%E4%B8%80%E4%B8%81%E7%9B%AE",
+    "id": "O30"
+   },
+   {
+    "name": "カメラのナニワ 心斎橋本店",
+    "k": [
+     "shop"
+    ],
+    "ring": 0,
+    "walk": "约 5 分",
+    "hours": "10:30–19:30 · 全年无休（年末年初除外）",
+    "body": "大丸和PARCO之间往东，二楼。中古相机和镜头号称关西最大级，从老胶片机到最新数码都有。住五晚，晚饭前进去看一眼最方便。",
+    "note": "梅田还有一家中古买取中心，见「买 · 梅田」。核对于 2026/10/4，出发前再看官网。",
+    "links": [
+     {
+      "label": "カメラのナニワ 心斎橋本店",
+      "url": "https://www.cameranonaniwa.co.jp/store/shinsaibashi/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E3%82%AB%E3%83%A1%E3%83%A9%E3%81%AE%E3%83%8A%E3%83%8B%E3%83%AF+%E5%BF%83%E6%96%8E%E6%A9%8B%E6%9C%AC%E5%BA%97",
+    "id": "O31"
+   },
+   {
+    "name": "戎橋・道頓堀川",
+    "k": [
+     "see",
+     "night"
+    ],
+    "ring": 1,
+    "walk": "约 10 分",
+    "hours": "随时；招牌夜里最好看",
+    "body": "站在戎桥上看格力高跑跑人，再下到河边步道，从下面拍招牌、桥和倒影。你一个人晚上来可以慢慢等画面，全家过一次桥就够。",
+    "note": "河边、桥面和步道是不同高度，推车先找合适出入口。不需要为拍照一直挤在人最多的位置。",
+    "links": [
+     {
+      "label": "道顿堀河边步道",
+      "url": "https://osaka-info.jp/spot/tombori-riverwalk/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E3%81%A8%E3%82%93%E3%81%BC%E3%82%8A%E3%83%AA%E3%83%90%E3%83%BC%E3%82%A6%E3%82%A9%E3%83%BC%E3%82%AF",
+    "id": "O07"
+   },
+   {
+    "name": "とんぼりリバークルーズ",
+    "k": [
+     "kids",
+     "see"
+    ],
+    "ring": 1,
+    "walk": "约 10 分",
+    "hours": "11:00–21:00，每 30 分钟一班，约 20 分钟",
+    "body": "坐小船从河上看格力高招牌和一座座桥，是孩子最容易喜欢的道顿堀玩法。成人 ¥2,000；未上小学的孩子，每位付费大人可以免费带一位，两个孩子刚好都免费。",
+    "note": "码头在太左卫门桥，票在唐吉诃德摩天轮旁的柜台买，也可以网上预约直接上船。傍晚坐能看到亮灯。",
+    "links": [
+     {
+      "label": "水都大阪：船班与票价",
+      "url": "https://www.suito-osaka.jp/cruise-ship/tonbori/"
+     },
+     {
+      "label": "2026 年票务说明",
+      "url": "https://tiger-navi.com/travelguide/dotonbori-cruise-2026/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E5%A4%AA%E5%B7%A6%E8%A1%9B%E9%96%80%E6%A9%8B%E8%88%B9%E7%9D%80%E5%A0%B4",
+    "id": "O08"
+   },
+   {
+    "name": "法善寺横丁・水掛不動",
+    "k": [
+     "see",
+     "night"
+    ],
+    "ring": 1,
+    "walk": "约 12 分",
+    "hours": "随时",
+    "body": "从巨型招牌街拐进一条短巷，石板、灯笼和青苔神像会给你完全不同的夜景。非常适合相机散步。",
+    "note": "参拜空间与餐厅门口有不同用途；小巷本身即可看，不预设深夜所有店还营业。",
+    "links": [
+     {
+      "label": "法善寺横丁官方观光资料",
+      "url": "https://osaka-info.jp/en/spot/hozenji-yokocho/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E6%B3%95%E5%96%84%E5%AF%BA%E6%A8%AA%E4%B8%81",
+    "id": "O09"
+   },
+   {
+    "name": "純喫茶アメリカン",
+    "k": [
+     "snack",
+     "eat"
+    ],
+    "ring": 1,
+    "walk": "约 10 分",
+    "hours": "10:00–22:00 · 每月约三个周四休",
+    "body": "道顿堀的老派大喫茶，两层 245 个座位，水晶灯和旋转楼梯。热松饼和布丁是招牌，早餐、午饭也都能吃。",
+    "note": "休息的周四不固定，3/25 周四去之前看官网。",
+    "links": [
+     {
+      "label": "纯喫茶アメリカン",
+      "url": "https://www.junkissa-american.com/access.html"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E7%B4%94%E5%96%AB%E8%8C%B6%E3%82%A2%E3%83%A1%E3%83%AA%E3%82%AB%E3%83%B3+%E9%81%93%E9%A0%93%E5%A0%80",
+    "id": "O10"
+   },
+   {
+    "name": "道頓堀の名物：大阪烧・乌冬・章鱼烧・串炸",
+    "k": [
+     "eat"
+    ],
+    "ring": 1,
+    "walk": "约 10–15 分",
+    "hours": "各店不同",
+    "body": "五晚足够每次只吃一样：千房道顿堀大厦店的大阪烧，坐下全家分食；今井本店的きつねうどん是甜口油豆腐配高汤乌冬，想吃温和一点时去；わなか的章鱼烧路过分一份；串炸去だるま法善寺店，两人起可预约，不用专程跑新世界。",
+    "note": "串炸だるま法善寺店开到 22:30。铁板边留意孩子伸手；章鱼烧内馅很烫，稍凉再分给孩子。",
+    "links": [
+     {
+      "label": "千房",
+      "url": "https://shop.chibo.com/detail/28/"
+     },
+     {
+      "label": "道顿堀今井",
+      "url": "https://www.d-imai.com/"
+     },
+     {
+      "label": "わなか",
+      "url": "https://www.takoyaki-wanaka.com/"
+     },
+     {
+      "label": "だるま法善寺店",
+      "url": "https://www.kushikatu-daruma.com/location/houzenji"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E9%81%93%E9%A0%93%E5%A0%80",
+    "id": "O11"
+   },
+   {
+    "name": "はり重グリル",
+    "k": [
+     "eat"
+    ],
+    "ring": 1,
+    "walk": "约 12 分",
+    "hours": "周二休",
+    "body": "1919 年创业的黑毛和牛老店。グリル这边卖炸牛排、汉堡排这类洋食，大人孩子都好点。",
+    "note": "**3/23 周二休息。**营业时间看官网，可以网上订位。",
+    "links": [
+     {
+      "label": "はり重",
+      "url": "https://www.harijyu.co.jp/contents/tenpo/doutonbori/grill/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E3%81%AF%E3%82%8A%E9%87%8D%E3%82%B0%E3%83%AA%E3%83%AB+%E9%81%93%E9%A0%93%E5%A0%80",
+    "id": "O12"
+   },
+   {
+    "name": "金龍ラーメン 道頓堀店",
+    "k": [
+     "eat",
+     "night"
+    ],
+    "ring": 1,
+    "walk": "约 12 分",
+    "hours": "24 小时 · 全年无休",
+    "body": "屋顶趴着一条大龙的拉面摊，猪骨鸡骨熬的清汤，泡菜和蒜自己加。深夜散步完来一碗最方便。",
+    "note": "",
+    "links": [
+     {
+      "label": "店铺信息",
+      "url": "https://co-trip.jp/spot/49330"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E9%87%91%E9%BE%8D%E3%83%A9%E3%83%BC%E3%83%A1%E3%83%B3+%E9%81%93%E9%A0%93%E5%A0%80%E5%BA%97",
+    "id": "O13"
+   },
+   {
+    "name": "一蘭 道頓堀店 別館",
+    "k": [
+     "eat",
+     "night"
+    ],
+    "ring": 1,
+    "walk": "约 10–15 分",
+    "hours": "柜台 24 小时；桌席到 23:00",
+    "body": "夜景散步后吃面，再沿心斋桥方向回来，是很容易执行的一小圈。官方目前桌席到23点，单人柜台24小时。",
+    "note": "搜“别馆”。道顿堀本馆已有关闭公告，不能拿旧店地址当备选。",
+    "links": [
+     {
+      "label": "一兰道顿堀别馆",
+      "url": "https://ichiran.com/shop/kinki/dotonbori-south/"
+     },
+     {
+      "label": "一兰道顿堀本馆关闭公告",
+      "url": "https://ichiran.com/shop/kinki/dotonbori-main/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E4%B8%80%E8%98%AD+%E9%81%93%E9%A0%93%E5%A0%80%E5%BA%97%E5%88%A5%E9%A4%A8",
+    "id": "O14"
+   },
+   {
+    "name": "アメリカ村／三角公園",
+    "k": [
+     "see",
+     "shop"
+    ],
+    "ring": 1,
+    "walk": "约 10–12 分",
+    "hours": "店铺多中午后开",
+    "body": "心斋桥西边的年轻人街区，古着、街头服饰和涂鸦招牌。三角公园是街区中心，买盒章鱼烧坐长椅吃。",
+    "note": "三角公園更像街区聚集点，不是幼儿放电的大草坪。孩子需要活动空间时选てんしば或别的公园。",
+    "links": [
+     {
+      "label": "アメリカ村官方观光资料",
+      "url": "https://osaka-info.jp/spot/america-mura-american-village/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E3%82%A2%E3%83%A1%E3%83%AA%E3%82%AB%E6%9D%91+%E4%B8%89%E8%A7%92%E5%85%AC%E5%9C%92",
+    "id": "O15"
+   },
+   {
+    "name": "甲賀流 アメリカ村本店",
+    "k": [
+     "snack"
+    ],
+    "ring": 1,
+    "walk": "约 12 分",
+    "hours": "10:30–20:30（周六、节假日到 21:30）",
+    "body": "号称“章鱼烧淋美乃滋”的元祖店，外皮软嫩。买一盒去旁边三角公园坐着吃，是美国村的标准吃法。",
+    "note": "店内没什么座位。",
+    "links": [
+     {
+      "label": "店铺介绍",
+      "url": "https://www.ittoko-minami.net/gourmet/kougaryu-amemura"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E7%94%B2%E8%B3%80%E6%B5%81+%E3%82%A2%E3%83%A1%E3%83%AA%E3%82%AB%E6%9D%91%E6%9C%AC%E5%BA%97",
+    "id": "O16"
+   },
+   {
+    "name": "北極星 心斎橋本店",
+    "k": [
+     "eat"
+    ],
+    "ring": 1,
+    "walk": "约 12–15 分",
+    "hours": "11:30–21:30（最后点单 21:00）· 无休",
+    "body": "1925 年在这里发明了蛋包饭的店。房子是 1950 年的町屋，榻榻米座位，窗外有小庭院。孩子大人都能点，是大阪很稳的一顿家庭晚饭。",
+    "note": "",
+    "links": [
+     {
+      "label": "北极星心斋桥本店",
+      "url": "https://osakamania.jp/shop/omelet-rice_01/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E5%8C%97%E6%A5%B5%E6%98%9F+%E5%BF%83%E6%96%8E%E6%A9%8B%E6%9C%AC%E5%BA%97",
+    "id": "O17"
+   },
+   {
+    "name": "551蓬莱 本店",
+    "k": [
+     "snack",
+     "eat"
+    ],
+    "ring": 1,
+    "walk": "约 15 分",
+    "hours": "外带 10:00–21:30 · 每月第一、三个周二休",
+    "body": "戎桥筋上的豚包老店。买几个回房当夜宵或第二天早餐；2–3 楼也能坐下吃中餐。",
+    "note": "3/16 第三个周二你们还在东京，大阪期间都开。",
+    "links": [
+     {
+      "label": "551蓬莱本店",
+      "url": "https://www.551horai.co.jp/shop/list/13/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=551%E8%93%AC%E8%8E%B1+%E6%9C%AC%E5%BA%97",
+    "id": "O18"
+   },
+   {
+    "name": "りくろーおじさんの店 なんば本店",
+    "k": [
+     "snack"
+    ],
+    "ring": 1,
+    "walk": "约 15 分",
+    "hours": "9:00–20:00；2F 咖啡 11:00–17:30",
+    "body": "现烤芝士蛋糕，一整个圆的拎回房，四个人切开分。2–3 楼的咖啡室能吃到店里限定的甜点。",
+    "note": "不接受预约；人多时会限购。",
+    "links": [
+     {
+      "label": "なんば本店",
+      "url": "https://www.rikuro.co.jp/shoplist/134.html"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E3%82%8A%E3%81%8F%E3%82%8D%E3%83%BC%E3%81%8A%E3%81%98%E3%81%95%E3%82%93%E3%81%AE%E5%BA%97+%E3%81%AA%E3%82%93%E3%81%B0%E6%9C%AC%E5%BA%97",
+    "id": "O19"
+   },
+   {
+    "name": "北極 なんば本店",
+    "k": [
+     "snack"
+    ],
+    "ring": 1,
+    "walk": "约 15 分",
+    "hours": "10:00–20:30 · 全年无休",
+    "body": "开了五十多年的大阪老派冰棍店，用老做法一根根做。走累了一人一根，2 楼还有个小咖啡座。",
+    "note": "",
+    "links": [
+     {
+      "label": "北极なんば本店",
+      "url": "https://ebisubashisuji.or.jp/shops/hokkyoku/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E5%8C%97%E6%A5%B5+%E3%81%AA%E3%82%93%E3%81%B0%E6%9C%AC%E5%BA%97",
+    "id": "O20"
+   },
+   {
+    "name": "黒門市場",
+    "k": [
+     "snack",
+     "see"
+    ],
+    "ring": 1,
+    "walk": "约 15 分",
+    "hours": "白天；多数店傍晚收",
+    "body": "把市场当食材与街市体验：看海鲜、买一份当场吃的熟食，或给孩子找水果。它和电电城是相邻但不同的街区。",
+    "note": "先看价目和份量，再决定是否买。需要全家坐着吃饱时，优先寿司店或商场。",
+    "links": [
+     {
+      "label": "黒門市場官方店铺图",
+      "url": "https://kuromon.com/en/official-store-map/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E9%BB%92%E9%96%80%E5%B8%82%E5%A0%B4",
+    "id": "O21"
+   },
+   {
+    "name": "千日前道具屋筋",
+    "k": [
+     "shop",
+     "see"
+    ],
+    "ring": 1,
+    "walk": "约 15 分",
+    "hours": "白天店铺为主",
+    "body": "对你们家来说，一件小餐具、饭勺或有趣的食品模型，可能比大盒收藏品更容易经常用。",
+    "note": "刀具托运及带回美规则另查；先量尺寸和重量，别买到箱子里根本装不下。",
+    "links": [
+     {
+      "label": "千日前道具屋筋",
+      "url": "https://www.doguyasuji.or.jp/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E5%8D%83%E6%97%A5%E5%89%8D%E9%81%93%E5%85%B7%E5%B1%8B%E7%AD%8B",
+    "id": "O22"
+   },
+   {
+    "name": "高津宮",
+    "k": [
+     "see"
+    ],
+    "ring": 1,
+    "walk": "约 15 分",
+    "hours": "境内随时",
+    "body": "祭祀仁德天皇的古社，在上町台地的坡上。它是落语「高津の富」的舞台，境内还有说书场，五代目桂文枝最后一次高座就在这里。",
+    "note": "坡道和石阶多，推车绕路。",
+    "links": [
+     {
+      "label": "高津宮（维基）",
+      "url": "https://ja.wikipedia.org/wiki/%E9%AB%98%E6%B4%A5%E5%AE%AE"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E9%AB%98%E6%B4%A5%E5%AE%AE",
+    "id": "O23"
+   },
+   {
+    "name": "難波千日前公園",
+    "k": [
+     "kids"
+    ],
+    "ring": 1,
+    "walk": "约 15–20 分",
+    "hours": "全天开放",
+    "body": "酒店附近没有大公园，这是最近的一个有游具的：组合游具、秋千、沙坑、攀爬架。孩子憋坏了就来跑一跑。",
+    "note": "小公园，没有厕所，先在商场上好。",
+    "links": [
+     {
+      "label": "公园资料",
+      "url": "https://www.koentanbo.com/osaka/nanbasennichimae/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E9%9B%A3%E6%B3%A2%E5%8D%83%E6%97%A5%E5%89%8D%E5%85%AC%E5%9C%92",
+    "id": "O24"
+   },
+   {
+    "name": "难波的游戏中心",
+    "k": [
+     "kids",
+     "night"
+    ],
+    "ring": 1,
+    "walk": "约 10–15 分",
+    "hours": "营业：开到 23:30–24:00｜孩子：16 岁以下 18:00 后须家长陪同、最晚 22:00",
+    "body": "タイトーステーション 難波店（太空侵略者红招牌，开到 24:00）和 GiGO 大阪道頓堀本店（开到 23:30 前后）都在夜景散步的路上。 带孩子去放在白天或傍晚；关门前那几个小时只适合爸爸。",
+    "note": "道顿堀的えびすタワー摩天轮傍晚就停，不是夜里的项目。复古店关得早：美国村的弹珠台店 THE SILVER BALL PLANET 11:00–20:00，新世界的かすが娯楽場 10:00–22:00、周四休，白天带哥哥去。 儿童时限按 Taito 公布的大阪规则：16 岁以下 18:00 后须家长陪同、最晚 22:00，18 岁以下 22:00 后不能入场；GiGO 等其他运营商以门店告示为准。核对于 2026/10/3。",
+    "links": [
+     {
+      "label": "タイトーステーション 難波店",
+      "url": "https://www.taito.co.jp/store/00001910"
+     },
+     {
+      "label": "THE SILVER BALL PLANET",
+      "url": "https://silverballplanet.jp/"
+     },
+     {
+      "label": "かすが娯楽場",
+      "url": "https://en.kasugagorakujou.com/access"
+     },
+     {
+      "label": "Taito：未成年入场时间规定",
+      "url": "https://www.taito.co.jp/gc/special/new_regulation"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E3%82%BF%E3%82%A4%E3%83%88%E3%83%BC%E3%82%B9%E3%83%86%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3+%E9%9B%A3%E6%B3%A2%E5%BA%97",
+    "id": "O25"
+   },
+   {
+    "name": "丸福珈琲店 千日前本店",
+    "k": [
+     "snack",
+     "eat"
+    ],
+    "ring": 1,
+    "walk": "约 12–15 分",
+    "hours": "8:00–23:00（店家注明可能变动）",
+    "body": "1934 年开业的大阪老牌咖啡店，以浓郁的深烘出名。招牌是铜板一张一张烤的松饼，配黄油、蜂蜜和枫糖浆。一楼二楼加起来一百多个座位，老式家具很有年代感。",
+    "note": "这是全家一起去最合适的一家喫茶店：孩子吃松饼，你喝咖啡。早上 8 点就开，也可以当早餐；官网的モーニング套餐只在平日，3/22 是振替休日，可能没有。核对于 2026/10/3，出发前再看店家公告。",
+    "links": [
+     {
+      "label": "丸福珈琲店 千日前本店（官方）",
+      "url": "https://marufukucoffeeten.com/store/marufukucoffee-sennichimae/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E4%B8%B8%E7%A6%8F%E7%8F%88%E7%90%B2%E5%BA%97%20%E5%8D%83%E6%97%A5%E5%89%8D%E6%9C%AC%E5%BA%97",
+    "id": "O29"
+   },
+   {
+    "name": "なんばパークス：屋顶花园＋室内游戏区",
+    "k": [
+     "kids"
+    ],
+    "ring": 2,
+    "walk": "约 20–25 分",
+    "hours": "花园 10:00–24:00；5F 游戏区平日 11:00–19:00、周末到 20:00",
+    "body": "9F 有人工草坪广场和攀爬墙，8F 有草坡，孩子能好好跑一场，免费。下雨就去 5F 的 DADWAY Play Studio，只收学龄前孩子，哥哥妹妹正好。",
+    "note": "游戏区费用看现场。也可以坐御堂筋线一站到难波。",
+    "links": [
+     {
+      "label": "パークスガーデン",
+      "url": "https://nambaparks.com/garden"
+     },
+     {
+      "label": "DADWAY Play Studio",
+      "url": "https://nambaparks.com/shopresearch/7"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E3%81%AA%E3%82%93%E3%81%B0%E3%83%91%E3%83%BC%E3%82%AF%E3%82%B9",
+    "id": "O26"
+   },
+   {
+    "name": "裏なんば",
+    "k": [
+     "eat",
+     "night"
+    ],
+    "ring": 2,
+    "walk": "约 15–20 分",
+    "hours": "很多店开到午夜",
+    "body": "南海难波站东侧到日本桥站之间、千日前通以南的几条小街，是本地人下班喝一杯的地方。立饮和烤内脏小店密集，站着喝一杯、吃两串就走，很大阪。",
+    "note": "店都很小，先看墙上的价格再坐。代表店如大阪焼きトンセンター，营业时间以当晚为准。",
+    "links": [
+     {
+      "label": "裏なんば介绍",
+      "url": "https://kinarino.jp/cat8/36212"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E8%A3%8F%E3%81%AA%E3%82%93%E3%81%B0",
+    "id": "O27"
+   },
+   {
+    "name": "梅田スカイビル 空中庭園（御堂筋线三站）",
+    "k": [
+     "see",
+     "night"
+    ],
+    "ring": 2,
+    "walk": "约 25 分",
+    "hours": "9:30–22:30（最后入场 22:00）· 成人 ¥2,000",
+    "body": "想拍一张大阪全景夜景，这里最省事：心斋桥站坐御堂筋线到梅田约 7 分钟，再走地下通道到大楼。顶层是露天的环形回廊，九点出门也来得及。",
+    "note": "要走大楼外侧的展望台专用入口，东西两栋的电梯上不去。营业时间可能临时调整，当天看官网。",
+    "links": [
+     {
+      "label": "营业时间与票价",
+      "url": "https://www.skybldg.co.jp/observatory/information/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E6%A2%85%E7%94%B0%E3%82%B9%E3%82%AB%E3%82%A4%E3%83%93%E3%83%AB+%E7%A9%BA%E4%B8%AD%E5%BA%AD%E5%9C%92%E5%B1%95%E6%9C%9B%E5%8F%B0",
+    "id": "O28"
+   }
+  ]
+ }
+]
