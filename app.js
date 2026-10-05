@@ -3,7 +3,7 @@
 // Dates own fixed facts (hotel, intercity moves, dated dinners, luggage); cards own reusable
 // activities. A "slot" day shows whichever card the plan puts on it; everything shown for
 // that day (title, route, eat/shop/see, nearby, prep to-dos, "on days" chips) comes from view(d).
-let D, CARDS = {}, TAGS = {};
+let D, CARDS = {}, TAGS = {}, APX = {}, APX_ORDER = [];
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const pad = n => String(n).padStart(2,'0');
@@ -18,10 +18,11 @@ const WHO = {dad:'爸爸单独'};
 const DOW = ['周日','周一','周二','周三','周四','周五','周六'];
 const AT = {early:-1, am:0, noon:1, pm:2, eve:3};
 const JA_RX = /[぀-ヿ]/;
-// wrap text: escape, link 附录 X, mark search hits
+// wrap text: escape, link 附录 X (a whole section) and 附录#id (one appendix card), mark search hits
 function fmt(t, q){
   let h = esc(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/附录\s?([A-E])(?:[、，‑-]\s?([A-E]))?/g, (m,a,b) =>
     '<a class="ax" href="#info-'+a+'">附录 '+a+'</a>' + (b ? '、<a class="ax" href="#info-'+b+'">'+b+'</a>' : ''));
+  h = h.replace(/附录#([a-z][a-z0-9-]*)/g, (m, id) => APX[id] ? '<a class="ax" href="#info-'+id+'">'+esc(apxLabel(id))+'</a>' : m);
   h = h.replace(/「(?:行程 · )?Museum 换日」/g, m => '<a class="ax" href="#museum">'+m+'</a>');
   if (q) h = hl(h, q);
   return h;
@@ -312,17 +313,23 @@ function planBanner(){
   if (!canSave) h += '<p class="pnote">这台设备的浏览器不能保存选择（可能是隐私模式或存储被关）。照常能看推荐方案，换的活动刷新后会丢。</p>';
   return h;
 }
-function checkbox(id, key, text){
-  return '<li><label><input type="checkbox" id="'+esc(id)+'" data-check-key="'+esc(key)+'"'+(done[key]?' checked':'')+'><span>'+fmt(text)+'</span></label></li>';
+// ref: where the details live (an appendix card or a 宿 entry), shown as a 详情 link next to the box
+function checkbox(id, key, text, ref){
+  const rl = ref && refLabel(ref);
+  return '<li><label><input type="checkbox" id="'+esc(id)+'" data-check-key="'+esc(key)+'"'+(done[key]?' checked':'')+'><span>'+fmt(text)+'</span></label>'
+    + (rl ? '<a class="tref" href="#'+esc(ref)+'" aria-label="详情：'+esc(rl)+'">详情</a>' : '')+'</li>';
 }
 const allChecks = () => D.apx.flatMap(a => a.parts.flatMap(p => p.checklist || []));
 // extra: to-do ids owned by the date itself (days.json `todos`, e.g. the 今半 booking), listed first
-function prepList(c, sel, extra){
+function prepTodos(c, sel, extra){
   const fromCard = c ? c.todos.map(r => r.split('@')).filter(([, o]) => !sel || !o || sel.includes(o)).map(([id]) => id) : [];
-  const ts = [...new Set([...(extra || []), ...fromCard])].map(id => D.todo.find(t => t.id === id)).filter(Boolean);
+  return [...new Set([...(extra || []), ...fromCard])].map(id => D.todo.find(t => t.id === id)).filter(Boolean);
+}
+function prepList(c, sel, extra){
+  const ts = prepTodos(c, sel, extra);
   const cs = ((c && c.checks) || []).map(id => allChecks().find(x => x.id === id)).filter(Boolean);
   if (!ts.length && !cs.length) return '';
-  return '<ul class="todo">'+ts.map(t => checkbox('p-todo-'+t.id, 'todo:'+t.id, t.text)).join('')+cs.map(x => checkbox('p-'+x.id, x.id, x.text)).join('')+'</ul>';
+  return '<ul class="todo">'+ts.map(t => checkbox('p-todo-'+t.id, 'todo:'+t.id, t.text, t.ref)).join('')+cs.map(x => checkbox('p-'+x.id, x.id, x.text)).join('')+'</ul>';
 }
 
 /* ----- itinerary ----- */
@@ -971,35 +978,91 @@ if (typeof done !== 'object' || Array.isArray(done)) done = {};
 // reliably to today's list, so they are ignored (never applied by position) until acknowledged.
 const legacyTodo = () => Object.keys(done).some(k => /^\d+$/.test(k) && done[k]);
 function saveDone(){ try { localStorage.setItem('jp27-todo', JSON.stringify(done)); } catch(err) {} }
+/* Appendix cards: each subsection of 附录 A–E has a permanent id and its own page at #info-<id>;
+   #info is the index (to-dos, then each section as a list of tiles). */
+const apxShort = id => { const p = APX[id].p; return p.short || p.h.split('：')[0]; };
+const apxLabel = id => '附录 '+APX[id].a.id+' · '+apxShort(id);
+const secName = a => a.title.split('｜')[0];
+// what a to-do's ref points at: info-<card>, info-<A–E>, base-<hotel> or base-<entry>
+function refLabel(ref){
+  let m;
+  if ((m = ref.match(/^info-([A-E])$/))) return D.apx.some(a => a.id === m[1]) ? '附录 '+m[1] : null;
+  if ((m = ref.match(/^info-([a-z][a-z0-9-]*)$/))) return APX[m[1]] ? apxLabel(m[1]) : null;
+  if ((m = ref.match(/^base-([A-Z])(\d{2})?$/))){
+    const bs = D.base.find(x => x.code === m[1]); if (!bs) return null;
+    if (!m[2]) return '宿 · '+bs.sign;
+    const e = bs.entries.find(e => e.id === m[1]+m[2]); return e ? '宿 · '+e.name : null;
+  }
+  return null;
+}
+const apxChecks = p => (p.checklist || []).filter(t => !t.card || activeRef(t.card));
+const apxTodos = id => D.todo.filter(t => t.ref === 'info-'+id);
+function tileBadges(id){
+  const cl = apxChecks(APX[id].p), open = apxTodos(id).filter(t => todoActive(t) && !done['todo:'+t.id]);
+  return (open.length ? '<span class="bdg pend">待办 '+open.length+'</span>' : '')
+    + (cl.length ? '<span class="bdg">已勾 '+cl.filter(t => done[t.id]).length+'/'+cl.length+'</span>' : '');
+}
+const refreshTiles = () => document.querySelectorAll('#v-info .atile').forEach(a => { a.querySelector('.bdgs').innerHTML = tileBadges(a.dataset.apx); });
+// The days whose page points at an appendix card: a 附录#id link in what the day shows (or in its
+// current card's facts), or a to-do in its 「这一天的准备」 whose details live there.
+function apxDays(id){
+  const rx = new RegExp('附录#'+id+'(?![a-z0-9-])'), ref = 'info-'+id;
+  return D.days.filter(d => {
+    const v = view(d), c = d.slot ? v.card : null;
+    const t = [v.sub, v.ctx, v.note, v.cnote, ...v.stay, ...['plan','eat','shop','see'].flatMap(k => v[k].map(txt)),
+      ...(c ? [c.family, c.booking, c.rain] : [])].filter(Boolean).join('\n');
+    return rx.test(t) || prepTodos(c, c ? v.sel : null, d.todos).some(x => x.ref === ref);
+  }).map(d => d.n);
+}
 function renderInfo(){
   // To-dos tied to a card only show while that card (and branch) is in the plan; ticks are never dropped.
   const live = D.todo.filter(todoActive), parked = D.todo.filter(t => !todoActive(t));
-  let h = '<div class="vhead"><h2><span class="k" lang="ja">要</span>附录 · 执行细节</h2><p>交通行李、预约换日、孩子与吟游、退税返程、日本 eVISA。各节标注核对时间，出发前再开官方入口复核。各城市的备选活动在「行程 · 活动卡片」，Museum 抽签结果在「Museum 换日」。</p></div>';
+  let h = '<div class="vhead"><h2><span class="k" lang="ja">要</span>附录 · 执行细节</h2><p>'+D.apx.map(secName).join('、')+'。每一节分成几张卡，点开一张只看这一件事；各卡标注核对时间，出发前再开官方入口复核。各城市的备选活动在「行程 · 活动卡片」，Museum 抽签结果在「Museum 换日」。</p></div>';
   // quick nav: one short chip per section (title before "｜"), scrolls sideways, follows the reading position
-  const nav = [['todo', '', '待办 '+live.length], ...D.apx.map(a => [a.id, a.id, a.title.split('｜')[0]]), ['ref', '', '怎么用']];
+  const nav = [['todo', '', '待办 '+live.length], ...D.apx.map(a => [a.id, a.id, secName(a)]), ['ref', '', '怎么用']];
   h += '<nav class="tools inav" aria-label="附录各节"><div class="chips">'
     + nav.map(([id, k, t]) => '<a class="chip" href="#info-'+id+'" data-sec="info-'+id+'">'+(k ? '<b class="ro">'+k+'</b>' : '')+esc(t)+'</a>').join('')
     + '</div></nav>';
   h += '<div class="apx c-osaka" id="info-todo"><div class="id">TO DO</div><h3>尚待确认</h3><div class="lk"><a href="#info-E">日本 eVISA 材料与办理</a></div><ul class="todo">'
-    + live.map(t => checkbox('todo-'+t.id, 'todo:'+t.id, t.text)).join('')
+    + live.map(t => checkbox('todo-'+t.id, 'todo:'+t.id, t.text, t.ref)).join('')
     + '</ul>' + (parked.length ? '<p class="small">另有 '+parked.length+' 项只属于没排进行程的活动，收在卡片里：'
         + [...new Set(parked.map(t => t.card))].map(id => '<a class="ax" href="#card-'+id+'">'+esc(CARDS[id].name)+'</a>').join('、')+'。</p>' : '')
     + (legacyTodo() ? '<div class="legacy" role="note"><p>旧版本按列表位置记录过这里的勾选；列表顺序后来变过，无法可靠对应到现在的任务，所以没有沿用。请把上面的待办重新核对一遍。附录里的打包和 eVISA 勾选不受影响。</p><button type="button" class="legacy-ok">知道了</button></div>' : '')
     + '<p class="small">勾选只保存在这台设备的浏览器里。</p></div>';
   D.apx.forEach(a => {
     h += '<div class="apx" id="info-'+a.id+'"><div class="id">APPENDIX '+a.id+'</div><h3>'+esc(a.title)+'</h3><p class="ld">'+esc(a.lead)+'</p>'
-      + a.parts.map(p => {
-          const cl = (p.checklist || []).filter(t => !t.card || activeRef(t.card)), off = (p.checklist || []).filter(t => t.card && !activeRef(t.card));
-          return '<h4>'+esc(p.h)+'</h4>'+(p.p || []).map(x=>'<p>'+fmt(x)+'</p>').join('')
-            + (cl.length ? '<ul class="todo">'+cl.map(t => checkbox(t.id, t.id, t.text)).join('')+'</ul>' : '')
-            + off.map(t => '<p class="small">'+esc(CARDS[t.card].name)+' 不在当前行程，相关一项收在<a class="ax" href="#card-'+t.card+'">卡片</a>里。</p>').join('');
-        }).join('')
-      + '<div class="lk">'+extLinks(a.links)+'</div></div>';
+      + '<ol class="atiles">'+a.parts.map(p => { const [n, ...g] = p.h.split('：');
+          return '<li><a class="atile" id="t-'+p.id+'" data-apx="'+p.id+'" href="#info-'+p.id+'"><span class="tn">'+esc(n)+'</span>'
+            + (g.length ? '<span class="tg">'+esc(g.join('：'))+'</span>' : '')+'<span class="bdgs">'+tileBadges(p.id)+'</span></a></li>'; }).join('')+'</ol>'
+      + (a.links && a.links.length ? '<div class="lk">'+extLinks(a.links)+'</div>' : '')+'</div>';
   });
   h += '<div class="apx" id="info-ref"><div class="id">REFERENCE</div><h3>这套攻略怎么用</h3><div class="refs">'
     + D.ref.map(r => '<p><b>'+esc(r.h)+'</b>'+fmt(r.p)+'</p>').join('') + '</div></div>';
   $('#v-info').innerHTML = h;
   watchInfoNav();
+}
+// One appendix card on its own page: text, checklist, its official links, the to-dos whose
+// details live here, the days that point here, and the previous/next card across all sections.
+function renderApx(id){
+  const {p, a} = APX[id], i = APX_ORDER.indexOf(id), [n, ...g] = p.h.split('：');
+  const cl = apxChecks(p), off = (p.checklist || []).filter(t => t.card && !activeRef(t.card));
+  const ts = apxTodos(id).filter(todoActive), parked = apxTodos(id).filter(t => !todoActive(t)), used = apxDays(id);
+  const nb = (k, cls, arrow) => { const o = APX[APX_ORDER[i+k]]; if (!o) return '<span></span>';
+    return '<a'+cls+' href="#info-'+o.p.id+'">'+arrow.replace('$', '附录 '+o.a.id)+'<b>'+esc(o.p.h.split('：')[0])+'</b></a>'; };
+  let h = '<nav class="crumb" aria-label="位置"><a href="#info">附录</a><span aria-hidden="true">›</span><a href="#info-'+a.id+'">'+a.id+' '+esc(secName(a))+'</a></nav>'
+    + '<article class="apx apage" id="apx-'+id+'"><div class="id">APPENDIX '+a.id+' · '+(a.parts.indexOf(p)+1)+'/'+a.parts.length+'</div>'
+    + '<h2>'+esc(n)+'</h2>'+(g.length ? '<p class="ld">'+esc(g.join('：'))+'</p>' : '')
+    + (p.p || []).map(x => '<p>'+fmt(x)+'</p>').join('')
+    + (cl.length ? '<ul class="todo">'+cl.map(t => checkbox(t.id, t.id, t.text)).join('')+'</ul>' : '')
+    + off.map(t => '<p class="small">'+esc(CARDS[t.card].name)+' 不在当前行程，相关一项收在<a class="ax" href="#card-'+t.card+'">卡片</a>里。</p>').join('')
+    + (p.links && p.links.length ? '<div class="lk">'+extLinks(p.links)+'</div>' : '')+'</article>';
+  if (ts.length || parked.length) h += '<div class="blk"><div class="lbl">相关待办 <span class="en">TO DO</span></div>'
+    + (ts.length ? '<ul class="todo">'+ts.map(t => checkbox('a-todo-'+t.id, 'todo:'+t.id, t.text)).join('')+'</ul><p class="small">和「附录 · 尚待确认」是同一份勾选。</p>' : '')
+    + (parked.length ? '<p class="small">另有 '+parked.length+' 项只属于没排进行程的活动，收在卡片里：'
+        + [...new Set(parked.map(t => t.card))].map(c => '<a class="ax" href="#card-'+c+'">'+esc(CARDS[c].name)+'</a>').join('、')+'。</p>' : '')+'</div>';
+  if (used.length) h += '<div class="blk"><div class="lbl">哪天会用到 <span class="en">DAYS</span></div>'+dayChips(used)+'</div>';
+  h += '<div class="pager">'+nb(-1, '', '← $')+nb(1, ' class="nx"', '$ →')+'</div>';
+  $('#v-info').innerHTML = h;
 }
 // Quick-nav highlight follows the reading position: the current section is the last one whose
 // heading has passed a reading line just under the sticky bar (the last section once the page
@@ -1030,9 +1093,11 @@ function watchInfoNav(){
 /* ----- router ----- */
 function show(v){ document.querySelectorAll('.view').forEach(x => x.hidden = x.id !== 'v-'+v); }
 // keep = re-render in place after a plan change (no scroll jump)
+let lastApx = null;   // the appendix card page just left, so the index can scroll back to its tile
 function route(keep){
   const h = (location.hash || '#trip').slice(1);
   let tab = 'trip', target = null, idx = false;
+  const fromApx = lastApx; lastApx = null;
   let m;
   // old bookmarks to the retired night sections
   if (/^(eat|see)-N1$/.test(h)) { location.replace('#base'); return; }
@@ -1066,12 +1131,25 @@ function route(keep){
     if (!st) renderBookBody(m[1]);
     v.querySelector('.idx').hidden = !!st; v.querySelector('.stp').hidden = !st;
   }
-  else if ((m = h.match(/^info(?:-([A-Za-z]+))?$/))){ renderInfo(); show('info'); tab='info'; if (m[1]) target = document.getElementById('info-'+m[1]); }
+  else if ((m = h.match(/^info(?:-([A-Za-z0-9-]+))?$/))){
+    const k = m[1];
+    // an appendix card id that was renamed goes to its new id; anything unknown goes to the index
+    if (k && !/^([A-E]|todo|ref)$/.test(k) && !APX[k]){ const to = D.apxAliases[k]; location.replace(to && APX[to] ? '#info-'+to : '#info'); return; }
+    tab = 'info';
+    if (k && APX[k]){ renderApx(k); show('info'); lastApx = k; }
+    else {
+      renderInfo(); show('info');
+      // back from a card page to the index (or to that card's own section): land on its tile
+      const back = fromApx && !keep && (!k || k === APX[fromApx].a.id) && document.getElementById('t-'+fromApx);
+      if (back){ target = back; back.classList.add('flash'); }
+      else if (k) target = document.getElementById('info-'+k);
+    }
+  }
   else { renderTrip(); show('trip'); idx = true; }
   document.getElementById('mast').hidden = !idx;
   document.querySelectorAll('.tabs a').forEach(a => a.classList.toggle('on', a.dataset.t === tab));
   if (keep) return;
-  if (target) requestAnimationFrame(() => target.scrollIntoView({block: target.classList.contains('be') ? 'center' : 'start', behavior:'instant'}));
+  if (target) requestAnimationFrame(() => target.scrollIntoView({block: target.matches('.be, .atile') ? 'center' : 'start', behavior:'instant'}));
   else window.scrollTo({top:0, behavior:'instant'});
 }
 function onAction(e){
@@ -1119,6 +1197,7 @@ function onChange(e){
   if (t.dataset.checkKey){
     done[t.dataset.checkKey] = t.checked; saveDone();
     document.querySelectorAll('input[data-check-key="'+CSS.escape(t.dataset.checkKey)+'"]').forEach(x => { x.checked = t.checked; });
+    refreshTiles();
     return;
   }
   if (t.dataset.act === 'opt'){
@@ -1155,6 +1234,7 @@ function onChange(e){
 function boot(){
   D.cards.cards.forEach(c => { CARDS[c.id] = c; });
   TAGS = D.cards.tags;
+  D.apx.forEach(a => a.parts.forEach(p => { APX[p.id] = {p, a}; APX_ORDER.push(p.id); }));
   loadPlan();
   ['eat','shop','see'].forEach(renderBookShell);
   window.addEventListener('hashchange', () => route());
@@ -1182,7 +1262,7 @@ function boot(){
 }
 const get = f => fetch('data/'+f+'.json', {cache:'no-cache'}).then(r => { if (!r.ok) throw new Error(f+'.json '+r.status); return r.json(); });
 Promise.all(['days','cards','books','base','info'].map(get)).then(([days, cards, books, base, info]) => {
-  D = {days, cards, books, base, todo:info.todo, apx:info.apx, ref:info.ref};
+  D = {days, cards, books, base, todo:info.todo, apx:info.apx, ref:info.ref, apxAliases:info.aliases || {}};
   try { boot(); }
   catch(err){
     // a render bug or an unexpected saved plan: say so, and offer the way back to the recommended plan
