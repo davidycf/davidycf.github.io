@@ -57,7 +57,7 @@ const dowOf = d => { const [m, dd] = d.date.split('/').map(Number); return new D
 // plan.booked {cardId: dayId}: a ticket the user registered on this device (e.g. Museum lottery won).
 // Plan changes never touch it; moving a booked card off its day only warns.
 const PLAN_KEY = 'jp27-plan', PLAN_V = 1;
-let plan = {v:PLAN_V, days:{}, opts:{}, visited:{}, booked:{}};
+let plan = {v:PLAN_V, days:{}, opts:{}, visited:{}, booked:{}, preset:{}};
 let canSave = true, planNotes = [];
 function loadPlan(){
   let raw = null;
@@ -80,6 +80,8 @@ function loadPlan(){
   Object.entries(p.visited || {}).forEach(([t, dayId]) => { const d = dayById(dayId);
     if (TAGS[t] && d && d.slot) plan.visited[t] = dayId; else badVisit++; });
   if (badVisit) planNotes.push('有 '+badVisit+' 条“已逛过”记录指向不存在的日期或标签，已忽略。');
+  Object.entries(p.preset || {}).forEach(([pid, oid]) => { const ps = (D.cards.presets || []).find(x => x.id === pid);
+    if (ps && ps.options.some(o => o.id === oid)) plan.preset[pid] = oid; });
   Object.entries(p.booked || {}).forEach(([cid, dayId]) => { const id = alias(cid), d = dayById(dayId);
     if (id && d && d.slot) plan.booked[id] = dayId; else dropped.push('票 '+cid+' → '+dayId); });
   if (dropped.length) planNotes.push('有 '+dropped.length+' 项本地选择指向已删除或不适用的活动（'+dropped.join('，')+'），这几天按推荐方案显示。');
@@ -175,6 +177,8 @@ function dayWarnings(d){
   ck.verify.forEach(t => out.push({k:'verify', t}));
   if (c.load === 'far') out.push({k:'pref', t:'路程远：'+c.transit});
   if (c.late && d.fixed.plan.some(x => x.at === 'eve')) out.push({k:'pref', t:'这张卡回酒店偏晚，晚上的固定安排可能要往后推。'});
+  Object.entries(plan.booked).filter(([cid, bd]) => bd === d.id && cid !== c.id).forEach(([cid]) =>
+    out.push({k:'verify', t:'登记在 '+d.date+' 的「'+CARDS[cid].name+'」票，这天现在排的是「'+c.name+'」；网页不会改票，实际票务要本人处理。'}));
   const adj = view(d).adj;
   if (adj.dinner){ const fd = [...d.fixed.plan, ...(d.fixed.eat || [])].find(x => x.dinner);
     out.push({k:'pref', t:'这天的晚饭已经定了（'+(fd.label || fd.text)+'），卡片里的晚饭建议不显示。'}); }
@@ -239,17 +243,25 @@ function undo(){
 }
 const nm = c => '「'+c.name+'」';
 // Choices for putting card cid on day dayId. Returns [] when it can go straight on.
+function ticketNote(card, toDay){
+  const bd = bookedDay(card);
+  if (!bd || bd === (toDay && toDay.id)) return null;
+  return '「'+card.name+'」登记的票是 '+dayById(bd).date+'，'+(toDay ? '这样会把它排到 '+toDay.date : '这样它就不在行程里了')+'；网页不会改票，实际票务要本人处理，登记会保留。';
+}
 function placeChoices(cid, dayId, fromDay){
   const c = CARDS[cid], d = dayById(dayId), cur = cardOf(d);
   if (cur.id === cid) return null;
   const src = c.multi ? null : placedOn(cid).find(x => x.id !== dayId);
   const ch = [];
+  ch.notes = [ticketNote(c, d), bookedDay(cur) === dayId ? '「'+cur.name+'」登记的票就是 '+d.date+'，换掉后那天不再是它；网页不会改票，实际票务要本人处理，登记会保留。' : null].filter(Boolean);
   if (src){
     const back = check(cur, src, {vacate:[dayId]});
     ch.push({op:'swap', src:src.id, label:'交换：'+d.date+' 换成'+nm(c)+'，'+src.date+' 换成'+nm(cur), dis:back.block});
     ch.push({op:'move', src:src.id, label:'移过来：'+src.date+' 改成'+nm(restCard(c.city))});
   } else if (!fromDay && !cur.multi){
     ch.push({op:'set', label:'替换：'+d.date+' 的'+nm(cur)+'回到未安排'});
+  } else if (ch.notes.length){
+    ch.push({op:'set', label:'确认：'+d.date+' 改成'+nm(c)});
   }
   return ch;
 }
@@ -264,7 +276,7 @@ function doPlace(op, cid, dayId, srcId){
   }, d.date+' 改成'+nm(c) + (op === 'swap' ? '，'+dayById(srcId).date+' 改成'+nm(cur) : op === 'move' ? '，'+dayById(srcId).date+' 改成留白' : ''));
 }
 function confirmHTML(cid, dayId, ch){
-  return '<div class="cf" role="group" aria-label="确认怎么安排">'+ch.map(x => '<button type="button" class="btn" data-act="do" data-op="'+x.op+'" data-card="'+cid+'" data-day="'+dayId+'"'+(x.src ? ' data-src="'+x.src+'"' : '')+(x.dis ? ' disabled' : '')+'>'+esc(x.label)+'</button>'
+  return '<div class="cf" role="group" aria-label="确认怎么安排">'+(ch.notes || []).map(t => '<p class="ck w-verify"><b>票</b>'+esc(t)+'</p>').join('')+ch.map(x => '<button type="button" class="btn" data-act="do" data-op="'+x.op+'" data-card="'+cid+'" data-day="'+dayId+'"'+(x.src ? ' data-src="'+x.src+'"' : '')+(x.dis ? ' disabled' : '')+'>'+esc(x.label)+'</button>'
     + (x.dis ? '<p class="small">'+esc(x.dis)+'</p>' : '')).join('')+'<button type="button" class="btn ghost" data-act="cancel">取消，保持原方案</button></div>';
 }
 
@@ -352,6 +364,7 @@ function swapPanel(d, open){
   const more = city.filter(c => !rec.includes(c));
   return '<div class="swap" id="swap"'+(open?'':' hidden')+'><div class="lbl">换活动 <span class="en">SWAP</span></div>'
     + '<p class="small">只改 '+d.date+' 这一天；日期固定的事不动。先看推荐，再看更多。</p>'
+    + (bookedDay(cur) === d.id ? '<p class="ck w-verify"><b>票</b>「'+esc(cur.name)+'」登记的票就是这天；换成别的会先确认，实际票务要本人处理。</p>' : '')
     + '<ul class="picks">'+rec.map(c => pickItem(c, d)).join('')+'</ul>'
     + (more.length ? '<details class="more"><summary>更多活动（'+more.length+'）</summary><ul class="picks">'+more.map(c => pickItem(c, d)).join('')+'</ul></details>' : '')
     + '</div>';
@@ -520,8 +533,12 @@ function presetRows(ps, o, won){
     const d = dayById(id), cur = cardOf(d), nxt = CARDS[o.days[id]];
     const booked = nxt.id === ps.card && won ? id : undefined;
     const r = check(nxt, d, booked ? {vacate:ids, booked} : {vacate:ids});
-    const custom = cur.id !== nxt.id && !ps.options.some(x => x.days[id] === cur.id);
-    return {d, cur, nxt, r, custom};
+    // hand-picked = set on this device and not what the last applied layout put there
+    const last = ps.options.find(x => x.id === plan.preset[ps.id]);
+    const custom = cur.id !== nxt.id && isMine(d) && !(last && last.days[id] === cur.id);
+    const away = cur.id !== nxt.id && bookedDay(cur) === id
+      ? '「'+cur.name+'」登记的票就是 '+d.date+'，换掉后那天不再是它；网页不会改票，实际票务要本人处理，登记会保留。' : null;
+    return {d, cur, nxt, r, custom, away};
   });
 }
 function renderPreset(pid){
@@ -544,10 +561,11 @@ function renderPreset(pid){
         + (r.cur.id === r.nxt.id ? esc(r.nxt.name)+' · 不变' : esc(r.cur.name)+' → <b>'+esc(r.nxt.name)+'</b>')
         + ((r.d.fixed.short || []).length ? ' · 固定：'+esc(r.d.fixed.short.join('、')) : '')+'</span></div>'
         + (r.custom ? '<p class="ck w-pref"><b>提示</b>这天是你自己选的「'+esc(r.cur.name)+'」，应用后会换掉（可以撤销）。</p>' : '')
+        + (r.away ? '<p class="ck w-verify"><b>票</b>'+esc(r.away)+'</p>' : '')
         + checkLine(r.r)+'</li>').join('')
     + '</ul></div>';
   if (o.museum) h += '<label class="opt won"><input type="checkbox" data-act="preset-won" data-preset="'+pid+'"'+(ui.won ? ' checked' : '')+'><span>我已经中签，票面就是 '+dayById(o.museum).date
-    + '<small>只是在这台设备上登记；不勾就按模拟安排显示。网页不会替你买票或改票。</small></span></label>';
+    + '<small>只是在这台设备上登记；不勾就按模拟安排显示。网页不会替你买票或改票。'+(bd && bd !== o.museum ? '勾了会把登记从 '+dayById(bd).date+' 改成 '+dayById(o.museum).date+'。' : '')+'</small></span></label>';
   if (bd && o.museum !== bd) h += '<ul class="warns"><li class="w-verify"><b>待核对</b><span>你登记过 '+dayById(bd).date+' 的票。按这个安排，那天不去 Museum：登记不会被删，实际的票要本人处理。</span></li></ul>';
   h += '<div class="pa">'+(changes.length || (won && bd !== o.museum)
       ? '<button type="button" class="btn" data-act="preset-apply" data-preset="'+pid+'" data-opt="'+o.id+'"'+(block ? ' disabled' : '')+'>'
@@ -564,6 +582,7 @@ function applyPreset(pid, oid){
   commit(() => {
     Object.entries(o.days).forEach(([id, cid]) => { if (dayById(id).slot.card === cid) delete plan.days[id]; else plan.days[id] = cid; });
     if (won) plan.booked[ps.card] = o.museum;
+    plan.preset[pid] = o.id;
   }, '大阪四天已按「'+o.label+'」安排'+(o.museum ? (won ? '，已登记中签' : '（模拟）') : ''));
 }
 
@@ -875,7 +894,7 @@ function onChange(e){
   }
   if (t.dataset.act === 'preset-pick' || t.dataset.act === 'preset-won'){
     const ps = presetSt(t.dataset.preset);
-    if (t.dataset.act === 'preset-pick') ps.id = t.dataset.opt; else ps.won = t.checked;
+    if (t.dataset.act === 'preset-pick'){ if (ps.id !== t.dataset.opt) ps.won = false; ps.id = t.dataset.opt; } else ps.won = t.checked;
     const key = focusKey(t); route(true); restoreFocus(key); return;
   }
   if (t.dataset.act === 'visit'){
