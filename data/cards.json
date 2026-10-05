@@ -265,7 +265,8 @@
      "url": "https://www.urbanlaunch.net/boarding/"
     }
    ],
-   "checked": "2026/10/4"
+   "checked": "2026/10/4",
+   "ticket": true
   },
   {
    "id": "ueno-akiba",
@@ -952,7 +953,8 @@
      "url": "https://www.yokohama-anpanman.jp/news/article/l1moa4r0yp0e3dns.html"
     }
    ],
-   "checked": "2026/10/3"
+   "checked": "2026/10/3",
+   "ticket": true
   },
   {
    "id": "toy-museum",
@@ -1018,7 +1020,8 @@
      "url": "https://art-play.or.jp/ttm/faq/"
     }
    ],
-   "checked": "2026/10/3"
+   "checked": "2026/10/3",
+   "ticket": true
   },
   {
    "id": "tokyo-tower",
@@ -1033,8 +1036,8 @@
    "time": "上午半天（估计）",
    "transit": "新御徒町坐大江户线直达赤羽橋，再步行几分钟；单程约 30 分钟（估计）",
    "load": "mid",
-   "family": "带小孩的设施与推车规定看官网“小さなお子様をお連れのお客様へ”。",
-   "booking": "票价与是否需要预约，购票前看官网",
+   "family": "Main Deck 官网标的（WEB 价）：大人 ¥1,500，幼児（4 岁以上）¥600；哥哥 5 岁买幼児票，妹妹 3 岁不在收费档里，购票时确认是否免费。带小孩的设施与推车规定看官网“小さなお子様をお連れのお客様へ”。",
+   "booking": "可在官网买 WEB 票，事前购入入场更顺；不是必须预约",
    "rain": "展望台在室内；下雨看不远",
    "hours": "Main Deck 9:00–23:00（最终入场 22:30）",
    "kinds": [
@@ -1069,16 +1072,20 @@
    "eat": [],
    "shop": [],
    "see": [],
-   "note": "票价、儿童票和开放公告这次没有逐项核对，选它之前先查官网。",
+   "note": "票价核对于 2026/10/5（官网 WEB 价）；推车规定和开放公告出发前再看官网。",
    "rel": [],
    "todos": [],
    "links": [
     {
      "label": "東京タワー 官网",
      "url": "https://www.tokyotower.co.jp/"
+    },
+    {
+     "label": "東京タワー：料金・営業時間",
+     "url": "https://www.tokyotower.co.jp/fee/"
     }
    ],
-   "checked": "2026/10/4"
+   "checked": "2026/10/5"
   },
   {
    "id": "rest-tokyo",
@@ -1502,7 +1509,8 @@
      "opt": "pm-castle",
      "text": "饭后从大阪港坐中央线到森ノ宫，大阪城只看外观和公园，约 60–90 分钟（估计）；天守阁另留时间，不默认进。"
     }
-   ]
+   ],
+   "ticket": true
   },
   {
    "covers": [],
@@ -1781,7 +1789,8 @@
      "at": "pm",
      "text": "看完直接回心斋桥；不顺路追加平等院或京都市区。"
     }
-   ]
+   ],
+   "ticket": true
   },
   {
    "covers": [],

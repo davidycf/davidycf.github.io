@@ -359,6 +359,10 @@ a.sec-h{text-decoration:none}
 .pset{border:0;margin:14px 0 0}
 .pset legend{font-weight:700;font-size:14px;padding:6px 0 2px}
 .opt.won{margin-top:12px;background:var(--surface);border-radius:var(--r);padding:10px 12px}
+.tk{background:var(--surface);border-radius:var(--r);padding:12px 14px;font-size:14px}
+textarea.io{display:block;width:100%;margin-top:8px;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;color:var(--ink);background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:8px 10px;resize:vertical}
+.pnote p+p{margin-top:6px}
+.pnote .btn{margin-top:8px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--tab-h) + 12px + env(safe-area-inset-bottom,0px));z-index:20;width:min(608px,calc(100% - 32px));display:flex;align-items:center;gap:12px;background:var(--ink);color:var(--bg);border-radius:10px;padding:10px 12px;font-size:14px;box-shadow:0 4px 16px rgba(0,0,0,.2)}
 .toast span{flex:1}
 .toast .btn{--line:var(--bg);color:var(--ink);background:var(--bg);border-color:var(--bg)}
@@ -416,6 +420,7 @@ a.sec-h{text-decoration:none}
     <section class="view" id="v-cards" hidden aria-label="活动卡片"></section>
     <section class="view" id="v-card" hidden></section>
     <section class="view" id="v-museum" hidden aria-label="Museum 换日"></section>
+    <section class="view" id="v-plan" hidden aria-label="导出导入方案"></section>
     <section class="view" id="v-base" hidden></section>
     <section class="view" id="v-eat" hidden></section>
     <section class="view" id="v-shop" hidden></section>
