@@ -102,7 +102,7 @@ Nintendo Museum、旅馆玩任天堂“大統領”花札、Super Potato 复古�
 - data/books.json（吃买玩站）、data/base.json（宿）、data/info.json（todo、apx 附录、ref）。
 
 活动卡片字段（新增或改卡照这个写）：
-- `id` 永久稳定，不用下标、标题或日期；删除或合并时在 `aliases` 里留映射。`city`、`size`（half/full）、`name`（列表里的名字）、`ja`/`ro`（站牌大字与罗马字：只写地名——车站或街区，不写景点名，景点名留给旁边的 name／title；跨两地可写「上野・秋葉原」，留白卡例外）、`area`、`title`、`summary`。
+- `id` 永久稳定，不用下标、标题或日期；删除或合并时在 `aliases` 里留映射。`city`、`size`（half/full）、`name`（列表里的名字）、`ja`/`ro`（站牌大字与罗马字：只写地名——车站或街区，不写景点名，景点名留给旁边的 name／title，日文景点名（例如 東京タワー）要留在 name/title/summary 等会被搜索的字段里，卡片库才能用日文搜到；跨两地可写「上野・秋葉原」，留白卡例外）、`area`、`title`、`summary`。
 - 事实：`time`、`transit`（写“估计”，不要伪造精确分钟）、`load`（near/mid/far）、`family`、`booking`、`rain`、`hours`、`closed`{dow: 0=周日…6=周六, text}（每周固定休馆＝硬性不可安排）、`calendar`（日历未发布等待核对文字，只提示不阻止）、`late`（回酒店晚，和当天晚上的固定事项冲突时提示）、`multi`（可以放在多天，例如留白卡）、`checked`（核对日期）。
 - `opts` 支线：{id, label, on 默认是否勾, group 同组互斥单选, who:"dad" 爸爸单独, covers 重叠标签, closed 按星期不可行}。`route`/`eat`/`shop`/`see` 的每条是 {text, at(am/noon/pm/eve，仅 route), opt 选了才显示, unless 没选才显示, who, dinner, withFixedDinner, closed, alt}：`dinner:true` 是卡片的晚饭建议，当天日期有固定晚饭时不显示并给出说明；`withFixedDinner:true` 只在当天有固定晚饭时显示（例如“直接回去赶上晚上的安排”）；`closed`{dow,text} 加可选 `alt` 表示这一段在某个星期不可行（例如 2k540 周三休业），那天显示 alt 或跳过并提示，不禁止整张卡。
 - `covers` 卡片级重叠标签；`rel` 是 "eat:T5" 这类资料引用，"shop:T8@ginza" 表示选了该支线才算经过；`todos` 是 info.todo 的 id，"water-bus@pm-boat" 同理；`checks` 是附录 checklist 的 id；`links` 官方链接。
