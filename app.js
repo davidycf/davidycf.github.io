@@ -73,7 +73,10 @@ function loadPlan(){
   });
   Object.entries(p.opts || {}).forEach(([cid, o]) => { const id = alias(cid); if (!id || !o) return;
     Object.entries(o).forEach(([oid, v]) => { if (CARDS[id].opts.some(x => x.id === oid)) (plan.opts[id] ||= {})[oid] = !!v; }); });
-  Object.entries(p.visited || {}).forEach(([t, dayId]) => { if (TAGS[t]) plan.visited[t] = dayId; });
+  let badVisit = 0;
+  Object.entries(p.visited || {}).forEach(([t, dayId]) => { const d = dayById(dayId);
+    if (TAGS[t] && d && d.slot) plan.visited[t] = dayId; else badVisit++; });
+  if (badVisit) planNotes.push('有 '+badVisit+' 条“已逛过”记录指向不存在的日期或标签，已忽略。');
   if (dropped.length) planNotes.push('有 '+dropped.length+' 项本地选择指向已删除或不适用的活动（'+dropped.join('，')+'），这几天按推荐方案显示。');
 }
 function savePlan(){
@@ -99,9 +102,24 @@ function selOpts(c, d){
   return sel;
 }
 const shows = (x, sel) => (!x.opt || sel.includes(x.opt)) && (!x.unless || !sel.includes(x.unless));
+// A date with its own dinner (fixed eat/plan item marked dinner) replaces the card's dinner
+// suggestions (dinner:true); items marked withFixedDinner only show on such dates.
+const hasFixedDinner = d => !!d.slot && [...d.fixed.plan, ...(d.fixed.eat || [])].some(x => x.dinner);
+// One card item as it reads on day d: null when it doesn't apply, or the alt text when it is
+// closed that weekday (e.g. 2k540 on Wednesdays). Without a day (card page) everything shows.
+function itemOn(x, sel, d, adj){
+  if (!shows(x, sel)) return null;
+  if (!d) return x;
+  const fd = hasFixedDinner(d);
+  if (x.withFixedDinner && !fd) return null;
+  if (x.dinner && fd){ adj.dinner = true; return null; }
+  if (x.closed && x.closed.dow.includes(dowOf(d))){ adj.closed.add(x.closed.text); return x.alt ? {...x, text:x.alt} : null; }
+  return x;
+}
 const refOn = (r, sel) => { const [ref, o] = r.split('@'); return (!o || sel.includes(o)) ? ref : null; };
 function coversOf(c, sel){ return [...c.covers, ...c.opts.filter(o => sel.includes(o.id)).flatMap(o => o.covers || [])]; }
-const dayCovers = d => coversOf(cardOf(d), selOpts(cardOf(d), d));
+const dayCovers = d => d.slot ? coversOf(cardOf(d), selOpts(cardOf(d), d)) : (d.covers || []);
+const dayName = d => d.slot ? cardOf(d).name : d.ja;
 const placedOn = cid => slotDays().filter(d => cardOf(d).id === cid);
 const activeRef = (cid, opt) => placedOn(cid).some(d => !opt || selOpts(CARDS[cid], d).includes(opt));
 const todoActive = t => !t.card || activeRef(t.card, t.opt);
@@ -111,13 +129,14 @@ const todoActive = t => !t.card || activeRef(t.card, t.opt);
 function view(d){
   if (!d.slot) return {ja:d.ja, ro:d.ro, area:d.area, title:d.title, sub:d.sub, plan:d.plan, eat:d.eat, shop:d.shop, see:d.see,
     stay:d.stay, note:d.note, rel:d.rel, judge:d.judge, short:[]};
-  const c = cardOf(d), sel = selOpts(c, d), fx = d.fixed;
-  const steps = [...c.route.filter(x => shows(x, sel)), ...fx.plan.map(x => ({...x, fixed:true}))]
+  const c = cardOf(d), sel = selOpts(c, d), fx = d.fixed, adj = {dinner:false, closed:new Set()};
+  const on = k => c[k].map(x => itemOn(x, sel, d, adj)).filter(Boolean);
+  const steps = [...on('route'), ...fx.plan.map(x => ({...x, fixed:true}))]
     .map((x, i) => [x, i]).sort((a, b) => AT[a[0].at]-AT[b[0].at] || a[1]-b[1]).map(a => a[0]);
-  const pick = k => [...c[k].filter(x => shows(x, sel)), ...(fx[k] || []).map(x => ({...x, fixed:true}))];
+  const pick = k => [...on(k), ...(fx[k] || []).map(x => ({...x, fixed:true}))];
   const rel = [...new Set([...d.rel, ...c.rel.map(r => refOn(r, sel)).filter(Boolean)])];
   return {card:c, sel, ja:c.ja, ro:c.ro, area:c.area, title:c.title, sub:c.summary, ctx:d.ctx, plan:steps,
-    eat:pick('eat'), shop:pick('shop'), see:pick('see'), stay:d.stay, note:d.note, cnote:c.note, rel, short:fx.short || []};
+    eat:pick('eat'), shop:pick('shop'), see:pick('see'), stay:d.stay, note:d.note, cnote:c.note, rel, short:fx.short || [], adj};
 }
 
 /* ----- checks: hard block / needs verifying / preference ----- */
@@ -134,8 +153,8 @@ function check(c, d, opts){
   // overlap with what other days already cover (excluding the days this move would vacate)
   const sel = selOpts(c, d), skip = new Set([d.id, ...(opts && opts.vacate || [])]);
   coversOf(c, sel).forEach(t => {
-    const others = slotDays().filter(x => !skip.has(x.id) && dayCovers(x).includes(t));
-    if (others.length) r.pref.push('「'+TAGS[t].label+'」'+others.map(x => x.date).join('、')+' 也有');
+    const others = D.days.filter(x => !skip.has(x.id) && dayCovers(x).includes(t));
+    if (others.length) r.pref.push('「'+TAGS[t].label+'」'+others.map(x => x.date+'（'+dayName(x)+'）').join('、')+' 也有');
     else if (plan.visited[t]) r.pref.push('「'+TAGS[t].label+'」已标记逛过');
   });
   return r;
@@ -146,14 +165,19 @@ function dayWarnings(d){
   const ck = check(c, d);
   if (ck.block) out.push({k:'block', t:ck.block});
   ck.verify.forEach(t => out.push({k:'verify', t}));
+  if (c.load === 'far') out.push({k:'pref', t:'路程远：'+c.transit});
   if (c.late && d.fixed.plan.some(x => x.at === 'eve')) out.push({k:'pref', t:'这张卡回酒店偏晚，晚上的固定安排可能要往后推。'});
+  const adj = view(d).adj;
+  if (adj.dinner){ const fd = [...d.fixed.plan, ...(d.fixed.eat || [])].find(x => x.dinner);
+    out.push({k:'pref', t:'这天的晚饭已经定了（'+(fd.label || fd.text)+'），卡片里的晚饭建议不显示。'}); }
+  adj.closed.forEach(t => out.push({k:'pref', t:DOW[dowOf(d)]+'：'+t+'，路线里跳过这一段。'}));
   c.opts.filter(o => optOn(c, o) && optClosed(o, d)).forEach(o =>
     out.push({k:'pref', t:'「'+o.label+'」在'+DOW[dowOf(d)]+'不可行（'+o.closed.text+'），这天按默认显示；换到别的日子会恢复。'}));
   const sel = selOpts(c, d);
   dayCovers(d).forEach(t => {
-    const others = slotDays().filter(x => x !== d && dayCovers(x).includes(t));
+    const others = D.days.filter(x => x !== d && dayCovers(x).includes(t));
     const fromOpt = c.opts.find(o => sel.includes(o.id) && (o.covers || []).includes(t) && !o.group);
-    others.filter(x => plan.visited[t] !== x.id).forEach(x => out.push({k:'pref', t:'「'+TAGS[t].label+'」'+x.date+'（'+cardOf(x).name+'）也安排了'+(x.n < d.n ? '' : '，那天会再去一次'), tag:t, opt:fromOpt && x.n < d.n ? fromOpt.id : null}));
+    others.filter(x => plan.visited[t] !== x.id).forEach(x => out.push({k:'pref', t:'「'+TAGS[t].label+'」'+x.date+'（'+dayName(x)+'）也安排了'+(x.n < d.n ? '' : '，那天会再去一次'), tag:t, opt:fromOpt && x.n < d.n ? fromOpt.id : null}));
     if (TAGS[t].visit && plan.visited[t] && plan.visited[t] !== d.id){
       const vd = dayById(plan.visited[t]);
       out.push({k:'pref', t:'「'+TAGS[t].label+'」已标记逛过（'+(vd ? vd.date : '')+'）；想重访就保留，不想就取消这一项。', opt:fromOpt ? fromOpt.id : null});
@@ -173,10 +197,27 @@ const checkLine = r => r.block ? '<p class="ck w-block"><b>不可行</b>'+esc(r.
 let undoSnap = null, toastTimer = null;
 function commit(fn, msg){
   undoSnap = JSON.stringify(plan);
+  const key = focusKey(document.activeElement);
   fn();
   savePlan();
   route(true);
+  restoreFocus(key);
   toast(msg + (canSave ? '' : '（这台设备的浏览器不能保存，刷新后会丢）'), true);
+}
+// Re-rendering replaces the DOM, so remember the focused control by its stable data-* ids
+// and put focus back on the same control (e.g. the next radio after ArrowDown).
+const FOCUS_ATTRS = ['act','card','opt','tag','day','checkKey'];
+function focusKey(el){
+  if (!el || !el.dataset || !el.dataset.act) return null;
+  return '[data-'+'act="'+CSS.escape(el.dataset.act)+'"]' + FOCUS_ATTRS.slice(1).filter(a => el.dataset[a] != null)
+    .map(a => '[data-'+a.replace(/[A-Z]/g, m => '-'+m.toLowerCase())+'="'+CSS.escape(el.dataset[a])+'"]').join('');
+}
+function restoreFocus(key){
+  const v = [...document.querySelectorAll('.view')].find(x => !x.hidden);
+  const el = (key && v.querySelector(key+':not([disabled])')) || v.querySelector('h2');
+  if (!el) return;
+  if (el.tagName === 'H2') el.setAttribute('tabindex', '-1');
+  el.focus({preventScroll:true});
 }
 function toast(msg, withUndo){
   const el = $('#toast');
@@ -186,7 +227,7 @@ function toast(msg, withUndo){
 }
 function undo(){
   if (!undoSnap) return;
-  plan = JSON.parse(undoSnap); undoSnap = null; savePlan(); route(true); toast('已撤销上一步', false);
+  plan = JSON.parse(undoSnap); undoSnap = null; savePlan(); route(true); restoreFocus(null); toast('已撤销上一步', false);
 }
 const nm = c => '「'+c.name+'」';
 // Choices for putting card cid on day dayId. Returns [] when it can go straight on.
@@ -224,7 +265,7 @@ function dayChips(ns){
   return '<div class="dchips">'+ns.map(n => { const d = D.days[n-1], v = view(d);
     return '<a class="c-'+d.city+'" href="#d'+n+'"><b>DAY '+pad(n)+'</b><span lang="ja">'+esc(v.ja)+'</span><small>'+d.date+' '+esc(d.dow)+'</small></a>'; }).join('')+'</div>';
 }
-const segNav = on => '<nav class="seg" aria-label="行程入口"><a href="#trip"'+(on==='trip'?' aria-current="page" class="on"':'')+'>我的行程</a><a href="#cards"'+(on==='cards'?' aria-current="page" class="on"':'')+'>活动卡片</a></nav>';
+const segNav = on => '<nav class="pseg" aria-label="行程入口"><a href="#trip"'+(on==='trip'?' aria-current="page" class="on"':'')+'>我的行程</a><a href="#cards"'+(on==='cards'?' aria-current="page" class="on"':'')+'>活动卡片</a></nav>';
 function planBanner(){
   let h = '';
   planNotes.forEach(t => { h += '<p class="pnote">'+esc(t)+'</p>'; });
@@ -322,7 +363,7 @@ function optsPanel(c, d, sel){
   const vis = c.opts.filter(o => sel.includes(o.id)).flatMap(o => o.covers || []).filter(t => TAGS[t].visit);
   vis.forEach(t => {
     const mine = plan.visited[t] === d.id;
-    h += '<label class="opt visit"><input type="checkbox" data-act="visit" data-tag="'+t+'" data-day="'+d.id+'"'+(mine?' checked':'')+(plan.visited[t] && !mine?' disabled':'')+'><span>已逛过：'+esc(TAGS[t].label)+'<small>'+(plan.visited[t] && !mine ? '已在 '+dayById(plan.visited[t]).date+' 标记' : '只是记录，不影响预约和待办')+'</small></span></label>';
+    h += '<label class="opt visit"><input type="checkbox" data-act="visit" data-tag="'+t+'" data-day="'+d.id+'"'+(mine?' checked':'')+(plan.visited[t] && !mine?' disabled':'')+'><span>已逛过：'+esc(TAGS[t].label)+'<small>'+(plan.visited[t] && !mine ? '已在 '+((dayById(plan.visited[t]) || {}).date || '别的日子')+' 标记' : '只是记录，不影响预约和待办')+'</small></span></label>';
   });
   return h+'</div>';
 }
@@ -416,7 +457,8 @@ function renderCard(id){
   const at = placedOn(c.id), days = slotDays().filter(d => d.city === c.city);
   const all = c.opts.map(o => o.id);
   const optName = x => x.opt ? c.opts.find(o => o.id === x.opt).label : x.unless ? '不选「'+c.opts.find(o => o.id === x.unless).label+'」时' : '';
-  const li = a => a.map(x => '<li>'+fmt(x.text)+(optName(x) ? '<span class="fxt">支线 · '+esc(optName(x))+'</span>' : '')+(x.who ? '<span class="fxt who">'+WHO[x.who]+'</span>' : '')+'</li>').join('');
+  const cond = x => [optName(x) && '支线 · '+optName(x), x.dinner && '当天有固定晚饭时不显示', x.withFixedDinner && '只在当天有固定晚饭时', x.closed && x.closed.text+'时改走：'+(x.alt || '跳过')].filter(Boolean);
+  const li = a => a.map(x => '<li>'+fmt(x.text)+cond(x).map(t => '<span class="fxt">'+esc(t)+'</span>').join('')+(x.who ? '<span class="fxt who">'+WHO[x.who]+'</span>' : '')+'</li>').join('');
   const fact = (k, val) => val ? '<div><dt>'+k+'</dt><dd>'+fmt(val)+'</dd></div>' : '';
   let h = '<div class="c-'+c.city+'"><a class="back" href="#cards">← 全部活动卡片</a>'
     + '<div class="sign"><div class="top"><div class="big" lang="ja">'+esc(c.ja)+'</div><div class="rom">'+esc(c.ro)+'</div></div>'
@@ -783,7 +825,13 @@ function boot(){
 const get = f => fetch('data/'+f+'.json', {cache:'no-cache'}).then(r => { if (!r.ok) throw new Error(f+'.json '+r.status); return r.json(); });
 Promise.all(['days','cards','books','base','info'].map(get)).then(([days, cards, books, base, info]) => {
   D = {days, cards, books, base, todo:info.todo, apx:info.apx, ref:info.ref};
-  boot();
+  try { boot(); }
+  catch(err){
+    // a render bug or an unexpected saved plan: say so, and offer the way back to the recommended plan
+    show('trip');
+    $('#v-trip').innerHTML = '<p class="empty">页面显示出错（'+esc(err.message)+'）。可以清掉这台设备保存的活动选择，回到推荐方案；勾选不受影响。<br><button type="button" class="btn" id="plan-clear">清掉本机活动选择并重新载入</button></p>';
+    $('#plan-clear').addEventListener('click', () => { try { localStorage.removeItem(PLAN_KEY); } catch(e){} location.reload(); });
+  }
 }).catch(err => {
   $('#v-trip').innerHTML = '<p class="empty">行程资料没有载入（'+esc(err.message)+'）。检查网络后刷新一次。</p>';
 });

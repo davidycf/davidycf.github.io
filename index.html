@@ -126,7 +126,7 @@ p{margin:0}
 .stay p+p{margin-top:6px}
 .stay .l0{font-weight:700}
 .trio{display:grid;gap:10px}
-.trio section{display:grid;grid-template-columns:34px 1fr;gap:12px;align-items:start}
+.trio section{display:grid;grid-template-columns:34px minmax(0,1fr);gap:12px;align-items:start}
 .mk{font-family:var(--f-ja);font-weight:700;font-size:16px;width:34px;height:34px;border-radius:7px;display:grid;place-items:center;border:2px solid var(--ink)}
 .trio ul{list-style:none;margin:0;padding:0}
 .trio li{padding-left:14px;position:relative}
@@ -286,9 +286,9 @@ a.sec-h{text-decoration:none}
 .tabs a.on .g{color:var(--ink);text-decoration:underline;text-decoration-thickness:3px;text-underline-offset:5px}
 
 /* ---------- plan: cards, swap, options ---------- */
-.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--sunk);border-radius:10px;padding:4px;margin:2px 0 6px}
-.seg a{text-align:center;text-decoration:none;font-weight:700;font-size:14.5px;padding:8px 6px;border-radius:7px;color:var(--muted)}
-.seg a.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 0 var(--rule)}
+.pseg{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--sunk);border-radius:10px;padding:4px;margin:2px 0 6px}
+.pseg a{text-align:center;text-decoration:none;font-weight:700;font-size:14.5px;padding:8px 6px;border-radius:7px;color:var(--muted)}
+.pseg a.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 0 var(--rule)}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:40px;border:1.5px solid var(--line,var(--ink));background:var(--line,var(--ink));color:var(--on-line);font:inherit;font-size:14px;font-weight:700;border-radius:8px;padding:6px 14px;cursor:pointer;text-decoration:none;text-align:left}
 .btn.sm{min-height:34px;font-size:13px;padding:3px 11px}
 .btn.ghost{background:transparent;color:var(--line,var(--ink))}
@@ -300,7 +300,7 @@ a.sec-h{text-decoration:none}
 .stop .sx{margin:-4px 0 12px 12px}
 .stop .sx .btn{margin-left:auto}
 .fx{font-size:12.5px;color:var(--muted)}
-.fxt{display:inline-block;margin-left:6px;font-size:11.5px;font-weight:700;color:var(--muted);border:1px solid var(--rule);border-radius:4px;padding:0 5px;vertical-align:1px;white-space:nowrap}
+.fxt{display:inline-block;max-width:100%;margin-left:6px;font-size:11.5px;font-weight:700;color:var(--muted);border:1px solid var(--rule);border-radius:4px;padding:0 5px;vertical-align:1px;overflow-wrap:anywhere}
 .fxt.who{color:var(--night);border-color:var(--night)}
 .ctx{margin-top:6px;font-size:14px;padding-left:10px;border-left:3px solid var(--line)}
 .pbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:8px;padding:10px 12px;border-radius:var(--r);background:var(--surface);font-size:14px}

@@ -97,23 +97,24 @@ Nintendo Museum、旅馆玩任天堂“大統領”花札、Super Potato 复古�
 文件（GitHub Pages 静态部署，无构建步骤）：
 - index.html：页面骨架、全部 CSS、主题脚本；加载 app.js。
 - app.js：全部渲染与路由。启动时并行 fetch data/*.json，所以本地预览要起一个静态服务器（例如仓库根目录 `python3 -m http.server`），直接双击打开 index.html 会读不到数据。
-- data/days.json：15 天。普通日是旧的整日结构（ja/ro/area/title/sub/plan/stay/eat/shop/see/note/rel/judge）。活动日多一个 `slot`，去掉了 ja/title/plan 等活动内容，只留：`id`（"0315" 这类稳定日期 id）、`slot`{card 推荐卡, suggest 换活动时首屏推荐, pending 未选时显示的待选文字}、`ctx`（当天作息语境，例如倒时差补觉）、`fixed`{plan/eat 里带 `at` 的固定事项, short 列表页显示的固定事项短语}、`stay`、`note`、`rel`。
+- data/days.json：15 天。普通日是旧的整日结构（ja/ro/area/title/sub/plan/stay/eat/shop/see/note/rel/judge）。活动日多一个 `slot`，去掉了 ja/title/plan 等活动内容，只留：`id`（"0315" 这类稳定日期 id）、`slot`{card 推荐卡, suggest 换活动时首屏推荐, pending 未选时显示的待选文字}、`ctx`（当天作息语境，例如倒时差补觉）、`fixed`{plan/eat 里带 `at` 的固定事项, short 列表页显示的固定事项短语}、`stay`、`note`、`rel`。固定晚饭条目标 `dinner:true` 和 `label`（例如 3/15 今半、3/18 酒店附近早吃收行李）。普通日也可以带 `covers`（例如 3/23 海游馆 `aquarium`），让东京卡和固定日一起做重叠提示。
 - data/cards.json：`tags`（重叠标签：label，`visit:true` 的可以标“已逛过”）、`aliases`（卡片改名或合并时旧 id → 新 id）、`cards`（活动卡片）。
 - data/books.json（吃买玩站）、data/base.json（宿）、data/info.json（todo、apx 附录、ref）。
 
 活动卡片字段（新增或改卡照这个写）：
 - `id` 永久稳定，不用下标、标题或日期；删除或合并时在 `aliases` 里留映射。`city`、`size`（half/full）、`name`（列表里的名字）、`ja`/`ro`（站牌大字与罗马字）、`area`、`title`、`summary`。
 - 事实：`time`、`transit`（写“估计”，不要伪造精确分钟）、`load`（near/mid/far）、`family`、`booking`、`rain`、`hours`、`closed`{dow: 0=周日…6=周六, text}（每周固定休馆＝硬性不可安排）、`calendar`（日历未发布等待核对文字，只提示不阻止）、`late`（回酒店晚，和当天晚上的固定事项冲突时提示）、`multi`（可以放在多天，例如留白卡）、`checked`（核对日期）。
-- `opts` 支线：{id, label, on 默认是否勾, group 同组互斥单选, who:"dad" 爸爸单独, covers 重叠标签, closed 按星期不可行}。`route`/`eat`/`shop`/`see` 的每条是 {text, at(am/noon/pm/eve，仅 route), opt 选了才显示, unless 没选才显示, who}。
+- `opts` 支线：{id, label, on 默认是否勾, group 同组互斥单选, who:"dad" 爸爸单独, covers 重叠标签, closed 按星期不可行}。`route`/`eat`/`shop`/`see` 的每条是 {text, at(am/noon/pm/eve，仅 route), opt 选了才显示, unless 没选才显示, who, dinner, withFixedDinner, closed, alt}：`dinner:true` 是卡片的晚饭建议，当天日期有固定晚饭时不显示并给出说明；`withFixedDinner:true` 只在当天有固定晚饭时显示（例如“直接回去赶上晚上的安排”）；`closed`{dow,text} 加可选 `alt` 表示这一段在某个星期不可行（例如 2k540 周三休业），那天显示 alt 或跳过并提示，不禁止整张卡。
 - `covers` 卡片级重叠标签；`rel` 是 "eat:T5" 这类资料引用，"shop:T8@ginza" 表示选了该支线才算经过；`todos` 是 info.todo 的 id，"water-bus@pm-boat" 同理；`checks` 是附录 checklist 的 id；`links` 官方链接。
 - 卡片文字不能假定日期：星期、休馆按实际日期算；“哪天晚饭”“今天是第一天”这类写在日期的 ctx/fixed 里。
 
 活动卡片与本地方案：
 - 行程顶部有「我的行程／活动卡片」两个入口。活动日在列表和当天页显示“推荐方案／我的选择”、待选文字、固定事项与提示数，并有“换活动”（#dN-swap 直接展开）。卡片库 #cards 可搜中文、日文与内容，按已安排／未安排和亲子／街区／购物／地标／留白筛选；卡片页 #card-<id> 显示完整路线、支线、准备事项、资料，以及“安排到哪天”。
 - 一天一张主卡。换卡只改那一天；如果这张卡已经在别的日子，先确认“交换两天”或“移过来、原日改留白”；从卡片页替换已有主卡也要确认。都有一步撤销。日期的固定事项（今半、整理行李、酒店、移动日）永远不跟卡走。
-- 三类提示：不可行（城市不符、移动日、每周固定休馆，按钮禁用并写原因）；待核对（日历未发布、已订票日期不符时提示实际票务要本人处理）；提示（重叠标签、远、回酒店晚、所选支线当天不可行时按默认显示）。不做暗中全局重排：重叠只提示，并给“取消这一项”按钮。
+- 三类提示：不可行（城市不符、移动日、每周固定休馆，按钮禁用并写原因）；待核对（日历未发布、已订票日期不符时提示实际票务要本人处理）；提示（重叠标签——也和带 covers 的固定日比较、路程远、回酒店晚、固定晚饭替换了卡片晚饭、某段当天休业、所选支线当天不可行时按默认显示）。不做暗中全局重排：重叠只提示，并给“取消这一项”按钮。
 - 当天页的路线、标题、吃买看、这一带还能、准备清单、前后日名称，以及吃买玩站的“哪天会经过”，都由 app.js 的 `view(d)` 从当前卡和支线生成。改活动内容改 cards.json，改日期固定事项改 days.json 的 fixed，不要把活动写回日期。
-- 本设备选择存在 localStorage `jp27-plan`：{v:1, days{日期id: 卡id}, opts{卡id: {支线id: bool}}, visited{标签: 日期id}}。支线跟着卡走，切回原卡会恢复。读不出来、版本不支持、卡已删除时按推荐方案显示并说明；存储不可用时照常显示，提示不能保存。“恢复推荐方案”只清 days/opts，保留已逛过和勾选。不承诺跨设备同步；导出／导入方案还没做。
+- 本设备选择存在 localStorage `jp27-plan`：{v:1, days{日期id: 卡id}, opts{卡id: {支线id: bool}}, visited{标签: 日期id}}。支线跟着卡走，切回原卡会恢复。读不出来、版本不支持、卡已删除、已逛过记录指向不存在的日期时按推荐方案显示并说明；万一渲染出错，页面给出“清掉本机活动选择并重新载入”的按钮；存储不可用时照常显示，提示不能保存。“恢复推荐方案”只清 days/opts，保留已逛过和勾选。不承诺跨设备同步；导出／导入方案还没做。
+- 改支线、换卡后重渲染会把焦点放回同一个控件（按 data-act/card/opt 等稳定属性找），单选组可以连续用方向键切换。
 - 用户要把自己的选择变成推荐方案时，改 days.json 的 slot.card 和卡片 opts 的 on，不需要改卡片正文。
 - 待办可带 `card`（和可选 `opt`）：只在那张卡（那条支线）排进行程时出现在附录待办里；没排的收在卡片页，勾选状态一直保留。附录 checklist 条目同样可带 `card`。
 - 箱根、大阪还是固定页面；之后做成卡片时沿用同一套模型（restCard 按城市找 multi 卡），不要另造一套机制。
