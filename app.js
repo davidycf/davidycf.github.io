@@ -130,7 +130,9 @@ function selOpts(c, d){
 const shows = (x, sel) => (!x.opt || sel.includes(x.opt)) && (!x.unless || !sel.includes(x.unless));
 // A date with its own dinner (fixed eat/plan item marked dinner) replaces the card's dinner
 // suggestions (dinner:true); items marked withFixedDinner only show on such dates.
-const hasFixedDinner = d => !!d.slot && [...d.fixed.plan, ...(d.fixed.eat || [])].some(x => x.dinner);
+// Lunch works the same way (lunch:true), e.g. 3/19's fixed eel lunch.
+const fixedMeal = (d, k) => d.slot ? [...d.fixed.plan, ...(d.fixed.eat || [])].find(x => x[k]) : null;
+const hasFixedDinner = d => !!fixedMeal(d, 'dinner');
 // One card item as it reads on day d: null when it doesn't apply, or the alt text when it is
 // closed that weekday (e.g. 2k540 on Wednesdays). Without a day (card page) everything shows.
 function itemOn(x, sel, d, adj){
@@ -139,6 +141,7 @@ function itemOn(x, sel, d, adj){
   const fd = hasFixedDinner(d);
   if (x.withFixedDinner && !fd) return null;
   if (x.dinner && fd){ adj.dinner = true; return null; }
+  if (x.lunch && fixedMeal(d, 'lunch')){ adj.lunch = true; return null; }
   if (x.closed && x.closed.dow.includes(dowOf(d))){ adj.closed.add(x.closed.text); return x.alt ? {...x, text:x.alt} : null; }
   return x;
 }
@@ -155,7 +158,7 @@ const todoActive = t => !t.card || activeRef(t.card, t.opt);
 function view(d){
   if (!d.slot) return {ja:d.ja, ro:d.ro, area:d.area, title:d.title, sub:d.sub, plan:d.plan, eat:d.eat, shop:d.shop, see:d.see,
     stay:d.stay, note:d.note, rel:d.rel, judge:d.judge, short:[]};
-  const c = cardOf(d), sel = selOpts(c, d), fx = d.fixed, adj = {dinner:false, closed:new Set()};
+  const c = cardOf(d), sel = selOpts(c, d), fx = d.fixed, adj = {dinner:false, lunch:false, closed:new Set()};
   const on = k => c[k].map(x => itemOn(x, sel, d, adj)).filter(Boolean);
   const steps = [...on('route'), ...fx.plan.map(x => ({...x, fixed:true}))]
     .map((x, i) => [x, i]).sort((a, b) => AT[a[0].at]-AT[b[0].at] || a[1]-b[1]).map(a => a[0]);
@@ -166,17 +169,21 @@ function view(d){
 }
 
 /* ----- checks: hard block / needs verifying / preference ----- */
+// c.avoid {dow, text}: weekdays the card works but is a bad idea (e.g. Skywalk on weekends) — a hint, not a block
+const avoidOn = (c, d) => !!(c.avoid && c.avoid.dow.includes(dowOf(d)));
 function check(c, d, opts){
   const r = {block:null, verify:[], pref:[]};
   if (!d.slot) r.block = d.date+' 是移动或固定行程日，不放活动卡';
   else if (c.city !== d.city) r.block = '这张卡在'+CITY[c.city][0]+'，'+d.date+' 住'+CITY[d.city][0];
   else if (c.closed && c.closed.dow.includes(dowOf(d))) r.block = d.date+' 是'+DOW[dowOf(d)]+'：'+c.closed.text;
+  else if (d.slot.half && c.size === 'full') r.block = d.date+' 只排半天的活动：'+d.slot.half;
   if (r.block) return r;
   if (c.calendar) r.verify.push(c.calendar);
   const bd = opts && 'booked' in opts ? opts.booked : bookedDay(c);
   if (bd && bd !== d.id) r.verify.push('登记的票是 '+dayById(bd).date+'，网页改日不会改票，实际改期要本人处理');
   if (c.lottery && !bd) r.verify.push('还没登记中签：放在这天只是模拟安排，见「Museum 换日」');
   if (c.load === 'far') r.pref.push('路程远：'+c.transit);
+  if (avoidOn(c, d)) r.pref.push(d.date+' 是'+DOW[dowOf(d)]+'：'+c.avoid.text);
   if (c.late && d.fixed.plan.some(x => x.at === 'eve')) r.pref.push('回酒店偏晚，'+d.date+' 晚上有固定安排（'+(d.fixed.short || []).join('、')+'）');
   // overlap with what other days already cover (excluding the days this move would vacate)
   const sel = selOpts(c, d), skip = new Set([d.id, ...(opts && opts.vacate || [])]);
@@ -194,6 +201,7 @@ function dayWarnings(d){
   if (ck.block) out.push({k:'block', t:ck.block});
   ck.verify.forEach(t => out.push({k:'verify', t}));
   if (c.load === 'far') out.push({k:'pref', t:'路程远：'+c.transit});
+  if (avoidOn(c, d)) out.push({k:'pref', t:DOW[dowOf(d)]+'：'+c.avoid.text});
   if (c.late && d.fixed.plan.some(x => x.at === 'eve')) out.push({k:'pref', t:'这张卡回酒店偏晚，晚上的固定安排可能要往后推。'});
   Object.entries(plan.booked).filter(([cid, bd]) => bd === d.id && cid !== c.id).forEach(([cid]) =>
     out.push({k:'verify', t:'登记在 '+d.date+' 的「'+CARDS[cid].name+'」票，这天现在排的是「'+c.name+'」；网页不会改票，实际票务要本人处理。'}));
@@ -203,8 +211,10 @@ function dayWarnings(d){
   if (early && c.load === 'far') out.push({k:'pref', t:'上午要先办固定的事（'+(d.fixed.short || []).join('、')+'），再出远门会很赶：提前跟前台说好，或换近一点的卡。'});
   if (extras.length + (c.load === 'far' ? 1 : 0) + (early ? 1 : 0) >= 3 || extras.length >= 3)
     out.push({k:'pref', t:'这天加的东西比较多（'+extras.join('、')+'），孩子的体力可能撑不住；可以取消一两项。'});
-  if (adj.dinner){ const fd = [...d.fixed.plan, ...(d.fixed.eat || [])].find(x => x.dinner);
+  if (adj.dinner){ const fd = fixedMeal(d, 'dinner');
     out.push({k:'pref', t:'这天的晚饭已经定了（'+(fd.label || fd.text)+'），卡片里的晚饭建议不显示。'}); }
+  if (adj.lunch){ const fl = fixedMeal(d, 'lunch');
+    out.push({k:'pref', t:'这天的午饭已经定了（'+(fl.label || fl.text)+'），卡片里的午饭建议不显示。'}); }
   adj.closed.forEach(t => out.push({k:'pref', t:DOW[dowOf(d)]+'：'+t+'，路线里跳过这一段。'}));
   c.opts.filter(o => optOn(c, o) && optClosed(o, d)).forEach(o =>
     out.push({k:'pref', t:'「'+o.label+'」在'+DOW[dowOf(d)]+'不可行（'+o.closed.text+'），这天按默认显示；换到别的日子会恢复。'}));
@@ -491,7 +501,7 @@ function renderCards(){
     + [['st','all','全部'],['st','on','已安排'],['st','off','未安排']].concat(['tokyo','mishima','osaka','hakone'].map(c => ['city',c,CITY[c][0]]), Object.entries(CKIND).map(([k,l]) => ['k',k,l]))
         .map(([f,val,l]) => '<button type="button" class="chip'+(cfilter[f]===val?' on':'')+'" data-f="'+f+'" data-v="'+val+'" aria-pressed="'+(cfilter[f]===val)+'">'+l+'</button>').join('')
     + '</div></div><div class="cres"></div>'
-    + '<p class="small">移动日（3/13–14、3/19、3/21、3/26–27）是固定行程，不放卡片。</p>';
+    + '<p class="small">移动日（3/13–14、3/21、3/26–27）是固定行程，不放卡片；3/19 上午从东京过来，只放半天的卡。</p>';
   v.innerHTML = h;
   const inp = v.querySelector('input'), clr = v.querySelector('.search button');
   inp.addEventListener('input', () => { cfilter.q = inp.value.trim(); clr.hidden = !cfilter.q; cardResults(); });
