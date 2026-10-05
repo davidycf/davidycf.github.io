@@ -328,8 +328,6 @@ function renderTrip(){
   const groups = [];
   D.days.forEach(d => { const g = groups[groups.length-1]; if (g && g.city === d.city) g.days.push(d); else groups.push({city:d.city, days:[d]}); });
   let h = '<div class="vhead"><h2>行程 · 15 站</h2><p>每天一个主项目。东京、箱根、大阪的活动日都可以“换活动”，移动日和日期固定的事不跟着变。</p></div>' + segNav('trip') + planBanner();
-  h += '<div class="pbar"><span>'+(planEdited() ? '有你自己的选择（只存在这台设备）。' : '现在是推荐方案。')+' <a class="ax" href="#plan">导出／导入我的方案</a></span>'
-    + (planEdited() ? '<button type="button" class="btn sm" data-act="reset">恢复推荐方案</button>' : '')+'</div>';
   groups.forEach(g => {
     h += '<div class="c-'+g.city+'"><div class="city-h"><span class="nm" lang="ja">'+CITY[g.city][0]+'</span><span class="ro">'+CITY[g.city][1]+'</span><span class="cstay">'+esc(STAY[g.city])+'</span></div>'
       + (D.cards.presets || []).filter(ps => Object.keys(ps.options[0].days).some(id => dayById(id).city === g.city)).map(presetRow).join('')
@@ -353,6 +351,9 @@ function renderTrip(){
     });
     h += '</ol></div>';
   });
+  // plan status, export/import and restore sit after the day list; notices (planBanner) stay on top
+  h += '<div class="pbar"><span>'+(planEdited() ? '有你自己的选择（只存在这台设备）。' : '现在是推荐方案。')+' <a class="ax" href="#plan">导出／导入我的方案</a></span>'
+    + (planEdited() ? '<button type="button" class="btn sm" data-act="reset">恢复推荐方案</button>' : '')+'</div>';
   $('#v-trip').innerHTML = h;
 }
 
@@ -973,6 +974,11 @@ function renderInfo(){
   // To-dos tied to a card only show while that card (and branch) is in the plan; ticks are never dropped.
   const live = D.todo.filter(todoActive), parked = D.todo.filter(t => !todoActive(t));
   let h = '<div class="vhead"><h2><span class="k" lang="ja">要</span>附录 · 执行细节</h2><p>交通行李、预约换日、孩子与吟游、退税返程、日本 eVISA。各节标注核对时间，出发前再开官方入口复核。各城市的备选活动在「行程 · 活动卡片」，Museum 抽签结果在「Museum 换日」。</p></div>';
+  // quick nav: one short chip per section (title before "｜"), scrolls sideways, follows the reading position
+  const nav = [['todo', '', '待办 '+live.length], ...D.apx.map(a => [a.id, a.id, a.title.split('｜')[0]]), ['ref', '', '怎么用']];
+  h += '<nav class="tools inav" aria-label="附录各节"><div class="chips">'
+    + nav.map(([id, k, t]) => '<a class="chip" href="#info-'+id+'" data-sec="info-'+id+'">'+(k ? '<b class="ro">'+k+'</b>' : '')+esc(t)+'</a>').join('')
+    + '</div></nav>';
   h += '<div class="apx c-osaka" id="info-todo"><div class="id">TO DO</div><h3>尚待确认</h3><div class="lk"><a href="#info-E">日本 eVISA 材料与办理</a></div><ul class="todo">'
     + live.map(t => checkbox('todo-'+t.id, 'todo:'+t.id, t.text)).join('')
     + '</ul>' + (parked.length ? '<p class="small">另有 '+parked.length+' 项只属于没排进行程的活动，收在卡片里：'
@@ -992,6 +998,32 @@ function renderInfo(){
   h += '<div class="apx" id="info-ref"><div class="id">REFERENCE</div><h3>这套攻略怎么用</h3><div class="refs">'
     + D.ref.map(r => '<p><b>'+esc(r.h)+'</b>'+fmt(r.p)+'</p>').join('') + '</div></div>';
   $('#v-info').innerHTML = h;
+  watchInfoNav();
+}
+// Quick-nav highlight follows the reading position: the current section is the last one whose
+// heading has passed a reading line just under the sticky bar (the last section once the page
+// bottom is reached). Recomputed from scratch on every scroll frame, so scrolling back up works.
+function markInfo(id, how){
+  const bar = $('#v-info .inav .chips'); if (!bar) return;
+  const on = bar.querySelector('[data-sec="'+id+'"]'); if (!on) return;
+  const moved = !on.classList.contains('on');
+  bar.querySelectorAll('.chip').forEach(c => { const me = c === on; c.classList.toggle('on', me); if (me) c.setAttribute('aria-current', 'true'); else c.removeAttribute('aria-current'); });
+  if (moved || how) bar.scrollTo({left: on.offsetLeft - bar.clientWidth/2 + on.offsetWidth/2, behavior:how || 'smooth'});   // only the chip row moves
+}
+function infoCurrent(){
+  const v = $('#v-info'); if (v.hidden) return;
+  const nav = v.querySelector('.inav'), secs = [...v.querySelectorAll('.apx')]; if (!nav || !secs.length) return;
+  const line = nav.getBoundingClientRect().bottom + 24;
+  let cur = secs[0];
+  secs.forEach(s => { if (s.getBoundingClientRect().top <= line) cur = s; });
+  if (innerHeight + scrollY >= document.documentElement.scrollHeight - 2) cur = secs[secs.length-1];
+  markInfo(cur.id);
+}
+let infoQueued = false;
+function onInfoScroll(){ if (infoQueued) return; infoQueued = true; requestAnimationFrame(() => { infoQueued = false; infoCurrent(); }); }
+function watchInfoNav(){
+  // the view is still hidden while it renders (no layout yet): place the first highlight on the next frame
+  requestAnimationFrame(() => markInfo(location.hash.startsWith('#info-') ? location.hash.slice(1) : 'info-todo', 'instant'));
 }
 
 /* ----- router ----- */
@@ -1136,6 +1168,8 @@ function boot(){
     if (location.hash === h) route(); else location.hash = h;
   });
   document.addEventListener('change', onChange);
+  addEventListener('scroll', onInfoScroll, {passive:true});
+  addEventListener('resize', onInfoScroll, {passive:true});
   document.addEventListener('input', e => { if (e.target.id === 'io-in'){ io.text = e.target.value; if (io.text !== io.checked) ioInvalidate(); } });
   $('#v-info').addEventListener('click', e => {
     if (!e.target.closest('.legacy-ok')) return;
