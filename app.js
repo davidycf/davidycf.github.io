@@ -3,7 +3,10 @@
 // Dates own fixed facts (hotel, intercity moves, dated dinners, luggage); cards own reusable
 // activities. A "slot" day shows whichever card the plan puts on it; everything shown for
 // that day (title, route, eat/shop/see, nearby, prep to-dos, "on days" chips) comes from view(d).
-let D, CARDS = {}, TAGS = {}, APX = {}, APX_ORDER = [];
+// lookup tables keyed by ids that can come from a URL, a saved plan or an import: no prototype,
+// so names like "constructor" or "toString" are never mistaken for a card
+const dict = o => Object.assign(Object.create(null), o);
+let D, CARDS = dict(), TAGS = dict(), APX = dict(), APX_ORDER = [];
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const pad = n => String(n).padStart(2,'0');
@@ -22,7 +25,7 @@ const JA_RX = /[぀-ヿ]/;
 function fmt(t, q){
   let h = esc(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/附录\s?([A-E])(?:[、，‑-]\s?([A-E]))?/g, (m,a,b) =>
     '<a class="ax" href="#info-'+a+'">附录 '+a+'</a>' + (b ? '、<a class="ax" href="#info-'+b+'">'+b+'</a>' : ''));
-  h = h.replace(/附录#([a-z][a-z0-9-]*)/g, (m, id) => APX[id] ? '<a class="ax" href="#info-'+id+'">'+esc(apxLabel(id))+'</a>' : m);
+  h = h.replace(/附录#([a-z][a-z0-9-]*)/g, (m, id) => (id = apxId(id)) ? '<a class="ax" href="#info-'+id+'">'+esc(apxLabel(id))+'</a>' : m);
   h = h.replace(/「(?:行程 · )?Museum 换日」/g, m => '<a class="ax" href="#museum">'+m+'</a>');
   if (q) h = hl(h, q);
   return h;
@@ -315,9 +318,9 @@ function planBanner(){
 }
 // ref: where the details live (an appendix card or a 宿 entry), shown as a 详情 link next to the box
 function checkbox(id, key, text, ref){
-  const rl = ref && refLabel(ref);
+  const rl = ref && refLabel(ref), to = rl && (refApx(ref) ? 'info-'+refApx(ref) : ref);
   return '<li><label><input type="checkbox" id="'+esc(id)+'" data-check-key="'+esc(key)+'"'+(done[key]?' checked':'')+'><span>'+fmt(text)+'</span></label>'
-    + (rl ? '<a class="tref" href="#'+esc(ref)+'" aria-label="详情：'+esc(rl)+'">详情</a>' : '')+'</li>';
+    + (rl ? '<a class="tref" href="#'+esc(to)+'" aria-label="详情：'+esc(rl)+'">详情</a>' : '')+'</li>';
 }
 const allChecks = () => D.apx.flatMap(a => a.parts.flatMap(p => p.checklist || []));
 // extra: to-do ids owned by the date itself (days.json `todos`, e.g. the 今半 booking), listed first
@@ -980,6 +983,10 @@ const legacyTodo = () => Object.keys(done).some(k => /^\d+$/.test(k) && done[k])
 function saveDone(){ try { localStorage.setItem('jp27-todo', JSON.stringify(done)); } catch(err) {} }
 /* Appendix cards: each subsection of 附录 A–E has a permanent id and its own page at #info-<id>;
    #info is the index (to-dos, then each section as a list of tiles). */
+// Every appendix-card reference (URL, 附录#id in text, a to-do's ref) goes through apxId, so an id
+// renamed in info.json `aliases` keeps working everywhere. null when it is not a card.
+const apxId = id => id in APX ? id : (id in D.apxAliases && D.apxAliases[id] in APX ? D.apxAliases[id] : null);
+const refApx = ref => { const m = ref && ref.match(/^info-([a-z][a-z0-9-]*)$/); return m ? apxId(m[1]) : null; };
 const apxShort = id => { const p = APX[id].p; return p.short || p.h.split('：')[0]; };
 const apxLabel = id => '附录 '+APX[id].a.id+' · '+apxShort(id);
 const secName = a => a.title.split('｜')[0];
@@ -987,7 +994,7 @@ const secName = a => a.title.split('｜')[0];
 function refLabel(ref){
   let m;
   if ((m = ref.match(/^info-([A-E])$/))) return D.apx.some(a => a.id === m[1]) ? '附录 '+m[1] : null;
-  if ((m = ref.match(/^info-([a-z][a-z0-9-]*)$/))) return APX[m[1]] ? apxLabel(m[1]) : null;
+  if (refApx(ref)) return apxLabel(refApx(ref));
   if ((m = ref.match(/^base-([A-Z])(\d{2})?$/))){
     const bs = D.base.find(x => x.code === m[1]); if (!bs) return null;
     if (!m[2]) return '宿 · '+bs.sign;
@@ -996,7 +1003,7 @@ function refLabel(ref){
   return null;
 }
 const apxChecks = p => (p.checklist || []).filter(t => !t.card || activeRef(t.card));
-const apxTodos = id => D.todo.filter(t => t.ref === 'info-'+id);
+const apxTodos = id => D.todo.filter(t => refApx(t.ref) === id);
 function tileBadges(id){
   const cl = apxChecks(APX[id].p), open = apxTodos(id).filter(t => todoActive(t) && !done['todo:'+t.id]);
   return (open.length ? '<span class="bdg pend">待办 '+open.length+'</span>' : '')
@@ -1006,12 +1013,11 @@ const refreshTiles = () => document.querySelectorAll('#v-info .atile').forEach(a
 // The days whose page points at an appendix card: a 附录#id link in what the day shows (or in its
 // current card's facts), or a to-do in its 「这一天的准备」 whose details live there.
 function apxDays(id){
-  const rx = new RegExp('附录#'+id+'(?![a-z0-9-])'), ref = 'info-'+id;
   return D.days.filter(d => {
     const v = view(d), c = d.slot ? v.card : null;
     const t = [v.sub, v.ctx, v.note, v.cnote, ...v.stay, ...['plan','eat','shop','see'].flatMap(k => v[k].map(txt)),
       ...(c ? [c.family, c.booking, c.rain] : [])].filter(Boolean).join('\n');
-    return rx.test(t) || prepTodos(c, c ? v.sel : null, d.todos).some(x => x.ref === ref);
+    return (t.match(/附录#[a-z][a-z0-9-]*/g) || []).some(x => apxId(x.slice(3)) === id) || prepTodos(c, c ? v.sel : null, d.todos).some(x => refApx(x.ref) === id);
   }).map(d => d.n);
 }
 function renderInfo(){
@@ -1134,9 +1140,9 @@ function route(keep){
   else if ((m = h.match(/^info(?:-([A-Za-z0-9-]+))?$/))){
     const k = m[1];
     // an appendix card id that was renamed goes to its new id; anything unknown goes to the index
-    if (k && !/^([A-E]|todo|ref)$/.test(k) && !APX[k]){ const to = D.apxAliases[k]; location.replace(to && APX[to] ? '#info-'+to : '#info'); return; }
+    if (k && !/^([A-E]|todo|ref)$/.test(k) && !(k in APX)){ const to = apxId(k); location.replace(to ? '#info-'+to : '#info'); return; }
     tab = 'info';
-    if (k && APX[k]){ renderApx(k); show('info'); lastApx = k; }
+    if (k && k in APX){ renderApx(k); show('info'); lastApx = k; }
     else {
       renderInfo(); show('info');
       // back from a card page to the index (or to that card's own section): land on its tile
@@ -1233,7 +1239,7 @@ function onChange(e){
 }
 function boot(){
   D.cards.cards.forEach(c => { CARDS[c.id] = c; });
-  TAGS = D.cards.tags;
+  TAGS = dict(D.cards.tags); D.cards.aliases = dict(D.cards.aliases);
   D.apx.forEach(a => a.parts.forEach(p => { APX[p.id] = {p, a}; APX_ORDER.push(p.id); }));
   loadPlan();
   ['eat','shop','see'].forEach(renderBookShell);
@@ -1262,7 +1268,7 @@ function boot(){
 }
 const get = f => fetch('data/'+f+'.json', {cache:'no-cache'}).then(r => { if (!r.ok) throw new Error(f+'.json '+r.status); return r.json(); });
 Promise.all(['days','cards','books','base','info'].map(get)).then(([days, cards, books, base, info]) => {
-  D = {days, cards, books, base, todo:info.todo, apx:info.apx, ref:info.ref, apxAliases:info.aliases || {}};
+  D = {days, cards, books, base, todo:info.todo, apx:info.apx, ref:info.ref, apxAliases:dict(info.aliases)};
   try { boot(); }
   catch(err){
     // a render bug or an unexpected saved plan: say so, and offer the way back to the recommended plan
