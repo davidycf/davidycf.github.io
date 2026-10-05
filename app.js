@@ -620,7 +620,7 @@ function applyPreset(pid, oid){
 // tickets, and (optionally) "已逛过". No to-do ticks, documents or order numbers. Import validates
 // everything first, previews the difference, and applies in one commit (undo), never partially.
 const IO_FORMAT = 'jp27-plan';
-const io = {visited:false, text:'', res:null, inVisited:false, inBooked:false};
+const io = {visited:false, text:'', checked:null, res:null, inVisited:false, inBooked:false};
 const today = () => { const t = new Date(); return t.getFullYear()+'-'+pad(t.getMonth()+1)+'-'+pad(t.getDate()); };
 function exportObj(withVisited){
   const o = {format:IO_FORMAT, v:PLAN_V, exported:today(), note:'Japan 2027 行程：活动选择（不含勾选与私人资料）',
@@ -630,36 +630,56 @@ function exportObj(withVisited){
   if (withVisited) o.visited = {...plan.visited};
   return o;
 }
+// Validation runs on the complete result the import would produce: every activity day (missing ones
+// filled with the recommended card) and every card's branch state (missing ones = card defaults),
+// so preview, checks and apply all see exactly the same plan.
 function parseImport(text){
-  const r = {errors:[], warns:[], days:{}, opts:{}, visited:null, booked:null};
+  const r = {errors:[], warns:[], final:{}, optsFinal:{}, visited:null, booked:null};
   let p;
   try { p = JSON.parse(text); } catch(e){ r.errors.push('不是有效的 JSON（'+e.message+'）。把导出的整段文字原样贴进来。'); return r; }
   if (!p || typeof p !== 'object' || p.format !== IO_FORMAT){ r.errors.push('这不是本网站导出的方案（缺少 format: "'+IO_FORMAT+'"）。'); return r; }
   if (p.v !== PLAN_V){ r.errors.push('方案格式版本是 '+String(p.v)+'，这个网页只认 '+PLAN_V+'。'); return r; }
   const alias = id => CARDS[id] ? id : (D.cards.aliases[id] && CARDS[D.cards.aliases[id]] ? D.cards.aliases[id] : null);
-  const seen = {};
+  const given = {};
   Object.entries(p.days || {}).forEach(([dayId, cid]) => {
     const d = dayById(dayId), id = alias(cid);
     if (!d) return r.errors.push('没有 '+dayId+' 这一天。');
     if (!d.slot) return r.errors.push(d.date+' 是移动或固定行程日，不放活动卡。');
     if (!id) return r.errors.push(d.date+'：找不到活动「'+cid+'」，可能已删除或改名。');
     if (id !== cid) r.warns.push(d.date+'：活动「'+cid+'」已改名为「'+CARDS[id].name+'」，按新名字导入。');
-    const ck = check(CARDS[id], d, {vacate:slotDays().map(x => x.id)});
-    if (ck.block) return r.errors.push(d.date+'：'+ck.block+'。');
-    if (!CARDS[id].multi && seen[id]) return r.errors.push('「'+CARDS[id].name+'」同时出现在 '+seen[id]+' 和 '+d.date+'。');
-    seen[id] = d.date; r.days[dayId] = id;
+    given[dayId] = id;
   });
-  slotDays().filter(d => !(d.id in r.days)).forEach(d => r.warns.push('文件里没有 '+d.date+'，导入后这天按推荐方案。'));
-  Object.entries(p.opts || {}).forEach(([cid, o]) => {
+  const missing = slotDays().filter(d => !(d.id in given));
+  missing.forEach(d => r.warns.push('文件里没有 '+d.date+'，导入后这天按推荐方案（'+CARDS[d.slot.card].name+'）。'));
+  slotDays().forEach(d => { r.final[d.id] = given[d.id] || d.slot.card; });
+  const seen = {}, how = d => d.date+(d.id in given ? '' : '（文件没写，按推荐）');
+  slotDays().forEach(d => {
+    const c = CARDS[r.final[d.id]], ck = check(c, d, {vacate:slotDays().map(x => x.id)});
+    if (ck.block) r.errors.push(how(d)+'：'+ck.block+'。');
+    if (!c.multi && seen[c.id]) r.errors.push('「'+c.name+'」同时出现在 '+how(seen[c.id])+' 和 '+how(d)+'。');
+    seen[c.id] ||= d;
+  });
+  const po = p.opts && typeof p.opts === 'object' ? p.opts : {};
+  const giv = {};
+  Object.entries(po).forEach(([cid, o]) => {
     const id = alias(cid);
     if (!id || !o || typeof o !== 'object') return r.warns.push('支线：找不到活动「'+cid+'」，这部分会忽略。');
-    const c = CARDS[id], out = {};
-    Object.entries(o).forEach(([oid, v]) => { if (c.opts.some(x => x.id === oid)) out[oid] = !!v; else r.warns.push('支线：「'+c.name+'」没有「'+oid+'」这一项，会忽略。'); });
-    [...new Set(c.opts.filter(x => x.group).map(x => x.group))].forEach(g => {
-      const on = c.opts.filter(x => x.group === g && out[x.id]);
-      if (on.length > 1){ on.slice(1).forEach(x => { out[x.id] = false; }); r.warns.push('支线：「'+c.name+'」的互斥选项选了不止一个，只保留「'+on[0].label+'」。'); }
+    giv[id] = {};
+    Object.entries(o).forEach(([oid, v]) => { if (CARDS[id].opts.some(x => x.id === oid)) giv[id][oid] = !!v; else r.warns.push('支线：「'+CARDS[id].name+'」没有「'+oid+'」这一项，会忽略。'); });
+  });
+  D.cards.cards.filter(c => c.opts.length).forEach(c => {
+    const g = giv[c.id] || {}, out = Object.fromEntries(c.opts.map(x => [x.id, x.id in g ? g[x.id] : !!x.on]));
+    const omitted = c.opts.filter(x => !(x.id in g) && optOn(c, x) !== !!x.on);
+    if (omitted.length) r.warns.push('支线：文件没写「'+c.name+'」的'+omitted.map(x => '「'+x.label+'」').join('')+'，导入后回到默认。');
+    [...new Set(c.opts.filter(x => x.group).map(x => x.group))].forEach(grp => {
+      const os = c.opts.filter(x => x.group === grp), on = os.filter(x => out[x.id]);
+      if (on.length === 1) return;
+      // keep the one the file explicitly turned on; otherwise the card's default
+      const keep = os.find(x => g[x.id] === true) || os.find(x => x.on) || os[0];
+      if (on.length > 1 && os.filter(x => g[x.id] === true).length > 1) r.warns.push('支线：「'+c.name+'」的互斥选项选了不止一个，只保留「'+keep.label+'」。');
+      os.forEach(x => { out[x.id] = x === keep; });
     });
-    r.opts[id] = out;
+    r.optsFinal[c.id] = out;
   });
   const refs = (obj, what, ok) => { const out = {};
     Object.entries(obj || {}).forEach(([k, dayId]) => { const d = dayById(dayId), kk = what === '票' ? alias(k) : k;
@@ -670,28 +690,43 @@ function parseImport(text){
   return r;
 }
 const sameMap = (a, b) => JSON.stringify(Object.entries(a || {}).sort()) === JSON.stringify(Object.entries(b || {}).sort());
+// What applying r would change, given the current device state and the two "also import" ticks.
+function importDiff(r){
+  const days = slotDays().map(d => ({d, cur:cardOf(d), nxt:CARDS[r.final[d.id]]})).filter(x => x.cur.id !== x.nxt.id);
+  const opts = D.cards.cards.filter(c => c.opts.length).flatMap(c => c.opts.filter(x => optOn(c, x) !== r.optsFinal[c.id][x.id])
+    .map(x => ({c, x, on:r.optsFinal[c.id][x.id]})));
+  const bookDiff = !!r.booked && !sameMap(r.booked, plan.booked), visDiff = !!r.visited && !sameMap(r.visited, plan.visited);
+  const booked = io.inBooked && bookDiff ? r.booked : plan.booked;
+  // every ticket that will be kept, checked against the final day map
+  const notes = Object.entries(booked).filter(([cid, bd]) => r.final[bd] !== cid).map(([cid, bd]) => {
+    const at = Object.keys(r.final).filter(id => r.final[id] === cid).map(id => dayById(id).date);
+    return '「'+CARDS[cid].name+'」登记的票是 '+dayById(bd).date+'，导入后那天排的是「'+CARDS[r.final[bd]].name+'」'
+      + (at.length ? '，它在 '+at.join('、') : '，它不在行程里')+'；网页不会改票，实际票务要本人处理，登记会保留。';
+  });
+  return {days, opts, bookDiff, visDiff, notes, any:days.length || opts.length || (bookDiff && io.inBooked) || (visDiff && io.inVisited)};
+}
 function ioResult(){
   const r = io.res; if (!r) return '';
   if (r.errors.length) return '<ul class="warns">'+r.errors.map(t => '<li class="w-block"><b>不能导入</b><span>'+esc(t)+'</span></li>').join('')
     + r.warns.map(t => '<li class="w-pref"><b>提示</b><span>'+esc(t)+'</span></li>').join('')+'</ul><p class="small">文件有问题时整份都不导入，不会只导入一半。</p>';
-  const days = slotDays().map(d => ({d, cur:cardOf(d), nxt:CARDS[r.days[d.id] || d.slot.card]}));
-  const ch = days.filter(x => x.cur.id !== x.nxt.id);
-  const optCh = Object.entries(r.opts).reduce((n, [cid, o]) => n + Object.entries(o).filter(([oid, v]) => optOn(CARDS[cid], CARDS[cid].opts.find(x => x.id === oid)) !== v).length, 0);
-  const bookDiff = r.booked && !sameMap(r.booked, plan.booked), visDiff = r.visited && !sameMap(r.visited, plan.visited);
-  const notes = days.filter(x => x.cur.id !== x.nxt.id).flatMap(x => [ticketNote(x.nxt, x.d)].filter(Boolean));
-  let h = '<div class="blk"><div class="lbl">预览 <span class="en">PREVIEW</span></div>'
-    + (ch.length ? '<ul class="places">'+ch.map(x => '<li class="place"><div class="pl"><b>'+x.d.date+' '+esc(x.d.dow)+'</b><span>'+esc(x.cur.name)+' → <b>'+esc(x.nxt.name)+'</b></span></div></li>').join('')+'</ul>'
+  const x = importDiff(r);
+  return '<div class="blk"><div class="lbl">预览 <span class="en">PREVIEW</span></div>'
+    + (x.days.length ? '<ul class="places">'+x.days.map(y => '<li class="place"><div class="pl"><b>'+y.d.date+' '+esc(y.d.dow)+'</b><span>'+esc(y.cur.name)+' → <b>'+esc(y.nxt.name)+'</b></span></div></li>').join('')+'</ul>'
       : '<p class="small">活动安排和现在一样。</p>')
-    + '<p class="small">支线变化 '+optCh+' 项。</p>'
+    + (x.opts.length ? '<p class="small">支线变化 '+x.opts.length+' 项：'+esc(x.opts.map(y => y.c.name+'「'+y.x.label+'」'+(y.on ? '选上' : '取消')).join('，'))+'。</p>' : '<p class="small">支线没有变化。</p>')
     + (r.warns.length ? '<ul class="warns">'+r.warns.map(t => '<li class="w-pref"><b>提示</b><span>'+esc(t)+'</span></li>').join('')+'</ul>' : '')
-    + (notes.length ? '<ul class="warns">'+notes.map(t => '<li class="w-verify"><b>票</b><span>'+esc(t)+'</span></li>').join('')+'</ul>' : '')
-    + (bookDiff ? '<label class="opt"><input type="checkbox" data-act="io-inbooked"'+(io.inBooked?' checked':'')+'><span>也导入登记的票<small>文件里：'+esc(Object.entries(r.booked).map(([k, v]) => CARDS[k].name+' '+dayById(v).date).join('、') || '无')
+    + (x.notes.length ? '<ul class="warns">'+x.notes.map(t => '<li class="w-verify"><b>票</b><span>'+esc(t)+'</span></li>').join('')+'</ul>' : '')
+    + (x.bookDiff ? '<label class="opt"><input type="checkbox" data-act="io-inbooked"'+(io.inBooked?' checked':'')+'><span>也导入登记的票<small>文件里：'+esc(Object.entries(r.booked).map(([k, v]) => CARDS[k].name+' '+dayById(v).date).join('、') || '无')
         + '；这台设备现在：'+esc(Object.entries(plan.booked).map(([k, v]) => CARDS[k].name+' '+dayById(v).date).join('、') || '无')+'。不勾就保留这台设备的登记。</small></span></label>' : '')
-    + (visDiff ? '<label class="opt"><input type="checkbox" data-act="io-invisited"'+(io.inVisited?' checked':'')+'><span>也导入“已逛过”<small>不勾就保留这台设备的记录。</small></span></label>' : '')
+    + (x.visDiff ? '<label class="opt"><input type="checkbox" data-act="io-invisited"'+(io.inVisited?' checked':'')+'><span>也导入“已逛过”<small>不勾就保留这台设备的记录。</small></span></label>' : '')
     + '<p class="small">清单勾选不在方案里，导入不会动它们。</p>'
-    + '<div class="pa">'+(ch.length || optCh || (bookDiff && io.inBooked) || (visDiff && io.inVisited)
-        ? '<button type="button" class="btn" data-act="io-apply">导入这份方案</button>' : '<p class="small">没有要改的。</p>')+'</div></div>';
-  return h;
+    + '<div class="pa">'+(x.any ? '<button type="button" class="btn" data-act="io-apply">导入这份方案</button>' : '<p class="small">没有要改的。</p>')+'</div></div>';
+}
+// Editing the text after "检查" voids the preview and the two ticks: only previewed text can be applied.
+function ioInvalidate(){
+  if (!io.res) return;
+  io.res = null; io.checked = null; io.inBooked = io.inVisited = false;
+  $('#io-res').innerHTML = '<p class="small">输入框的内容改过了，请重新“检查”后再导入。</p>';
 }
 function renderPlanIO(){
   const out = JSON.stringify(exportObj(io.visited), null, 1);
@@ -721,20 +756,21 @@ function ioAction(a, b){
     document.body.appendChild(l); l.click(); l.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
     return;
   }
-  if (a === 'io-check'){ io.res = parseImport(io.text); io.inBooked = false; io.inVisited = false; renderPlanIO(); $('#io-res').scrollIntoView({block:'nearest'}); return; }
+  if (a === 'io-check'){ io.res = parseImport(io.text); io.checked = io.text; io.inBooked = false; io.inVisited = false; renderPlanIO(); $('#io-res').scrollIntoView({block:'nearest'}); return; }
   if (a === 'io-apply'){
-    const r = parseImport(io.text); if (r.errors.length){ io.res = r; return renderPlanIO(); }
-    const bookDiff = r.booked && !sameMap(r.booked, plan.booked) && io.inBooked, visDiff = r.visited && !sameMap(r.visited, plan.visited) && io.inVisited;
-    io.text = ''; io.res = null; io.inBooked = io.inVisited = false;
+    const r = io.res;
+    if (!r || r.errors.length || io.text !== io.checked){ ioInvalidate(); return; }
+    const x = importDiff(r), bookIn = x.bookDiff && io.inBooked, visIn = x.visDiff && io.inVisited;
+    io.text = ''; io.checked = null; io.res = null; io.inBooked = io.inVisited = false;
     return commit(() => {
       plan.days = {};
-      slotDays().forEach(d => { const id = r.days[d.id]; if (id && id !== d.slot.card) plan.days[d.id] = id; });
+      slotDays().forEach(d => { if (r.final[d.id] !== d.slot.card) plan.days[d.id] = r.final[d.id]; });
       plan.opts = {};
-      Object.entries(r.opts).forEach(([cid, o]) => { const c = CARDS[cid];
-        Object.entries(o).forEach(([oid, v]) => { if (!!c.opts.find(x => x.id === oid).on !== v) (plan.opts[cid] ||= {})[oid] = v; }); });
-      if (bookDiff) plan.booked = r.booked;
-      if (visDiff) plan.visited = r.visited;
-    }, '已导入方案'+(bookDiff ? '（含登记的票）' : '')+(visDiff ? '（含已逛过）' : ''));
+      Object.entries(r.optsFinal).forEach(([cid, o]) => { const c = CARDS[cid];
+        c.opts.forEach(x => { if (!!x.on !== o[x.id]) (plan.opts[cid] ||= {})[x.id] = o[x.id]; }); });
+      if (bookIn) plan.booked = r.booked;
+      if (visIn) plan.visited = r.visited;
+    }, '已导入方案'+(bookIn ? '（含登记的票）' : '')+(visIn ? '（含已逛过）' : ''));
   }
 }
 
@@ -1062,7 +1098,7 @@ function onChange(e){
   }
   if (t.id === 'io-file' && t.files && t.files[0]){
     const fr = new FileReader();
-    fr.onload = () => { io.text = String(fr.result); io.res = parseImport(io.text); io.inBooked = io.inVisited = false; renderPlanIO(); };
+    fr.onload = () => { io.text = String(fr.result); io.res = parseImport(io.text); io.checked = io.text; io.inBooked = io.inVisited = false; renderPlanIO(); };
     fr.readAsText(t.files[0]); return;
   }
   if (['io-visited','io-inbooked','io-invisited'].includes(t.dataset.act)){
@@ -1100,6 +1136,7 @@ function boot(){
     if (location.hash === h) route(); else location.hash = h;
   });
   document.addEventListener('change', onChange);
+  document.addEventListener('input', e => { if (e.target.id === 'io-in'){ io.text = e.target.value; if (io.text !== io.checked) ioInvalidate(); } });
   $('#v-info').addEventListener('click', e => {
     if (!e.target.closest('.legacy-ok')) return;
     Object.keys(done).forEach(k => { if (/^\d+$/.test(k)) delete done[k]; });
