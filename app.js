@@ -11,7 +11,7 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const pad = n => String(n).padStart(2,'0');
 const CITY = {dep:['出发','Departure'], tokyo:['東京','Tokyo'], hakone:['箱根','Hakone'], osaka:['大阪','Osaka'], ret:['返程','Return'], misc:['索引与心得','Index & tips']};
-const STAY = {dep:'机上', tokyo:'MONday 上野新御徒町 · 5 晚', hakone:'箱根吟游 · 月・和室 · 2 晚 · 申请中', osaka:'MONday apart 心斋桥 · 5 晚', ret:'羽田附近 1 晚 · 待定'};
+const STAY = {dep:'机上', tokyo:'MONday 上野新御徒町 · 5 晚', hakone:'箱根吟游 · 月・和室 · 2 晚 · 申请中', osaka:'MONday apart 心斋桥 · 5 晚', ret:'Villa Fontaine 羽田 T3 · 1 晚'};
 const BOOK = {eat:['吃','食'], shop:['买','买'], see:['玩','观']};
 const KIND = {eat:['食','吃饭'], snack:['甜','小吃甜点'], shop:['买','买'], see:['观','看 · 逛'], kids:['遊','孩子放电'], night:['夜','九点以后']};
 const CKIND = {kids:'亲子', street:'街区', shop:'购物', landmark:'地标', rest:'留白'};
