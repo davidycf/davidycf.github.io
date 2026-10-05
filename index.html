@@ -274,7 +274,23 @@ a.sec-h{text-decoration:none}
 .apx h4{font-size:15px;margin:16px 0 4px}
 .apx h4+p{margin-top:0}
 .apx p+p{margin-top:6px}
+.atiles{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:8px}
+.atile{display:block;position:relative;text-decoration:none;background:var(--sunk);border-radius:10px;padding:10px 30px 10px 12px;scroll-margin-top:calc(env(safe-area-inset-top,0px) + 64px)}
+.atile::after{content:'›';position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:20px;line-height:1}
+.atile .tn{display:block;font-weight:700;font-size:15px}
+.atile .tg{display:block;font-size:13.5px;color:var(--muted);margin-top:1px}
+.atile .bdgs{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.atile .bdgs:empty{display:none}
+.atile.flash{box-shadow:0 0 0 2px var(--ink)}
+.crumb{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:16px;font-size:14px;color:var(--muted)}
+.crumb a{color:var(--muted);text-decoration:none;padding:6px 0}
+.apage{margin-top:8px}
+.apage h2{font-size:21px;font-weight:700;margin-top:2px}
+.apage .ld{margin-bottom:12px}
 .todo{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:2px}
+.todo li{display:flex;align-items:flex-start;gap:8px}
+.todo li label{flex:1;min-width:0}
+.todo .tref{flex:none;font-size:13px;padding:8px 0 6px 4px;color:var(--tokyo);text-underline-offset:3px;white-space:nowrap}
 .todo label{display:flex;gap:10px;align-items:flex-start;padding:6px 0;cursor:pointer}
 .todo input{width:19px;height:19px;margin-top:3px;accent-color:var(--hakone);flex:none}
 .todo input:checked+span{color:var(--muted);text-decoration:line-through}

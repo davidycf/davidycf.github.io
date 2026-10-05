@@ -2,71 +2,87 @@
  "todo": [
   {
    "id": "haneda-hotel",
-   "text": "羽田酒店（首选 T3 直连，订可免费取消）"
+   "text": "羽田酒店（首选 T3 直连，订可免费取消）",
+   "ref": "info-ship-haneda"
   },
   {
    "id": "ginyu-kids-details",
-   "text": "吟游儿童餐、寝具及连住细节（先核对申请里的孩子年龄：出行时哥哥 5 岁、妹妹 3 岁）"
+   "text": "吟游儿童餐、寝具及连住细节（先核对申请里的孩子年龄：出行时哥哥 5 岁、妹妹 3 岁）",
+   "ref": "info-ginyu"
   },
   {
    "id": "imahan-0315",
-   "text": "3/15 今半上野広小路晚饭订早场：至少提前 3 天订记念日甜点和儿童便当"
+   "text": "3/15 今半上野広小路晚饭订早场：至少提前 3 天订记念日甜点和儿童便当",
+   "ref": "base-T10"
   },
   {
    "id": "osaka-luggage-receive",
-   "text": "大阪行李代收：官网确认可提前收件，运单写订房人姓名"
+   "text": "大阪行李代收：官网确认可提前收件，运单写订房人姓名",
+   "ref": "info-ship-osaka"
   },
   {
    "id": "nintendo-museum-lottery",
-   "text": "Nintendo Museum 抽签（2026 年 12 月）"
+   "text": "Nintendo Museum 抽签（2026 年 12 月）",
+   "ref": "info-museum-lottery"
   },
   {
    "id": "teamlab-slot",
    "text": "teamLab Planets 时段（问过孩子再订；妹妹出行时满 3 岁，不再免票）",
-   "card": "teamlab"
+   "card": "teamlab",
+   "ref": "info-booking-check"
   },
   {
    "id": "kaiyukan-slot",
    "text": "海游馆时段",
-   "card": "kaiyukan"
+   "card": "kaiyukan",
+   "ref": "info-booking-check"
   },
   {
    "id": "shinkansen-seats",
-   "text": "新干线车次与座位（大箱子都寄送；随身包与推车按规则核对）"
+   "text": "新干线车次与座位（大箱子都寄送；随身包与推车按规则核对）",
+   "ref": "info-shinkansen"
   },
   {
    "id": "tax-refund",
-   "text": "离境退税流程"
+   "text": "离境退税流程",
+   "ref": "info-tax-free"
   },
   {
    "id": "water-bus",
    "text": "丰洲→浅草水上巴士班次、票价与学龄前儿童票规则",
    "card": "teamlab",
-   "opt": "pm-boat"
+   "opt": "pm-boat",
+   "ref": "info-booking-check"
   },
   {
    "id": "evisa",
-   "text": "夫妻 eVISA（2027 年 1 月上旬，见附录 E）"
+   "text": "夫妻 eVISA（2027 年 1 月上旬）",
+   "ref": "info-E"
   },
   {
    "id": "ginyu-reply",
-   "text": "吟游订房答复（预计 10 月中旬；10/14 后无回音再询问）"
+   "text": "吟游订房答复（预计 10 月中旬；10/14 后无回音再询问）",
+   "ref": "info-ginyu"
   },
   {
    "id": "odawara-shinkansen",
-   "text": "3/21 小田原→新大阪：芝加哥 2/20（周六）晚上 7:00 开售就订（日本时间 2/21 10:00）"
+   "text": "3/21 小田原→新大阪：芝加哥 2/20（周六）晚上 7:00 开售就订（日本时间 2/21 10:00）",
+   "ref": "info-shinkansen"
   },
   {
    "id": "osaka-haneda-shipping",
-   "text": "大阪→羽田寄箱（3/24 或 3/25 上午）"
+   "text": "大阪→羽田寄箱（3/24 或 3/25 上午）",
+   "ref": "info-ship-haneda"
   },
   {
    "id": "tokyo-arrival-note",
-   "text": "东京酒店：用官网联系表单改到达时间为 17:30–18:00（成田进）"
+   "text": "东京酒店：用官网联系表单改到达时间为 17:30–18:00（成田进）",
+   "ref": "base-T"
   },
   {
    "id": "skyliner",
-   "text": "Skyliner 成田→京成上野车票"
+   "text": "Skyliner 成田→京成上野车票",
+   "ref": "info-intercity"
   },
   {
    "id": "hanayashiki-calendar",
@@ -84,6 +100,7 @@
    "text": "東京おもちゃ美術館时段票：用信用卡或 d払い 付款，当天 9:59 前可取消"
   }
  ],
+ "aliases": {},
  "apx": [
   {
    "id": "A",
@@ -91,14 +108,44 @@
    "lead": "路线为操作建议；精确车次、寄送时效和酒店代收须在预订时确认。",
    "parts": [
     {
-     "h": "城际三段：先选方便的车次，再倒排出门",
+     "id": "intercity",
+     "h": "城际移动：先选方便的车次，再倒排出门",
      "p": [
+      "3/14 成田 → 上野：Skyliner 到京成上野，再短程打车到新御徒町；预计 17:30–18:00 进房，属于估算。",
       "3/19 东京 → 吟游：酒店 → 东京站 → 停小田原的新干线 → 小田原站打车到宫之下（约 30 分钟）。不坐登山电车，免去换乘、折返和上下楼梯；目标是接近 14:00 入住。",
-      "3/21 吟游 → 大阪：请旅馆叫出租车到小田原 → 新干线到新大阪 → 心斋桥。筛选停小田原的班次，不要默认每班 Hikari 都停；连休加春假，日本时间 2/21（周日）10:00 开售，也就是芝加哥 2/20（周六）晚上 7:00，开售就订。smartEX 可以提前一年预约部分产品（「1 年前予約」）：预约完成即扣款，座位号确定前取消也要付退款手续费，不是免费保留名额。乘车前一个月日本时间 08:00 起陆续确定车次、时刻和座位并发邮件通知；10:00 起（本次是芝加哥 2/20 晚上 7:00）才能自己修改，有空位时可以尝试改到 D、E 座，不收修改手续费，但不保证拿到目标座位；改车次、日期或商品可能要补差额。",
+      "3/21 吟游 → 大阪：请旅馆叫出租车到小田原 → 新干线到新大阪 → 心斋桥。筛选停小田原的班次，不要默认每班 Hikari 都停；开售时间与座位见附录#shinkansen。",
       "3/26 大阪 → 羽田：心斋桥 → 新大阪 → 品川 → 羽田。大箱子已提前寄出，只带随身包。"
      ]
     },
     {
+     "id": "shinkansen",
+     "h": "新干线：开售、座位与行李",
+     "p": [
+      "3/21 停小田原的班次：连休加春假，日本时间 2/21（周日）10:00 开售，也就是芝加哥 2/20（周六）晚上 7:00，开售就订。smartEX 可以提前一年预约部分产品（「1 年前予約」）：预约完成即扣款，座位号确定前取消也要付退款手续费，不是免费保留名额。乘车前一个月日本时间 08:00 起陆续确定车次、时刻和座位并发邮件通知；10:00 起（本次是芝加哥 2/20 晚上 7:00）才能自己修改，有空位时可以尝试改到 D、E 座，不收修改手续费，但不保证拿到目标座位；改车次、日期或商品可能要补差额。",
+      "两段大箱子都改为宅急便寄送，新干线上只剩随身包和推车，一般不用订大件行李席。随身包和推车仍按实际尺寸核对：JR 东海规则是长＋宽＋高超过 160 cm、至 250 cm 的须预订对应行李席，超过 250 cm 不可带上车；推车有特殊规则另查官方说明。",
+      "家庭同车厢座位提前选择。出行时哥哥 5 岁、妹妹 3 岁，都还没上小学：按 JR 规则，学龄前儿童不单独占座时免费，要占指定席就买儿童票。以 JR 官方为准，不默认儿童都免费。"
+     ],
+     "links": [
+      {
+       "label": "smartEX：1年前予約规则",
+       "url": "https://smart-ex.jp/reservation/useful/pre_time/"
+      },
+      {
+       "label": "smartEX：预约修改与确定时刻",
+       "url": "https://smart-ex.jp/reservation/change/"
+      },
+      {
+       "label": "JR 东海：大件行李规则",
+       "url": "https://global.jr-central.co.jp/en/info/oversized-baggage/"
+      },
+      {
+       "label": "SmartEX：大件行李席预订",
+       "url": "https://smart-ex.jp/en/entraining/oversized-baggage/"
+      }
+     ]
+    },
+    {
+     "id": "ship-osaka",
      "h": "东京寄大阪：交箱前确认这四项",
      "p": [
       "大阪酒店官网 FAQ 确认可提前代收：运单写订房人姓名，不寄冷藏冷冻品。东京最早 3/18 晚或 3/19 早寄出，可能比 3/21 入住早一到两天到。两家都能在前台代寄行李，提前一天告诉前台；联系用官网表单，日语文字沟通即可。",
@@ -107,137 +154,131 @@
      ]
     },
     {
+     "id": "ship-haneda",
      "h": "大阪寄羽田：最后两天不拖箱子",
      "p": [
       "3/24 或 3/25 上午把大箱子交给大阪酒店前台（前一天先告诉前台），寄到羽田酒店，或寄到羽田 T3 的空港宅急便柜台在出发当天取。空港柜台要求出发前 2 天（部分地区 3 天）寄出，按柜台截止时间倒排。",
       "需要办退税查验的商品不要寄，放随身包里，离境时海关要看实物；最后两晚的衣物、药品和充电器也留在身边。"
+     ],
+     "links": [
+      {
+       "label": "ヤマト：空港宅急便",
+       "url": "https://www.kuronekoyamato.co.jp/ytc/customer/send/services/airport/"
+      },
+      {
+       "label": "Villa Fontaine 羽田（T3 直连）",
+       "url": "https://www.hvf.jp/eng/hanedaairport-grand/"
+      }
      ]
-    },
-    {
-     "h": "新干线座位与行李：大箱子两段都寄送",
-     "p": [
-      "两段大箱子都改为宅急便寄送，新干线上只剩随身包和推车，一般不用订大件行李席。随身包和推车仍按实际尺寸核对：JR 东海规则是长＋宽＋高超过 160 cm、至 250 cm 的须预订对应行李席，超过 250 cm 不可带上车；推车有特殊规则另查官方说明。",
-      "家庭同车厢座位提前选择。出行时哥哥 5 岁、妹妹 3 岁，都还没上小学：按 JR 规则，学龄前儿童不单独占座时免费，要占指定席就买儿童票。以 JR 官方为准，不默认儿童都免费。"
-     ]
-    }
-   ],
-   "links": [
-    {
-     "label": "smartEX：1年前予約规则",
-     "url": "https://smart-ex.jp/reservation/useful/pre_time/"
-    },
-    {
-     "label": "smartEX：预约修改与确定时刻",
-     "url": "https://smart-ex.jp/reservation/change/"
-    },
-    {
-     "label": "JR 东海：大件行李规则",
-     "url": "https://global.jr-central.co.jp/en/info/oversized-baggage/"
-    },
-    {
-     "label": "SmartEX：大件行李席预订",
-     "url": "https://smart-ex.jp/en/entraining/oversized-baggage/"
-    },
-    {
-     "label": "ヤマト：空港宅急便",
-     "url": "https://www.kuronekoyamato.co.jp/ytc/customer/send/services/airport/"
-    },
-    {
-     "label": "Villa Fontaine 羽田（T3 直连）",
-     "url": "https://www.hvf.jp/eng/hanedaairport-grand/"
     }
    ]
   },
   {
    "id": "B",
-   "title": "预约与换日｜固定少量硬项目",
-   "lead": "东京看睡眠和天气，大阪跟 Museum 票走；海游馆始终独立保留。",
+   "title": "预约与票务｜住宿确认、门票与抽签",
+   "lead": "吟游先等答复再核对细节；东京看睡眠和天气，大阪跟 Museum 票走，海游馆始终独立保留。",
    "parts": [
     {
+     "id": "ginyu",
+     "h": "吟游两晚：出发前向旅馆核对",
+     "p": [
+      "**晚餐时间待提出：希望改到 17:30–18:00**（订房申请目前写的是 19:00，尚未更改）：怀石约两小时，19 点开吃要到 21 点，正好压到孩子平时 8:30–9:00 的睡觉时间。吟游确认后请 Ryokan Collection 一并转达。先核对申请里填的孩子年龄（出行时哥哥 5 岁、妹妹 3 岁），再说明哥哥要儿童餐、妹妹要幼儿餐还是只要寝具；具体餐种和收费以旅馆答复为准。",
+      "请旅馆确认两晚是否更换菜单、儿童餐具体内容、两位孩子的寝具配置、可选用餐时间；以订单确认单为准，不自行假设。",
+      "连住日是否需要离开房间清洁？提前说明 3/20 中午前后就回房、下午在房里泡汤休息，请旅馆建议清洁与铺床时间。",
+      "3/19 中午前后到，出发前确认可以先寄存背包。"
+     ]
+    },
+    {
+     "id": "museum-lottery",
      "h": "Nintendo Museum：从 2026 年 12 月开始关注",
      "p": [
       "按现行提前三个月抽签规则，2027 年 3 月参观在 2026 年 12 月关注申请。优先 3/24、3/25；愿意接受假日人流时可选 3/22。3/23 为周二，不安排 Museum。",
       "中签按指定期限付款；未中签继续关注官方余票或取消票。当前规则：通常次月 1 日公布结果、7 日前付款；候补中选另有期限，一律以通知为准。",
       "这是整趟旅行里最独特的任天堂一站：从京都的花札作坊讲到 Switch，还有大量可动手的展项，奥兰多没有对应体验。抽签当天优先处理。",
       "票种：0–5 岁免费，但必须和购票大人一起登记；出行时哥哥 5 岁、妹妹 3 岁，两人都免费，实际只付两张成人票。抽签申请时四个人都要填。核对于 2026/10/3，以官网为准。"
+     ],
+     "links": [
+      {
+       "label": "任天堂：抽签、付款、证件与 QR 票",
+       "url": "https://museum.nintendo.com/en/guide/visit-flow/index.html"
+      },
+      {
+       "label": "任天堂：票价与开放日",
+       "url": "https://museum.nintendo.com/en/guide/index.html"
+      }
      ]
     },
     {
+     "id": "museum-days",
      "h": "大阪四天：海游馆固定，奈良和梅田跟着 Museum 走",
      "p": [
-      "在「Museum 换日」页面选抽签结果，先预览四天的变化再一次应用；中签前是模拟安排，拿到票后在那里登记，网页不会因此替你改票。",
-      "没抽中：3/22 南区慢逛 → 3/23 海游馆 → 3/24 奈良 → 3/25 梅田。",
-      "抽中 3/24：3/22 梅田（10:00 开门就去）→ 3/23 海游馆 → 3/24 Museum → 3/25 奈良。",
-      "抽中 3/25：3/22 梅田 → 3/23 海游馆 → 3/24 奈良 → 3/25 Museum。",
-      "抽中 3/22：3/22 Museum → 3/23 海游馆 → 3/24 奈良 → 3/25 梅田。",
+      "在「Museum 换日」页面选抽签结果，先预览四天的变化再一次应用；中签前是模拟安排，拿到票后在那里登记，网页不会因此替你改票。四种安排（没抽中、抽中 3/24、3/25 或 3/22）都在那里逐日列出。",
       "Museum 周二休馆，所以海游馆每种情况都在 3/23。南区就在酒店楼下，没有单独占一天时就放在晚饭后。大阪城只作某个下午的备选。3/25 不管去哪，都先把大箱子寄去羽田。"
      ]
     },
     {
-     "h": "当天入馆与交通",
+     "id": "museum-entry",
+     "h": "Museum 当天：证件、QR 票与交通",
      "p": [
       "外国游客包括孩子须携带护照原件，姓名与票面一致。按目前规则，参观前一天日本时间 14:00 起生成 QR 票；有工作坊兴趣，入馆后先询问当天预约。",
       "近鉄京都線小倉（Ogura）站是最近车站，步行入馆；大阪出发的换乘按票面时段查询。官方要求不要乘汽车、摩托车、自行车或出租车到馆。"
+     ],
+     "links": [
+      {
+       "label": "任天堂：交通与入馆路线",
+       "url": "https://museum.nintendo.com/en/access/index.html"
+      }
      ]
     },
     {
+     "id": "booking-check",
      "h": "东京与海游馆：预约前再检查",
      "p": [
       "东京 3/15–3/18 在「行程 · 活动卡片」里安排：每天一张主卡，换卡只改那一天；今半晚饭、整理行李这些日期固定的事不跟着卡片走。休馆按实际星期提示，2027 年日历没发布的写“待核对”。",
       "teamLab 先问孩子再订时段；订好后以票面日期为准，网页上换卡不会改票。国立科学博物馆、上野动物园、东京国立博物馆通常周一休馆，只作「上野／秋叶原」那天上午的替换选项。",
       "丰洲坐船只是 teamLab 那天下午的一个选项。水上巴士 2026/8/1 起大幅减班，部分月份会把定休日移到第三个周三；2027 年 3 月船班尚待复核。",
       "海游馆订适合孩子的时段；3 岁起收幼児票，两个孩子都要买，票价按日期浮动。下午不再叠加大项目。大阪港駅下车后步行到馆；临近再核对营业日、入场方式和推车安排。"
+     ],
+     "links": [
+      {
+       "label": "海游馆：交通",
+       "url": "https://www.kaiyukan.com/info/access/"
+      },
+      {
+       "label": "国立科学博物馆：开放与休馆",
+       "url": "https://www.kahaku.go.jp/riyou/nyukan-annai/"
+      },
+      {
+       "label": "上野动物园：开放与休园",
+       "url": "https://www.tokyo-zoo.net/ueno/visitor-info/tickets/index.html"
+      },
+      {
+       "label": "丰洲水上巴士：运营与班次",
+       "url": "https://www.urbanlaunch.net/boarding/"
+      },
+      {
+       "label": "海游馆：票种与浮动票价",
+       "url": "https://www.kaiyukan.com/info/ticket/"
+      }
      ]
     },
     {
+     "id": "usj",
      "h": "USJ：这次不排",
      "p": [
       "大阪的 Super Nintendo World 与奥兰多 Epic Universe 的核心项目基本相同，全家已经玩过。按身高估计，明年三月哥哥（5 岁）三个项目大概率都能在大人陪同下坐，妹妹（3 岁、约 1 m）基本只剩耀西；各项身高与年龄限制以 USJ 官方为准。",
       "春假人潮、快速通关和一整天的代价，换来的大多是重复体验。任天堂熏陶改由 Nintendo Museum、旅馆花札和 Super Potato 复古游戏承担。"
      ]
     }
-   ],
-   "links": [
-    {
-     "label": "任天堂：抽签、付款、证件与 QR 票",
-     "url": "https://museum.nintendo.com/en/guide/visit-flow/index.html"
-    },
-    {
-     "label": "任天堂：交通与入馆路线",
-     "url": "https://museum.nintendo.com/en/access/index.html"
-    },
-    {
-     "label": "海游馆：交通",
-     "url": "https://www.kaiyukan.com/info/access/"
-    },
-    {
-     "label": "国立科学博物馆：开放与休馆",
-     "url": "https://www.kahaku.go.jp/riyou/nyukan-annai/"
-    },
-    {
-     "label": "上野动物园：开放与休园",
-     "url": "https://www.tokyo-zoo.net/ueno/visitor-info/tickets/index.html"
-    },
-    {
-     "label": "丰洲水上巴士：运营与班次",
-     "url": "https://www.urbanlaunch.net/boarding/"
-    },
-    {
-     "label": "海游馆：票种与浮动票价",
-     "url": "https://www.kaiyukan.com/info/ticket/"
-    },
-    {
-     "label": "任天堂：票价与开放日",
-     "url": "https://museum.nintendo.com/en/guide/index.html"
-    }
    ]
   },
   {
    "id": "C",
-   "title": "孩子与吟游｜留出真正的休息",
+   "title": "孩子与日常｜作息、出门与穿衣",
    "lead": "每天一个主项目；可选项目的决定权留给当天的体力。",
    "parts": [
     {
+     "id": "jetlag",
      "h": "时差与作息：头几天下午会垮，之后不按午睡排",
      "p": [
       "两个孩子平时晚上 8:30–9:00 睡、早上 7:20 起，白天不睡午觉。日本比芝加哥快 14 小时（美国 3/14 进夏令时）：日本下午 1 点到 5 点，正是他们身体里的夜里 11 点到凌晨 3 点。",
@@ -247,24 +288,31 @@
      ]
     },
     {
+     "id": "teamlab-prep",
      "h": "teamLab Planets：进馆前的准备",
      "p": [
       "不能推婴儿车入馆，馆外有推车停放处；可使用前背式背带。暗处牵好孩子，小朋友必要时抱着走，推车不能替代馆内的体力安排。",
       "带儿童完整换洗一套与装湿衣物的袋子；穿容易活动、卷裤腿的衣服。官方不允许穿湿衣服继续进入后续作品。午饭后看状态，台场可以直接取消。",
       "水区的水温由馆方按季节调节到让人觉得舒适，官方没有公布具体度数；三月室外冷不代表水冷，但出馆后湿裤腿会冷，换洗照带。",
       "票种：官方规定未满 3 岁免票；妹妹出行时已满 3 岁，和哥哥一样按官网票种买票。每位大人最多带 3 名儿童（含免票儿童）。核对于 2026/10/3，购票时以官网为准。"
+     ],
+     "links": [
+      {
+       "label": "Planets 官方：幼儿、推车与换洗",
+       "url": "https://support.dmm.com/teamlabplanets/article/47944"
+      },
+      {
+       "label": "Planets 官方：水温按季节调节",
+       "url": "https://support.dmm.com/teamlabplanets/article/47835"
+      },
+      {
+       "label": "Planets 官方 Help：儿童票与陪同规则",
+       "url": "https://teamlabplanets.dmm.com/en/help"
+      }
      ]
     },
     {
-     "h": "吟游两晚：出发前向旅馆核对",
-     "p": [
-      "**晚餐时间待提出：希望改到 17:30–18:00**（订房申请目前写的是 19:00，尚未更改）：怀石约两小时，19 点开吃要到 21 点，正好压到孩子平时 8:30–9:00 的睡觉时间。吟游确认后请 Ryokan Collection 一并转达。先核对申请里填的孩子年龄（出行时哥哥 5 岁、妹妹 3 岁），再说明哥哥要儿童餐、妹妹要幼儿餐还是只要寝具；具体餐种和收费以旅馆答复为准。",
-      "请旅馆确认两晚是否更换菜单、儿童餐具体内容、两位孩子的寝具配置、可选用餐时间；以订单确认单为准，不自行假设。",
-      "连住日是否需要离开房间清洁？提前说明 3/20 中午前后就回房、下午在房里泡汤休息，请旅馆建议清洁与铺床时间。",
-      "3/19 中午前后到，先寄存背包再去 NARAYA CAFE；3/20 雕刻之森开门时段半日，大涌谷／缆车这次不排。早餐后若全家想休息，整天留旅馆也成立。"
-     ]
-    },
-    {
+     "id": "city-days",
      "h": "城市日：大人购物与孩子活动交替",
      "p": [
       "商店集中逛，遇到公园或开放空间就给孩子自由活动时间。东京 Nintendo 与 Pokémon 已是主购物日，大阪只补喜欢的限定或漏买物品。",
@@ -272,13 +320,21 @@
      ]
     },
     {
-     "h": "每天出门只检查一个小包",
+     "id": "daypack",
+     "h": "每日小包：出门只检查这一个",
      "p": [
       "水、熟悉零食、湿巾、常用药、换洗、充电与当天票务截图。需要核验身份的场馆带护照原件；移动日额外清点行李数量。",
       "3/21‑22 是日本连休；箱根外出与大阪商圈按假日预期安排。樱花继续只作顺路加分，不改变住宿与主项目。"
+     ],
+     "links": [
+      {
+       "label": "内阁府：2027 年日本假日",
+       "url": "https://www8.cao.go.jp/chosei/shukujitsu/gaiyou.html"
+      }
      ]
     },
     {
+     "id": "weather",
      "h": "三月天气与穿衣：分层，随时加减",
      "p": [
       "东京（3/14–19）：气象厅三月平年最高 14.2℃、最低 5.0℃，中下旬略暖；大约每三天一场雨。",
@@ -317,37 +373,23 @@
        "text": "teamLab 用：能卷起裤腿的裤子、孩子整套换洗和装湿衣服的袋子",
        "card": "teamlab"
       }
+     ],
+     "links": [
+      {
+       "label": "气象厅：东京平年值",
+       "url": "https://www.data.jma.go.jp/stats/etrn/view/nml_sfc_ym.php?prec_no=44&block_no=47662"
+      },
+      {
+       "label": "气象厅：大阪平年值",
+       "url": "https://www.data.jma.go.jp/stats/etrn/view/nml_sfc_ym.php?prec_no=62&block_no=47772"
+      }
      ]
     }
    ],
    "links": [
     {
-     "label": "Planets 官方：幼儿、推车与换洗",
-     "url": "https://support.dmm.com/teamlabplanets/article/47944"
-    },
-    {
-     "label": "Planets 官方：水温按季节调节",
-     "url": "https://support.dmm.com/teamlabplanets/article/47835"
-    },
-    {
      "label": "未来馆官方：2027/4/23 重新开放",
      "url": "https://www.miraikan.jst.go.jp/news/press/202608264718.html"
-    },
-    {
-     "label": "内阁府：2027 年日本假日",
-     "url": "https://www8.cao.go.jp/chosei/shukujitsu/gaiyou.html"
-    },
-    {
-     "label": "气象厅：东京平年值",
-     "url": "https://www.data.jma.go.jp/stats/etrn/view/nml_sfc_ym.php?prec_no=44&block_no=47662"
-    },
-    {
-     "label": "气象厅：大阪平年值",
-     "url": "https://www.data.jma.go.jp/stats/etrn/view/nml_sfc_ym.php?prec_no=62&block_no=47772"
-    },
-    {
-     "label": "Planets 官方 Help：儿童票与陪同规则",
-     "url": "https://teamlabplanets.dmm.com/en/help"
     }
    ]
   },
@@ -357,13 +399,26 @@
    "lead": "2027 年适用新退税制度；具体柜台、操作与退款方式在离境前复核。",
    "parts": [
     {
+     "id": "tax-free",
      "h": "新退税：先付含税价，再确认带出日本",
      "p": [
       "自 2026/11/1 起，符合资格的免税购物改为先支付含税价；购买后 90 天内离境，经海关确认商品带出日本，再由商家办理税款退款。",
       "购物时问清记录、退款方式与手续，保留凭证；不要假设全部都在机场即时现金退回。退款可由商家或受托机构办理，具体方式以店方说明为准。"
+     ],
+     "links": [
+      {
+       "label": "日本国税厅：新退税制度说明（英文 PDF）",
+       "url": "https://www.nta.go.jp/publication/pamph/shohi/menzei/202506/pdf/0025006-106.pdf"
+      },
+      {
+       "label": "日本国税厅：制度更新与后续说明",
+       "url": "https://www.nta.go.jp/publication/pamph/shohi/menzei/201805/format/002.htm"
+      }
      ]
     },
     {
+     "id": "final-pack",
+     "short": "收尾打包",
      "h": "3/25‑26：购买收尾与打包",
      "p": [
       "主要购物在大阪完成；按航司额度量尺寸、称重。把需退税确认的商品整理到方便查找的位置，留好商品与购物记录的对应关系。",
@@ -371,6 +426,8 @@
      ]
     },
     {
+     "id": "departure",
+     "short": "3/27 离境",
      "h": "3/27：先查验顺序，再交出箱子",
      "p": [
       "前一天查询羽田当天适用的海关确认流程；到机场先确认查验与托运行李的先后，商品保持可出示。为退税、值机、托运及孩子临时状况另留时间。",
@@ -378,20 +435,12 @@
      ]
     },
     {
+     "id": "budget",
+     "short": "预算",
      "h": "预算与尚待确认的项目",
      "p": [
       "本手册不填未经核实的报价。后续汇总实际机票自付额、酒店儿童加价、城际交通、门票与餐饮，再检查家庭自付 $3,500‑4,000 的目标。"
      ]
-    }
-   ],
-   "links": [
-    {
-     "label": "日本国税厅：新退税制度说明（英文 PDF）",
-     "url": "https://www.nta.go.jp/publication/pamph/shohi/menzei/202506/pdf/0025006-106.pdf"
-    },
-    {
-     "label": "日本国税厅：制度更新与后续说明",
-     "url": "https://www.nta.go.jp/publication/pamph/shohi/menzei/201805/format/002.htm"
     }
    ]
   },
@@ -401,6 +450,7 @@
    "lead": "本次夫妻办理单次旅游 eVISA，孩子免签。3/13 从 ORD 出发，3/14 入境日本；建议 2027 年 1 月上旬提交。核对于 2026/9/30。",
    "parts": [
     {
+     "id": "evisa-docs",
      "h": "材料：两人的证件与旅行文件",
      "p": [
       "准备清晰电子文件，全部住宿都要有预订单。银行账单用最近一期；常规旅游清单未列在职证明、W-2 或多次申请理由，领馆仍可要求补件。"
@@ -450,9 +500,24 @@
        "id": "evisa-application",
        "text": "两人的申请信息核对一致；芝加哥清单仍列亲签申请表，备好签名扫描件，按系统上传提示提交。"
       }
+     ],
+     "links": [
+      {
+       "label": "芝加哥：旅游材料清单 PDF",
+       "url": "https://www.chicago.us.emb-japan.go.jp/Consular/visa/downloadable/v10_s.pdf"
+      },
+      {
+       "label": "签证申请表",
+       "url": "https://www.chicago.us.emb-japan.go.jp/Consular/visa/downloadable/app_type.pdf"
+      },
+      {
+       "label": "英文每日行程表",
+       "url": "https://www.chicago.us.emb-japan.go.jp/Consular/visa/downloadable/stayEN.pdf"
+      }
      ]
     },
     {
+     "id": "evisa-family",
      "h": "家庭申请：关系证明按方式准备",
      "p": [
       "一个账号可申请夫妻两人；家庭申请会复制部分旅行信息、统一接收通知并合并缴费。孩子免签，不加入签证申请。",
@@ -467,9 +532,16 @@
        "id": "evisa-authorization",
        "text": "如代配偶申请，准备其签名的授权书。"
       }
+     ],
+     "links": [
+      {
+       "label": "代办授权书",
+       "url": "https://www.chicago.us.emb-japan.go.jp/Consular/visa/downloadable/authorization.pdf"
+      }
      ]
     },
     {
+     "id": "evisa-apply",
      "h": "办理：在线提交、缴费、收签",
      "p": [
       "在下方官方入口选择 国籍 → 居住国 → 居住州 → Tourism，核对系统材料清单及芝加哥要求。"
@@ -503,9 +575,24 @@
        "id": "evisa-airport",
        "text": "出发前测试手机联网打开动态 Visa issuance notice；机场不能只出示截图或打印件。"
       }
+     ],
+     "links": [
+      {
+       "label": "JAPAN eVISA 官方申请",
+       "url": "https://www.evisa.mofa.go.jp/index"
+      },
+      {
+       "label": "官方 FAQ：家庭申请、时间与上传",
+       "url": "https://www.evisa.mofa.go.jp/faq"
+      },
+      {
+       "label": "芝加哥领馆：费用与咨询",
+       "url": "https://www.chicago.us.emb-japan.go.jp/itpr_en/visa.html"
+      }
      ]
     },
     {
+     "id": "evisa-timing",
      "h": "申请时间：给审核留余量",
      "p": [
       "2026 年 12 月中旬：进入提前三个月申请的窗口。2027 年 1 月上旬：本次建议提交时间。",
@@ -513,36 +600,6 @@
       "申请期间须留在美国。签发后入境有效期为三个月，限一次入境；停留天数以获批结果为准。",
       "下次主要更新银行账单、航班、酒店、每日行程及照片；有效且信息未变的证件扫描件可复用。"
      ]
-    }
-   ],
-   "links": [
-    {
-     "label": "JAPAN eVISA 官方申请",
-     "url": "https://www.evisa.mofa.go.jp/index"
-    },
-    {
-     "label": "官方 FAQ：家庭申请、时间与上传",
-     "url": "https://www.evisa.mofa.go.jp/faq"
-    },
-    {
-     "label": "芝加哥：旅游材料清单 PDF",
-     "url": "https://www.chicago.us.emb-japan.go.jp/Consular/visa/downloadable/v10_s.pdf"
-    },
-    {
-     "label": "签证申请表",
-     "url": "https://www.chicago.us.emb-japan.go.jp/Consular/visa/downloadable/app_type.pdf"
-    },
-    {
-     "label": "英文每日行程表",
-     "url": "https://www.chicago.us.emb-japan.go.jp/Consular/visa/downloadable/stayEN.pdf"
-    },
-    {
-     "label": "代办授权书",
-     "url": "https://www.chicago.us.emb-japan.go.jp/Consular/visa/downloadable/authorization.pdf"
-    },
-    {
-     "label": "芝加哥领馆：费用与咨询",
-     "url": "https://www.chicago.us.emb-japan.go.jp/itpr_en/visa.html"
     }
    ]
   }
