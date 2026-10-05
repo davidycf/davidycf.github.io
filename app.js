@@ -1000,20 +1000,30 @@ function renderInfo(){
   $('#v-info').innerHTML = h;
   watchInfoNav();
 }
-let infoObs = null;
+// Quick-nav highlight follows the reading position: the current section is the last one whose
+// heading has passed a reading line just under the sticky bar (the last section once the page
+// bottom is reached). Recomputed from scratch on every scroll frame, so scrolling back up works.
+function markInfo(id, how){
+  const bar = $('#v-info .inav .chips'); if (!bar) return;
+  const on = bar.querySelector('[data-sec="'+id+'"]'); if (!on) return;
+  const moved = !on.classList.contains('on');
+  bar.querySelectorAll('.chip').forEach(c => { const me = c === on; c.classList.toggle('on', me); if (me) c.setAttribute('aria-current', 'true'); else c.removeAttribute('aria-current'); });
+  if (moved || how) bar.scrollTo({left: on.offsetLeft - bar.clientWidth/2 + on.offsetWidth/2, behavior:how || 'smooth'});   // only the chip row moves
+}
+function infoCurrent(){
+  const v = $('#v-info'); if (v.hidden) return;
+  const nav = v.querySelector('.inav'), secs = [...v.querySelectorAll('.apx')]; if (!nav || !secs.length) return;
+  const line = nav.getBoundingClientRect().bottom + 24;
+  let cur = secs[0];
+  secs.forEach(s => { if (s.getBoundingClientRect().top <= line) cur = s; });
+  if (innerHeight + scrollY >= document.documentElement.scrollHeight - 2) cur = secs[secs.length-1];
+  markInfo(cur.id);
+}
+let infoQueued = false;
+function onInfoScroll(){ if (infoQueued) return; infoQueued = true; requestAnimationFrame(() => { infoQueued = false; infoCurrent(); }); }
 function watchInfoNav(){
-  if (infoObs) infoObs.disconnect();
-  const v = $('#v-info'), bar = v.querySelector('.inav .chips'); if (!bar || !('IntersectionObserver' in window)) return;
-  const mark = (id, how) => {
-    const on = bar.querySelector('[data-sec="'+id+'"]'); if (!on) return;
-    bar.querySelectorAll('.chip').forEach(c => { const me = c === on; c.classList.toggle('on', me); if (me) c.setAttribute('aria-current', 'true'); else c.removeAttribute('aria-current'); });
-    bar.scrollTo({left: on.offsetLeft - bar.clientWidth/2 + on.offsetWidth/2, behavior:how || 'smooth'});   // only the chip row moves
-  };
-  // a section counts as "current" once its top passes just under the sticky bar
-  infoObs = new IntersectionObserver(es => { es.filter(e => e.isIntersecting).forEach(e => mark(e.target.id)); }, {rootMargin:'-80px 0px -70% 0px'});
-  v.querySelectorAll('.apx').forEach(a => infoObs.observe(a));
-  // the view is still hidden while it renders (no layout yet), so place the first highlight on the next frame
-  requestAnimationFrame(() => mark(location.hash.startsWith('#info-') ? location.hash.slice(1) : 'info-todo', 'instant'));
+  // the view is still hidden while it renders (no layout yet): place the first highlight on the next frame
+  requestAnimationFrame(() => markInfo(location.hash.startsWith('#info-') ? location.hash.slice(1) : 'info-todo', 'instant'));
 }
 
 /* ----- router ----- */
@@ -1158,6 +1168,8 @@ function boot(){
     if (location.hash === h) route(); else location.hash = h;
   });
   document.addEventListener('change', onChange);
+  addEventListener('scroll', onInfoScroll, {passive:true});
+  addEventListener('resize', onInfoScroll, {passive:true});
   document.addEventListener('input', e => { if (e.target.id === 'io-in'){ io.text = e.target.value; if (io.text !== io.checked) ioInvalidate(); } });
   $('#v-info').addEventListener('click', e => {
     if (!e.target.closest('.legacy-ok')) return;
