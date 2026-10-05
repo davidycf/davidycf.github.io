@@ -102,7 +102,7 @@ Nintendo Museum、旅馆玩任天堂“大統領”花札、Super Potato 复古�
 - data/books.json（吃买玩站）、data/base.json（宿）、data/info.json（todo、apx 附录、ref）。
 
 活动卡片字段（新增或改卡照这个写）：
-- `id` 永久稳定，不用下标、标题或日期；删除或合并时在 `aliases` 里留映射。`city`、`size`（half/full）、`name`（列表里的名字）、`ja`/`ro`（站牌大字与罗马字）、`area`、`title`、`summary`。
+- `id` 永久稳定，不用下标、标题或日期；删除或合并时在 `aliases` 里留映射。`city`、`size`（half/full）、`name`（列表里的名字）、`ja`/`ro`（站牌大字与罗马字：只写地名——车站或街区，不写景点名，景点名留给旁边的 name／title，日文景点名（例如 東京タワー）要留在 name/title/summary 等会被搜索的字段里，卡片库才能用日文搜到；跨两地可写「上野・秋葉原」，留白卡例外）、`area`、`title`、`summary`。
 - 事实：`time`、`transit`（写“估计”，不要伪造精确分钟）、`load`（near/mid/far）、`family`、`booking`、`rain`、`hours`、`closed`{dow: 0=周日…6=周六, text}（每周固定休馆＝硬性不可安排）、`calendar`（日历未发布等待核对文字，只提示不阻止）、`late`（回酒店晚，和当天晚上的固定事项冲突时提示）、`multi`（可以放在多天，例如留白卡）、`checked`（核对日期）。
 - `opts` 支线：{id, label, on 默认是否勾, group 同组互斥单选, who:"dad" 爸爸单独, covers 重叠标签, closed 按星期不可行}。`route`/`eat`/`shop`/`see` 的每条是 {text, at(am/noon/pm/eve，仅 route), opt 选了才显示, unless 没选才显示, who, dinner, withFixedDinner, closed, alt}：`dinner:true` 是卡片的晚饭建议，当天日期有固定晚饭时不显示并给出说明；`withFixedDinner:true` 只在当天有固定晚饭时显示（例如“直接回去赶上晚上的安排”）；`closed`{dow,text} 加可选 `alt` 表示这一段在某个星期不可行（例如 2k540 周三休业），那天显示 alt 或跳过并提示，不禁止整张卡。
 - `covers` 卡片级重叠标签；`rel` 是 "eat:T5" 这类资料引用，"shop:T8@ginza" 表示选了该支线才算经过；`todos` 是 info.todo 的 id，"water-bus@pm-boat" 同理；`checks` 是附录 checklist 的 id；`links` 官方链接。
@@ -117,7 +117,7 @@ Nintendo Museum、旅馆玩任天堂“大統領”花札、Super Potato 复古�
 - 本设备选择存在 localStorage `jp27-plan`：{v:1, days{日期id: 卡id}, opts{卡id: {支线id: bool}}, visited{标签: 日期id}, booked{卡id: 日期id}, via{日期id: 方案id}, base}。支线跟着卡走，切回原卡会恢复。读不出来、版本不支持、卡已删除、已逛过记录指向不存在的日期时按推荐方案显示并说明；万一渲染出错，页面给出“清掉本机活动选择并重新载入”的按钮；存储不可用时照常显示，提示不能保存。“恢复推荐方案”只清 days/opts/via，保留已逛过、登记的票和勾选。不承诺跨设备同步；换设备用导出／导入。
 - 改支线、换卡后重渲染会把焦点放回同一个控件（按 data-act/card/opt 等稳定属性找），单选组可以连续用方向键切换。
 - 用户要把自己的选择变成推荐方案时，改 days.json 的 slot.card 和卡片 opts 的 on，不需要改卡片正文。
-- 待办可带 `card`（和可选 `opt`）：只在那张卡（那条支线）排进行程时出现在附录待办里；没排的收在卡片页，勾选状态一直保留。附录 checklist 条目同样可带 `card`。
+- 待办可带 `card`（和可选 `opt`）：只在那张卡（那条支线）排进行程时出现在附录待办里；没排的收在卡片页，勾选状态一直保留。附录 checklist 条目同样可带 `card`。属于日期本身的待办（今半订位、Skyliner、吟游答复、新干线开售、寄箱、羽田酒店、退税等）写在 days.json 那一天的 `todos` 里；每天的「这一天的准备」先列日期的待办，再列当前卡的待办，和附录是同一份勾选。不属于某一天的（eVISA、Museum 抽签）只在附录。
 - 三个城市都用同一套模型；每个城市有一张 multi 留白卡（rest-tokyo、rest-hakone、rest-osaka），“移过来、原日改留白”用它。卡片库可以按城市筛选。
 - 跨多天的成组调整用 `presets`（options[].days 日期→卡，museum 指中签日，card 指登记票的卡），不要写成隐藏的全局重排。
 - `plan.booked`{卡id: 日期id} 是本机登记的票；卡片也可以在 repo 里写 `booked`{day}。换掉登记日期上的卡时，卡片页“从这天移除”也走同一个确认流程，不直接改；换走以后那一天仍提示“登记在这天的票不在行程里”。`ticket:true` 的卡（teamLab、海游馆、横滨、四谷玩具馆、Museum）在当天页有「票」区块：订好后登记票面日期、改登记到这天、取消登记。`lottery:true` 的卡（Museum）没有登记时提示“模拟安排”。
