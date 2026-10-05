@@ -316,9 +316,11 @@ function checkbox(id, key, text){
   return '<li><label><input type="checkbox" id="'+esc(id)+'" data-check-key="'+esc(key)+'"'+(done[key]?' checked':'')+'><span>'+fmt(text)+'</span></label></li>';
 }
 const allChecks = () => D.apx.flatMap(a => a.parts.flatMap(p => p.checklist || []));
-function prepList(c, sel){
-  const ts = c.todos.map(r => r.split('@')).filter(([, o]) => !sel || !o || sel.includes(o)).map(([id]) => D.todo.find(t => t.id === id)).filter(Boolean);
-  const cs = (c.checks || []).map(id => allChecks().find(x => x.id === id)).filter(Boolean);
+// extra: to-do ids owned by the date itself (days.json `todos`, e.g. the 今半 booking), listed first
+function prepList(c, sel, extra){
+  const fromCard = c ? c.todos.map(r => r.split('@')).filter(([, o]) => !sel || !o || sel.includes(o)).map(([id]) => id) : [];
+  const ts = [...new Set([...(extra || []), ...fromCard])].map(id => D.todo.find(t => t.id === id)).filter(Boolean);
+  const cs = ((c && c.checks) || []).map(id => allChecks().find(x => x.id === id)).filter(Boolean);
   if (!ts.length && !cs.length) return '';
   return '<ul class="todo">'+ts.map(t => checkbox('p-todo-'+t.id, 'todo:'+t.id, t.text)).join('')+cs.map(x => checkbox('p-'+x.id, x.id, x.text)).join('')+'</ul>';
 }
@@ -448,10 +450,9 @@ function renderDay(n, opts){
     + '</div></div>';
   const notes = [v.note, v.cnote].filter(Boolean);
   if (notes.length) h += '<div class="note"><span class="stamp">待确认</span><p>'+notes.map(t => fmt(t)).join(' ')+'</p></div>';
-  if (d.slot){
-    const prep = prepList(v.card, v.sel);
-    if (prep) h += '<div class="blk"><div class="lbl">这张卡的准备 <span class="en">PREP</span></div>'+prep+'<p class="small">和「附录 · 尚待确认」是同一份勾选。</p></div>';
-  }
+  // date-owned to-dos (bookings for fixed dinners, travel tickets, shipping…) plus the current card's
+  const prep = prepList(d.slot ? v.card : null, d.slot ? v.sel : null, d.todos);
+  if (prep) h += '<div class="blk"><div class="lbl">这一天的准备 <span class="en">PREP</span></div>'+prep+'<p class="small">和「附录 · 尚待确认」是同一份勾选。</p></div>';
   if (v.rel.length){
     h += '<div class="blk"><div class="lbl">这一带还能… <span class="en">NEARBY</span></div><div class="rel">' + v.rel.map(relCard).join('') + '</div></div>';
   }
