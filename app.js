@@ -16,12 +16,13 @@ const SIZE = {half:'半日', full:'整日'};
 const LOAD = {near:'近场', mid:'中等路程', far:'远：单程约一小时'};
 const WHO = {dad:'爸爸单独'};
 const DOW = ['周日','周一','周二','周三','周四','周五','周六'];
-const AT = {am:0, noon:1, pm:2, eve:3};
+const AT = {early:-1, am:0, noon:1, pm:2, eve:3};
 const JA_RX = /[぀-ヿ]/;
 // wrap text: escape, link 附录 X, mark search hits
 function fmt(t, q){
   let h = esc(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/附录\s?([A-E])(?:[、，‑-]\s?([A-E]))?/g, (m,a,b) =>
     '<a class="ax" href="#info-'+a+'">附录 '+a+'</a>' + (b ? '、<a class="ax" href="#info-'+b+'">'+b+'</a>' : ''));
+  h = h.replace(/「(?:行程 · )?Museum 换日」/g, m => '<a class="ax" href="#museum">'+m+'</a>');
   if (q) h = hl(h, q);
   return h;
 }
@@ -53,8 +54,10 @@ const dowOf = d => { const [m, dd] = d.date.split('/').map(Number); return new D
 // plan.days {dayId: cardId}: days the user explicitly set. Absent = recommended card.
 // plan.opts {cardId: {optId: bool}}: branch choices travel with the card, so switching back restores them.
 // plan.visited {tag: dayId}: "already been" marks (e.g. 浅草核心), separate from bookings and to-dos.
+// plan.booked {cardId: dayId}: a ticket the user registered on this device (e.g. Museum lottery won).
+// Plan changes never touch it; moving a booked card off its day only warns.
 const PLAN_KEY = 'jp27-plan', PLAN_V = 1;
-let plan = {v:PLAN_V, days:{}, opts:{}, visited:{}};
+let plan = {v:PLAN_V, days:{}, opts:{}, visited:{}, booked:{}};
 let canSave = true, planNotes = [];
 function loadPlan(){
   let raw = null;
@@ -77,6 +80,8 @@ function loadPlan(){
   Object.entries(p.visited || {}).forEach(([t, dayId]) => { const d = dayById(dayId);
     if (TAGS[t] && d && d.slot) plan.visited[t] = dayId; else badVisit++; });
   if (badVisit) planNotes.push('有 '+badVisit+' 条“已逛过”记录指向不存在的日期或标签，已忽略。');
+  Object.entries(p.booked || {}).forEach(([cid, dayId]) => { const id = alias(cid), d = dayById(dayId);
+    if (id && d && d.slot) plan.booked[id] = dayId; else dropped.push('票 '+cid+' → '+dayId); });
   if (dropped.length) planNotes.push('有 '+dropped.length+' 项本地选择指向已删除或不适用的活动（'+dropped.join('，')+'），这几天按推荐方案显示。');
 }
 function savePlan(){
@@ -88,6 +93,7 @@ const dayById = id => D.days.find(d => d.id === id);
 const restCard = city => D.cards.cards.find(c => c.multi && c.city === city);
 const cardOf = d => CARDS[plan.days[d.id] || d.slot.card];
 const isMine = d => !!plan.days[d.id];
+const bookedDay = c => plan.booked[c.id] || (c.booked && c.booked.day) || null;
 const planEdited = () => Object.keys(plan.days).length || Object.keys(plan.opts).length;
 function optOn(c, o){ const u = plan.opts[c.id] && plan.opts[c.id][o.id]; return u !== undefined ? u : !!o.on; }
 const optClosed = (o, d) => d && o.closed && o.closed.dow.includes(dowOf(d));
@@ -136,7 +142,7 @@ function view(d){
   const pick = k => [...on(k), ...(fx[k] || []).map(x => ({...x, fixed:true}))];
   const rel = [...new Set([...d.rel, ...c.rel.map(r => refOn(r, sel)).filter(Boolean)])];
   return {card:c, sel, ja:c.ja, ro:c.ro, area:c.area, title:c.title, sub:c.summary, ctx:d.ctx, plan:steps,
-    eat:pick('eat'), shop:pick('shop'), see:pick('see'), stay:d.stay, note:d.note, cnote:c.note, rel, short:fx.short || [], adj};
+    eat:pick('eat'), shop:pick('shop'), see:pick('see'), stay:d.stay, note:d.note, cnote:c.note, rel, short:fx.short || [], adj, judge:d.judge};
 }
 
 /* ----- checks: hard block / needs verifying / preference ----- */
@@ -147,7 +153,9 @@ function check(c, d, opts){
   else if (c.closed && c.closed.dow.includes(dowOf(d))) r.block = d.date+' 是'+DOW[dowOf(d)]+'：'+c.closed.text;
   if (r.block) return r;
   if (c.calendar) r.verify.push(c.calendar);
-  if (c.booked && c.booked.day !== d.id) r.verify.push('已订的票是 '+dayById(c.booked.day).date+'，网页改日不会改票，实际改期要本人处理');
+  const bd = opts && 'booked' in opts ? opts.booked : bookedDay(c);
+  if (bd && bd !== d.id) r.verify.push('登记的票是 '+dayById(bd).date+'，网页改日不会改票，实际改期要本人处理');
+  if (c.lottery && !bd) r.verify.push('还没登记中签：放在这天只是模拟安排，见「Museum 换日」');
   if (c.load === 'far') r.pref.push('路程远：'+c.transit);
   if (c.late && d.fixed.plan.some(x => x.at === 'eve')) r.pref.push('回酒店偏晚，'+d.date+' 晚上有固定安排（'+(d.fixed.short || []).join('、')+'）');
   // overlap with what other days already cover (excluding the days this move would vacate)
@@ -287,10 +295,12 @@ function prepList(c, sel){
 function renderTrip(){
   const groups = [];
   D.days.forEach(d => { const g = groups[groups.length-1]; if (g && g.city === d.city) g.days.push(d); else groups.push({city:d.city, days:[d]}); });
-  let h = '<div class="vhead"><h2>行程 · 15 站</h2><p>每天一个主项目。东京四天可以“换活动”，移动日和日期固定的事不跟着变。</p></div>' + segNav('trip') + planBanner();
+  let h = '<div class="vhead"><h2>行程 · 15 站</h2><p>每天一个主项目。东京、箱根、大阪的活动日都可以“换活动”，移动日和日期固定的事不跟着变。</p></div>' + segNav('trip') + planBanner();
   if (planEdited()) h += '<div class="pbar"><span>东京几天里有你自己的选择（只存在这台设备）。</span><button type="button" class="btn sm" data-act="reset">恢复推荐方案</button></div>';
   groups.forEach(g => {
-    h += '<div class="c-'+g.city+'"><div class="city-h"><span class="nm" lang="ja">'+CITY[g.city][0]+'</span><span class="ro">'+CITY[g.city][1]+'</span><span class="cstay">'+esc(STAY[g.city])+'</span></div><ol class="line">';
+    h += '<div class="c-'+g.city+'"><div class="city-h"><span class="nm" lang="ja">'+CITY[g.city][0]+'</span><span class="ro">'+CITY[g.city][1]+'</span><span class="cstay">'+esc(STAY[g.city])+'</span></div>'
+      + (D.cards.presets || []).filter(ps => Object.keys(ps.options[0].days).some(id => dayById(id).city === g.city)).map(presetRow).join('')
+      + '<ol class="line">';
     g.days.forEach((d,i) => {
       const v = view(d);
       const cls = ['stop', i===0?'first':'', i===g.days.length-1?'last':'', d.n===todayN?'today':''].join(' ');
@@ -383,6 +393,7 @@ function renderDay(n, opts){
     h += '<div class="sx"><span class="bdg'+(isMine(d)?' mine':'')+'">'+(isMine(d)?'我的选择':'推荐方案')+'</span>'
       + (!isMine(d) && d.slot.pending ? '<span class="bdg pend">'+esc(d.slot.pending)+'</span>' : '')
       + '<a class="btn sm ghost" href="#card-'+c.id+'">卡片详情</a>'
+      + (presetOf(d) ? '<a class="btn sm ghost" href="#museum">Museum 换日</a>' : '')
       + '<button type="button" class="btn sm" data-act="toggle-swap" aria-expanded="'+(opts && opts.swap ? 'true' : 'false')+'" aria-controls="swap">换活动</button></div>'
       + '</div>' + swapPanel(d, opts && opts.swap) + warnHTML(dayWarnings(d), d) + optsPanel(c, d, v.sel);
   } else h += '</div>';
@@ -408,7 +419,7 @@ function renderDay(n, opts){
 }
 
 /* ----- activity cards: library + one page per card ----- */
-const cfilter = {q:'', st:'all', k:'all'};
+const cfilter = {q:'', st:'all', k:'all', city:'all'};
 function cardText(c){ return [c.name, c.ja, c.ro, c.area, c.title, c.summary, c.family, c.booking, ...c.route.map(x => x.text), ...c.opts.map(o => o.label),
   ...['eat','shop','see'].flatMap(k => c[k].map(x => x.text))].join(' ').toLowerCase(); }
 function cardItem(c){
@@ -419,20 +430,20 @@ function cardItem(c){
 }
 function renderCards(){
   const v = $('#v-cards');
-  let h = '<div class="vhead"><h2>活动卡片</h2><p>可以安排到东京几天的活动。每张卡是一次出游：推荐顺序、有限的支线、准备事项。点名字看详情，在详情里“安排到哪天”。</p></div>' + segNav('cards') + planBanner()
+  let h = '<div class="vhead"><h2>活动卡片</h2><p>可以安排到东京、箱根、大阪活动日的活动。每张卡是一次出游：推荐顺序、有限的支线、准备事项。点名字看详情，在详情里“安排到哪天”。</p></div>' + segNav('cards') + planBanner()
     + '<div class="tools"><div class="search"><input id="q-cards" type="search" placeholder="搜活动：中文、日文、内容…" aria-label="搜索活动卡片" autocomplete="off" value="'+esc(cfilter.q)+'"><button type="button"'+(cfilter.q?'':' hidden')+'>清除</button></div>'
     + '<div class="bchips" role="group" aria-label="筛选">'
-    + [['st','all','全部'],['st','on','已安排'],['st','off','未安排']].concat(Object.entries(CKIND).map(([k,l]) => ['k',k,l]))
+    + [['st','all','全部'],['st','on','已安排'],['st','off','未安排']].concat(['tokyo','hakone','osaka'].map(c => ['city',c,CITY[c][0]]), Object.entries(CKIND).map(([k,l]) => ['k',k,l]))
         .map(([f,val,l]) => '<button type="button" class="chip'+(cfilter[f]===val?' on':'')+'" data-f="'+f+'" data-v="'+val+'" aria-pressed="'+(cfilter[f]===val)+'">'+l+'</button>').join('')
     + '</div></div><div class="cres"></div>'
-    + '<p class="small">箱根和大阪暂时还是固定行程，之后再做成卡片。</p>';
+    + '<p class="small">移动日（3/13–14、3/19、3/21、3/26–27）是固定行程，不放卡片。</p>';
   v.innerHTML = h;
   const inp = v.querySelector('input'), clr = v.querySelector('.search button');
   inp.addEventListener('input', () => { cfilter.q = inp.value.trim(); clr.hidden = !cfilter.q; cardResults(); });
   clr.addEventListener('click', () => { inp.value = ''; cfilter.q = ''; clr.hidden = true; cardResults(); inp.focus(); });
   v.querySelector('.bchips').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
-    cfilter[b.dataset.f] = cfilter[b.dataset.f] === b.dataset.v && b.dataset.f === 'k' ? 'all' : b.dataset.v;
+    cfilter[b.dataset.f] = cfilter[b.dataset.f] === b.dataset.v && b.dataset.f !== 'st' ? 'all' : b.dataset.v;
     v.querySelectorAll('.bchips .chip').forEach(x => { const on = cfilter[x.dataset.f] === x.dataset.v; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); });
     cardResults();
   });
@@ -442,7 +453,8 @@ function cardResults(){
   const q = cfilter.q.toLowerCase();
   const cs = D.cards.cards.filter(c => (!q || cardText(c).includes(q))
     && (cfilter.st === 'all' || (cfilter.st === 'on') === !!placedOn(c.id).length)
-    && (cfilter.k === 'all' || c.kinds.includes(cfilter.k)));
+    && (cfilter.k === 'all' || c.kinds.includes(cfilter.k))
+    && (cfilter.city === 'all' || c.city === cfilter.city));
   const out = $('#v-cards .cres');
   if (!cs.length){ out.innerHTML = '<p class="empty">没有符合的活动。'+(q ? '换个词，或者清除筛选。' : '')+'</p>'; return; }
   let h = '';
@@ -487,6 +499,72 @@ function renderCard(id){
   h += '<p class="small">核对于 '+esc(c.checked)+'；营业日、票价和时段出发前再看官网。</p></div>';
   $('#v-card').innerHTML = h;
   return true;
+}
+
+/* ----- presets: several days re-planned together, previewed first (Museum lottery) ----- */
+// cards.json presets[].options[].days maps day ids to cards. Applying one is a single commit with
+// undo. "museum" names the lottery day; a won ticket is registered in plan.booked only when the
+// user ticks it, so a layout alone is always labelled as a simulation.
+const presetUI = {};
+const presetSt = id => presetUI[id] ||= {id:null, won:false};
+const presetOf = d => (D.cards.presets || []).find(ps => d.id in ps.options[0].days);
+const presetMatch = ps => ps.options.find(o => Object.entries(o.days).every(([id, cid]) => cardOf(dayById(id)).id === cid)) || null;
+function presetRow(ps){
+  const m = presetMatch(ps), c = CARDS[ps.card], bd = bookedDay(c), placed = placedOn(c.id);
+  const st = bd ? '已登记中签 '+dayById(bd).date+(placed.some(d => d.id === bd) ? '' : '，但行程里那天没有安排') : placed.length ? '模拟安排，还没登记中签' : '';
+  return '<div class="sx preset"><span class="fx">'+esc(ps.title)+'：<b>'+(m ? esc(m.label) : '自定义')+'</b>'+(st ? ' · '+esc(st) : '')+'</span><a class="btn sm" href="#'+ps.id+'">按中签日调整</a></div>';
+}
+function presetRows(ps, o, won){
+  const ids = Object.keys(o.days);
+  return ids.map(id => {
+    const d = dayById(id), cur = cardOf(d), nxt = CARDS[o.days[id]];
+    const booked = nxt.id === ps.card && won ? id : undefined;
+    const r = check(nxt, d, booked ? {vacate:ids, booked} : {vacate:ids});
+    const custom = cur.id !== nxt.id && !ps.options.some(x => x.days[id] === cur.id);
+    return {d, cur, nxt, r, custom};
+  });
+}
+function renderPreset(pid){
+  const ps = D.cards.presets.find(x => x.id === pid), c = CARDS[ps.card];
+  const m = presetMatch(ps), bd = bookedDay(c), ui = presetSt(pid);
+  const o = ps.options.find(x => x.id === (ui.id || (m ? m.id : ps.options[0].id)));
+  const won = !!(o.museum && ui.won);
+  const rows = presetRows(ps, o, won), changes = rows.filter(r => r.cur.id !== r.nxt.id);
+  const block = rows.find(r => r.r.block), custom = rows.filter(r => r.custom);
+  let h = '<div class="c-osaka"><a class="back" href="#trip">← 全部行程</a>'
+    + '<div class="vhead"><h2>Museum 换日</h2><p>'+fmt(ps.lead)+'</p></div>' + planBanner()
+    + '<div class="pbar"><span>现在的大阪四天：<b>'+(m ? esc(m.label) : '自定义（和四种安排都不完全一样）')+'</b>。'
+    + (bd ? '已登记中签：'+dayById(bd).date+'（只存在这台设备，不代表网页替你买了票）。' : '还没登记中签：行程里的 Museum 都是模拟安排。')+'</span>'
+    + (bd ? '<button type="button" class="btn sm ghost" data-act="booked-clear" data-card="'+c.id+'">取消中签登记</button>' : '')+'</div>'
+    + '<fieldset class="opts pset"><legend>抽签结果</legend>'
+    + ps.options.map(x => '<label class="opt"><input type="radio" name="ps-'+pid+'" data-act="preset-pick" data-preset="'+pid+'" data-opt="'+x.id+'"'+(x === o ? ' checked' : '')+'><span>'+esc(x.label)+(m === x ? '<small>当前就是这样排的</small>' : '')+'</span></label>').join('')
+    + '</fieldset>'
+    + '<div class="blk"><div class="lbl">预览 <span class="en">PREVIEW</span></div><ul class="places">'
+    + rows.map(r => '<li class="place"><div class="pl"><a href="#d'+r.d.n+'"><b>'+r.d.date+' '+esc(r.d.dow)+'</b></a><span>'
+        + (r.cur.id === r.nxt.id ? esc(r.nxt.name)+' · 不变' : esc(r.cur.name)+' → <b>'+esc(r.nxt.name)+'</b>')
+        + ((r.d.fixed.short || []).length ? ' · 固定：'+esc(r.d.fixed.short.join('、')) : '')+'</span></div>'
+        + (r.custom ? '<p class="ck w-pref"><b>提示</b>这天是你自己选的「'+esc(r.cur.name)+'」，应用后会换掉（可以撤销）。</p>' : '')
+        + checkLine(r.r)+'</li>').join('')
+    + '</ul></div>';
+  if (o.museum) h += '<label class="opt won"><input type="checkbox" data-act="preset-won" data-preset="'+pid+'"'+(ui.won ? ' checked' : '')+'><span>我已经中签，票面就是 '+dayById(o.museum).date
+    + '<small>只是在这台设备上登记；不勾就按模拟安排显示。网页不会替你买票或改票。</small></span></label>';
+  if (bd && o.museum !== bd) h += '<ul class="warns"><li class="w-verify"><b>待核对</b><span>你登记过 '+dayById(bd).date+' 的票。按这个安排，那天不去 Museum：登记不会被删，实际的票要本人处理。</span></li></ul>';
+  h += '<div class="pa">'+(changes.length || (won && bd !== o.museum)
+      ? '<button type="button" class="btn" data-act="preset-apply" data-preset="'+pid+'" data-opt="'+o.id+'"'+(block ? ' disabled' : '')+'>'
+        + (changes.length ? '应用：改 '+changes.length+' 天'+(custom.length ? '（含你自选的 '+custom.length+' 天）' : '') : '登记中签')+'</button>'
+      : '<p class="small">当前已经是这个安排。</p>')
+    + '</div>' + (block ? '<p class="small">'+esc(block.r.block)+'</p>' : '')
+    + '<p class="small">只改这四天；3/25 上午寄箱、酒店和其他固定事项不动。应用后可以撤销。</p></div>';
+  $('#v-museum').innerHTML = h;
+}
+function applyPreset(pid, oid){
+  const ps = D.cards.presets.find(x => x.id === pid), o = ps.options.find(x => x.id === oid), ui = presetSt(pid);
+  const won = !!(o.museum && ui.won);
+  presetUI[pid] = {id:null, won:false};   // after applying, the page shows the (new) current layout
+  commit(() => {
+    Object.entries(o.days).forEach(([id, cid]) => { if (dayById(id).slot.card === cid) delete plan.days[id]; else plan.days[id] = cid; });
+    if (won) plan.booked[ps.card] = o.museum;
+  }, '大阪四天已按「'+o.label+'」安排'+(o.museum ? (won ? '，已登记中签' : '（模拟）') : ''));
 }
 
 /* ----- home bases ----- */
@@ -687,7 +765,7 @@ function saveDone(){ try { localStorage.setItem('jp27-todo', JSON.stringify(done
 function renderInfo(){
   // To-dos tied to a card only show while that card (and branch) is in the plan; ticks are never dropped.
   const live = D.todo.filter(todoActive), parked = D.todo.filter(t => !todoActive(t));
-  let h = '<div class="vhead"><h2><span class="k" lang="ja">要</span>附录 · 执行细节</h2><p>交通行李、预约换日、孩子与吟游、退税返程、日本 eVISA。各节标注核对时间，出发前再开官方入口复核。东京几天的备选活动在「行程 · 活动卡片」。</p></div>';
+  let h = '<div class="vhead"><h2><span class="k" lang="ja">要</span>附录 · 执行细节</h2><p>交通行李、预约换日、孩子与吟游、退税返程、日本 eVISA。各节标注核对时间，出发前再开官方入口复核。各城市的备选活动在「行程 · 活动卡片」，Museum 抽签结果在「Museum 换日」。</p></div>';
   h += '<div class="apx c-osaka" id="info-todo"><div class="id">TO DO</div><h3>尚待确认</h3><div class="lk"><a href="#info-E">日本 eVISA 材料与办理</a></div><ul class="todo">'
     + live.map(t => checkbox('todo-'+t.id, 'todo:'+t.id, t.text)).join('')
     + '</ul>' + (parked.length ? '<p class="small">另有 '+parked.length+' 项只属于没排进行程的活动，收在卡片里：'
@@ -728,6 +806,7 @@ function route(keep){
   }
   else if (h === 'trip' || h === ''){ renderTrip(); show('trip'); idx = true; }
   else if (h === 'cards'){ renderCards(); show('cards'); }
+  else if (h === 'museum'){ renderPreset('museum'); show('museum'); }
   else if ((m = h.match(/^card-([a-z0-9-]+)$/))){
     const id = CARDS[m[1]] ? m[1] : D.cards.aliases[m[1]];
     if (id && id !== m[1]) { location.replace('#card-'+id); return; }
@@ -758,7 +837,7 @@ function onAction(e){
   const b = e.target.closest('[data-act]'); if (!b) return;
   const a = b.dataset.act;
   if (a === 'undo') return undo();
-  if (a === 'reset') return commit(() => { plan.days = {}; plan.opts = {}; }, '已恢复推荐方案（已逛过和勾选不变）');
+  if (a === 'reset') return commit(() => { plan.days = {}; plan.opts = {}; }, '已恢复推荐方案（已逛过、登记的票和勾选不变）');
   if (a === 'toggle-swap'){ const p = $('#swap'), open = p.hidden; p.hidden = !open; b.setAttribute('aria-expanded', open); if (open) p.scrollIntoView({block:'start', behavior:'smooth'}); return; }
   if (a === 'cancel'){ const cf = b.closest('.cf'); const btn = cf.parentElement.querySelector('[data-act="pick"],[data-act="place"]'); cf.remove(); if (btn){ btn.hidden = false; btn.focus(); } return; }
   if (a === 'pick' || a === 'place'){
@@ -771,6 +850,9 @@ function onAction(e){
     return;
   }
   if (a === 'do') return doPlace(b.dataset.op, b.dataset.card, b.dataset.day, b.dataset.src);
+  if (a === 'preset-apply') return applyPreset(b.dataset.preset, b.dataset.opt);
+  if (a === 'booked-clear'){ const c = CARDS[b.dataset.card];
+    return commit(() => { delete plan.booked[c.id]; }, '已取消「'+c.name+'」的中签登记（只改网页，不影响实际的票）'); }
   if (a === 'opt' && b.tagName === 'BUTTON'){
     const c = CARDS[b.dataset.card], o = c.opts.find(x => x.id === b.dataset.opt);
     return commit(() => { (plan.opts[c.id] ||= {})[o.id] = false; }, '已取消「'+o.label+'」');
@@ -790,6 +872,11 @@ function onChange(e){
       if (o.group) c.opts.filter(x => x.group === o.group).forEach(x => { po[x.id] = x.id === o.id; });
       else po[o.id] = t.checked;
     }, (o.group || t.checked ? '已选「' : '已取消「')+o.label+'」');
+  }
+  if (t.dataset.act === 'preset-pick' || t.dataset.act === 'preset-won'){
+    const ps = presetSt(t.dataset.preset);
+    if (t.dataset.act === 'preset-pick') ps.id = t.dataset.opt; else ps.won = t.checked;
+    const key = focusKey(t); route(true); restoreFocus(key); return;
   }
   if (t.dataset.act === 'visit'){
     const tag = t.dataset.tag;
