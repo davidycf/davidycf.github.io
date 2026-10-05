@@ -57,7 +57,7 @@ const dowOf = d => { const [m, dd] = d.date.split('/').map(Number); return new D
 // plan.booked {cardId: dayId}: a ticket the user registered on this device (e.g. Museum lottery won).
 // Plan changes never touch it; moving a booked card off its day only warns.
 const PLAN_KEY = 'jp27-plan', PLAN_V = 1;
-let plan = {v:PLAN_V, days:{}, opts:{}, visited:{}, booked:{}, preset:{}};
+let plan = {v:PLAN_V, days:{}, opts:{}, visited:{}, booked:{}, via:{}};
 let canSave = true, planNotes = [];
 function loadPlan(){
   let raw = null;
@@ -80,8 +80,9 @@ function loadPlan(){
   Object.entries(p.visited || {}).forEach(([t, dayId]) => { const d = dayById(dayId);
     if (TAGS[t] && d && d.slot) plan.visited[t] = dayId; else badVisit++; });
   if (badVisit) planNotes.push('有 '+badVisit+' 条“已逛过”记录指向不存在的日期或标签，已忽略。');
-  Object.entries(p.preset || {}).forEach(([pid, oid]) => { const ps = (D.cards.presets || []).find(x => x.id === pid);
-    if (ps && ps.options.some(o => o.id === oid)) plan.preset[pid] = oid; });
+  // plan.via {dayId: presetId}: the day's card was set by that layout and not touched since
+  Object.entries(p.via || {}).forEach(([dayId, pid]) => { const d = dayById(dayId);
+    if (d && d.slot && (D.cards.presets || []).some(x => x.id === pid)) plan.via[dayId] = pid; });
   Object.entries(p.booked || {}).forEach(([cid, dayId]) => { const id = alias(cid), d = dayById(dayId);
     if (id && d && d.slot) plan.booked[id] = dayId; else dropped.push('票 '+cid+' → '+dayId); });
   if (dropped.length) planNotes.push('有 '+dropped.length+' 项本地选择指向已删除或不适用的活动（'+dropped.join('，')+'），这几天按推荐方案显示。');
@@ -273,6 +274,7 @@ function doPlace(op, cid, dayId, srcId){
     if (op === 'swap'){ plan.days[srcId] = cur.id; }
     if (op === 'move'){ plan.days[srcId] = restCard(c.city).id; }
     plan.days[dayId] = cid;
+    delete plan.via[dayId]; if (srcId) delete plan.via[srcId];   // hand-made from now on
   }, d.date+' 改成'+nm(c) + (op === 'swap' ? '，'+dayById(srcId).date+' 改成'+nm(cur) : op === 'move' ? '，'+dayById(srcId).date+' 改成留白' : ''));
 }
 function confirmHTML(cid, dayId, ch){
@@ -495,7 +497,7 @@ function renderCard(id){
     + '<div class="blk"><div class="lbl">安排到哪天 <span class="en">PLACE</span></div><ul class="places">'
     + days.map(d => { const cur = cardOf(d), here = cur.id === c.id, r = check(c, d, {vacate: c.multi ? [] : at.map(x => x.id)});
         return '<li class="place"><div class="pl"><a href="#d'+d.n+'"><b>'+d.date+' '+esc(d.dow)+'</b></a><span>现在：'+esc(cur.name)+((d.fixed.short||[]).length ? ' · 固定：'+esc(d.fixed.short.join('、')) : '')+'</span></div>'
-          + (here ? '<p class="small"><b>已安排在这天</b></p>'+(c.multi ? '' : '<div class="pa"><button type="button" class="btn ghost" data-act="do" data-op="set" data-card="'+restCard(c.city).id+'" data-day="'+d.id+'">从这天移除（改成留白）</button></div>')
+          + (here ? '<p class="small"><b>已安排在这天</b></p>'+(c.multi ? '' : '<div class="pa"><button type="button" class="btn ghost" data-act="place" data-card="'+restCard(c.city).id+'" data-day="'+d.id+'">从这天移除（改成留白）</button></div>')
             : checkLine(r)+'<div class="pa"><button type="button" class="btn" data-act="place" data-card="'+c.id+'" data-day="'+d.id+'"'+(r.block?' disabled':'')+'>安排到 '+d.date+'</button></div>')
           + '</li>'; }).join('')
     + '</ul></div>'
@@ -533,9 +535,8 @@ function presetRows(ps, o, won){
     const d = dayById(id), cur = cardOf(d), nxt = CARDS[o.days[id]];
     const booked = nxt.id === ps.card && won ? id : undefined;
     const r = check(nxt, d, booked ? {vacate:ids, booked} : {vacate:ids});
-    // hand-picked = set on this device and not what the last applied layout put there
-    const last = ps.options.find(x => x.id === plan.preset[ps.id]);
-    const custom = cur.id !== nxt.id && isMine(d) && !(last && last.days[id] === cur.id);
+    // hand-picked = set on this device by anything other than this layout page
+    const custom = cur.id !== nxt.id && isMine(d) && plan.via[id] !== ps.id;
     const away = cur.id !== nxt.id && bookedDay(cur) === id
       ? '「'+cur.name+'」登记的票就是 '+d.date+'，换掉后那天不再是它；网页不会改票，实际票务要本人处理，登记会保留。' : null;
     return {d, cur, nxt, r, custom, away};
@@ -580,9 +581,8 @@ function applyPreset(pid, oid){
   const won = !!(o.museum && ui.won);
   presetUI[pid] = {id:null, won:false};   // after applying, the page shows the (new) current layout
   commit(() => {
-    Object.entries(o.days).forEach(([id, cid]) => { if (dayById(id).slot.card === cid) delete plan.days[id]; else plan.days[id] = cid; });
+    Object.entries(o.days).forEach(([id, cid]) => { if (dayById(id).slot.card === cid) delete plan.days[id]; else plan.days[id] = cid; plan.via[id] = pid; });
     if (won) plan.booked[ps.card] = o.museum;
-    plan.preset[pid] = o.id;
   }, '大阪四天已按「'+o.label+'」安排'+(o.museum ? (won ? '，已登记中签' : '（模拟）') : ''));
 }
 
@@ -856,7 +856,7 @@ function onAction(e){
   const b = e.target.closest('[data-act]'); if (!b) return;
   const a = b.dataset.act;
   if (a === 'undo') return undo();
-  if (a === 'reset') return commit(() => { plan.days = {}; plan.opts = {}; }, '已恢复推荐方案（已逛过、登记的票和勾选不变）');
+  if (a === 'reset') return commit(() => { plan.days = {}; plan.opts = {}; plan.via = {}; }, '已恢复推荐方案（已逛过、登记的票和勾选不变）');
   if (a === 'toggle-swap'){ const p = $('#swap'), open = p.hidden; p.hidden = !open; b.setAttribute('aria-expanded', open); if (open) p.scrollIntoView({block:'start', behavior:'smooth'}); return; }
   if (a === 'cancel'){ const cf = b.closest('.cf'); const btn = cf.parentElement.querySelector('[data-act="pick"],[data-act="place"]'); cf.remove(); if (btn){ btn.hidden = false; btn.focus(); } return; }
   if (a === 'pick' || a === 'place'){
