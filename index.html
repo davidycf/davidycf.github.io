@@ -57,7 +57,7 @@ p{margin:0}
 
 /* route strip: the whole trip as one line */
 .route{margin-top:18px;display:grid;grid-template-columns:52px 5fr 2.6fr 5fr 44px;align-items:start;gap:0}
-.route .seg{position:relative;padding-top:20px;min-width:0}
+.route .seg{position:relative;padding-top:26px;min-width:0}
 .route .seg::before{content:"";position:absolute;left:0;right:0;top:7px;height:5px;background:var(--line)}
 .route .seg::after{content:"";position:absolute;left:0;top:3px;width:13px;height:13px;border-radius:50%;background:var(--surface);border:3px solid var(--line)}
 .route .seg.end::before{right:auto;width:0}
@@ -204,7 +204,7 @@ a.sec-h{text-decoration:none}
 .dchips small{grid-column:1/-1;font-size:12px;color:var(--muted);font-family:var(--f-ro)}
 
 /* ---------- home bases ---------- */
-.bases{display:grid;gap:14px}
+.bases{display:grid;gap:14px;margin-top:14px}
 .bcard{display:block;text-decoration:none;background:var(--surface);border-radius:var(--r);overflow:hidden;box-shadow:0 1px 0 var(--rule)}
 .bcard:hover,.bcard.today{box-shadow:0 0 0 2px var(--line)}
 .bcard .top,.sign .top{position:relative}
@@ -240,7 +240,7 @@ a.sec-h{text-decoration:none}
 .rh::after{content:"";flex:1;height:4px;border-radius:2px;background:var(--line)}
 .rd{color:var(--muted);font-size:14px;margin-top:2px}
 .bents{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:8px}
-.btools .search{margin-bottom:8px}
+.search+.bchips{margin-top:8px}
 .bres .bents{margin-top:12px}
 .be .goto{display:inline-block;margin-top:8px;font-size:13px;color:var(--line);font-weight:700}
 .be{scroll-margin-top:calc(env(safe-area-inset-top,0px) + 120px)}
