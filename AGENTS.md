@@ -1,7 +1,7 @@
 # Japan Trip — 项目记忆与协作规则
 
-更新日期：2026-10-04（America/Chicago）。
-当前对应 main `ce69cde`（PR #15 合并）。最初核对的网页版本：53815b8d3ad62b1cc80c212ed8016cfd75c4479e；之后已同步 PR #8（fix/astra-review-issues-1-6，issue #1–#6）、PR #9（fix/booking-time-and-luggage-todo：新干线开售时间、行李待办、四家深烘喫茶店）、PR #10（content/eat-shop-see-review：吃买玩整体审查，已合并）、PR #11（content/plugin-days-and-0315：3/15 纪念日晚饭、附录 F 插件日、按真实作息改写）、PR #12（fix/section10-facts：登山电车折返、索道排队、teamLab 水温）、PR #13（feat/activity-cards：东京活动卡片、数据拆成 data/*.json，附录 F 并入卡片库）、PR #14（feat/hakone-osaka-cards：箱根 3/20 与大阪四天做成卡片，Museum 换日页面与中签登记）和 PR #15（feat/plan-export-tickets：导出／导入方案、通用的票登记、负担提示、推荐方案更新提示）的改动，#12–#15 均已合并。
+更新日期：2026-10-05（America/Chicago）。
+当前对应 main `4be6537`（PR #20 合并）。最初核对的网页版本：53815b8d3ad62b1cc80c212ed8016cfd75c4479e；之后已同步 PR #8（fix/astra-review-issues-1-6，issue #1–#6）、PR #9（fix/booking-time-and-luggage-todo：新干线开售时间、行李待办、四家深烘喫茶店）、PR #10（content/eat-shop-see-review：吃买玩整体审查，已合并）、PR #11（content/plugin-days-and-0315：3/15 纪念日晚饭、附录 F 插件日、按真实作息改写）、PR #12（fix/section10-facts：登山电车折返、索道排队、teamLab 水温）、PR #13（feat/activity-cards：东京活动卡片、数据拆成 data/*.json，附录 F 并入卡片库）、PR #14（feat/hakone-osaka-cards：箱根 3/20 与大阪四天做成卡片，Museum 换日页面与中签登记）和 PR #15（feat/plan-export-tickets：导出／导入方案、通用的票登记、负担提示、推荐方案更新提示）的改动，#12–#15 均已合并；之后又合并了 PR #16（docs/agents-workflow：本文件补上开发、审查与发布流程）、PR #17（content/page-title：网页标题「2027日本行程」）、PR #18（ui/plan-bar-bottom：方案栏移到行程列表最下面，附录吸顶分节导航）、PR #19（ui/station-sign-places：活动卡片站牌只写地名，每天的「这一天的准备」列出日期自己的待办）、PR #21（fix/visual-spacing：首页路线、活动卡片搜索框、宿首页三处间距）和 PR #20（feat/appendix-cards：附录拆成有永久 id 的卡片和单卡页面，附录#id 链接，待办「详情」，吟游移到 B 预约与票务，C 改名孩子与日常）。
 本文件是基于该版本的项目上下文快照；后续网页修改优先于此快照。
 
 ## 唯一信源
