@@ -354,6 +354,11 @@ a.sec-h{text-decoration:none}
 .olist{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .olist li{background:var(--surface);border-radius:8px;padding:8px 12px;font-size:14px}
 .olist small{display:block;color:var(--muted);font-size:12.5px}
+.city-h + .preset{margin:0 0 8px}
+.preset .fx{flex:1;min-width:12em;font-size:13.5px;color:var(--ink)}
+.pset{border:0;margin:14px 0 0}
+.pset legend{font-weight:700;font-size:14px;padding:6px 0 2px}
+.opt.won{margin-top:12px;background:var(--surface);border-radius:var(--r);padding:10px 12px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--tab-h) + 12px + env(safe-area-inset-bottom,0px));z-index:20;width:min(608px,calc(100% - 32px));display:flex;align-items:center;gap:12px;background:var(--ink);color:var(--bg);border-radius:10px;padding:10px 12px;font-size:14px;box-shadow:0 4px 16px rgba(0,0,0,.2)}
 .toast span{flex:1}
 .toast .btn{--line:var(--bg);color:var(--ink);background:var(--bg);border-color:var(--bg)}
@@ -410,6 +415,7 @@ a.sec-h{text-decoration:none}
     <section class="view" id="v-day" hidden></section>
     <section class="view" id="v-cards" hidden aria-label="活动卡片"></section>
     <section class="view" id="v-card" hidden></section>
+    <section class="view" id="v-museum" hidden aria-label="Museum 换日"></section>
     <section class="view" id="v-base" hidden></section>
     <section class="view" id="v-eat" hidden></section>
     <section class="view" id="v-shop" hidden></section>
