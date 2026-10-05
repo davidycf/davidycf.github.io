@@ -262,7 +262,12 @@ a.sec-h{text-decoration:none}
 .be .lk{margin-top:9px}
 
 /* ---------- appendix ---------- */
-.apx{margin-top:18px;background:var(--surface);border-radius:var(--r);padding:16px;scroll-margin-top:16px}
+.apx{margin-top:18px;background:var(--surface);border-radius:var(--r);padding:16px;scroll-margin-top:calc(env(safe-area-inset-top,0px) + 64px)}
+.inav .chips{padding-top:0}
+.inav .chip{font-family:var(--f-zh);font-weight:500;padding:5px 12px;gap:5px}
+.inav .chip::before{display:none}
+.inav .chip b{font-weight:700;font-size:13px;color:var(--muted)}
+.inav .chip.on b{color:inherit;opacity:.75}
 .apx .id{font-family:var(--f-ro);font-weight:700;letter-spacing:.12em;font-size:13px;color:var(--muted)}
 .apx h3{font-size:19px;margin-top:2px}
 .apx .ld{color:var(--muted);font-size:14px;margin-top:4px}
@@ -355,6 +360,7 @@ a.sec-h{text-decoration:none}
 .olist li{background:var(--surface);border-radius:8px;padding:8px 12px;font-size:14px}
 .olist small{display:block;color:var(--muted);font-size:12.5px}
 .city-h + .preset{margin:0 0 8px}
+#v-trip > .pbar{margin-top:22px}
 .preset .fx{flex:1;min-width:12em;font-size:13.5px;color:var(--ink)}
 .pset{border:0;margin:14px 0 0}
 .pset legend{font-weight:700;font-size:14px;padding:6px 0 2px}
