@@ -1,0 +1,534 @@
+{
+ "tags": {
+  "asakusa-core": {"label": "浅草核心（浅草寺／仲见世／雷门）", "visit": true},
+  "skytree-area": {"label": "晴空塔一带"},
+  "observation-deck": {"label": "展望台"},
+  "pokemon-center": {"label": "宝可梦中心"},
+  "aquarium": {"label": "水族馆"}
+ },
+ "aliases": {},
+ "cards": [
+  {
+   "id": "hanayashiki",
+   "city": "tokyo",
+   "size": "half",
+   "name": "花やしき",
+   "ja": "花やしき",
+   "ro": "Asakusa Hanayashiki",
+   "area": "東京｜浅草",
+   "title": "花やしき半日｜日本最老的游乐园",
+   "summary": "浅草寺旁边的小游乐园，设施小、节奏慢：上午玩到尽兴，午后回酒店。浅草寺、仲见世是另一回事，想顺路再勾支线。",
+   "time": "上午约 2–3 小时（估计）",
+   "transit": "筑波快线新御徒町 → 浅草一站，出站步行约 5 分钟；门到门约 15–20 分钟（估计）",
+   "load": "near",
+   "family": "0–4 岁免费入园，5 岁起买票：哥哥要买，妹妹免费。乘坐设施另买券，每张 ¥100；收费、身高和陪同限制逐项不同，比如忍者乐园从 3 岁起收费。离酒店近，随时能回。",
+   "booking": "不用预约，现场买票",
+   "rain": "室外设施为主，下雨不合适；可换 teamLab 或四谷玩具馆",
+   "hours": "10:00–18:00，随季节和天气变动",
+   "calendar": "休园日按官网营业日历；2027 年 3 月日历尚未发布，待核对",
+   "kinds": ["kids"],
+   "covers": [],
+   "opts": [
+    {"id": "asakusa-core", "label": "顺路逛浅草核心（浅草寺／仲见世／雷门）", "covers": ["asakusa-core"]}
+   ],
+   "route": [
+    {"at": "am", "text": "上午：10:00 开园前后到。先挑妹妹也能坐的慢速设施，再让哥哥选一两样；乘坐券按次买，玩到孩子尽兴就停，不用刷满。"},
+    {"at": "noon", "text": "中午：浅草就近吃，天丼、荞麦这类孩子吃得下的；排队长就换一家。"},
+    {"at": "pm", "opt": "asakusa-core", "text": "饭后顺路：浅草寺、仲见世、雷门走一小圈，约一小时（估计）。花やしき就在浅草寺西北侧，不用另坐车。"},
+    {"at": "pm", "text": "午后回酒店休息，下午不再排节目。"}
+   ],
+   "eat": [
+    {"text": "浅草午饭：想吃老店天丼选大黒家天麩羅；排队长就去天丼てんや，选择直接。"}
+   ],
+   "shop": [
+    {"opt": "asakusa-core", "text": "仲见世买一件记得住的小物就够。"},
+    {"unless": "asakusa-core", "text": "不安排购物。"}
+   ],
+   "see": [
+    {"text": "号称日本最老的游乐园，小而集中，孩子不用走远。"},
+    {"opt": "asakusa-core", "text": "浅草寺、仲见世和雷门只是顺路一圈，不必看全。"}
+   ],
+   "note": "休园日以官网营业日历为准。",
+   "rel": ["eat:T5", "see:T5@asakusa-core", "shop:T5@asakusa-core"],
+   "todos": ["hanayashiki-calendar"],
+   "links": [
+    {"label": "浅草花やしき：费用", "url": "https://www.hanayashiki.net/fee/"},
+    {"label": "浅草花やしき：营业日历", "url": "https://www.hanayashiki.net/businesshours/"}
+   ],
+   "checked": "2026/10/4"
+  },
+  {
+   "id": "teamlab",
+   "city": "tokyo",
+   "size": "half",
+   "name": "teamLab Planets",
+   "ja": "豊洲",
+   "ro": "teamLab Planets",
+   "area": "東京｜新豊洲",
+   "title": "teamLab 半日｜光与水的房间",
+   "summary": "上午唯一的预约项目：赤脚走过水和光的房间。之后就近吃饭，默认回酒店；丰洲海边、台场或坐船去浅草，只在精神好时选一个。",
+   "time": "上午馆内约 2 小时（估计）",
+   "transit": "新御徒町出发约 40 分钟，含换乘步行（估计）；出发前用换乘软件查",
+   "load": "mid",
+   "family": "推车不能入馆，馆外有停放处；可用前背式背带，暗处牵好孩子。水区要卷裤腿，带孩子整套换洗和装湿衣服的袋子。水温由馆方按季节调节，没有公布度数。未满 3 岁免票，妹妹出行时已满 3 岁，和哥哥一样买票；每位大人最多带 3 名儿童。",
+   "booking": "时段票，须提前网购；2027 年 3 月时段尚未开放",
+   "rain": "室内，雨天适用",
+   "hours": "按官网当日营业时间与时段",
+   "kinds": ["kids"],
+   "covers": [],
+   "opts": [
+    {"id": "pm-home", "group": "pm", "on": true, "label": "饭后回酒店"},
+    {"id": "pm-park", "group": "pm", "label": "丰洲公园海边散步"},
+    {"id": "pm-odaiba", "group": "pm", "label": "台场：高达店＋海边"},
+    {"id": "pm-boat", "group": "pm", "label": "水上巴士去浅草"}
+   ],
+   "route": [
+    {"at": "am", "text": "上午：按预约时段进馆，约 2 小时（估计）。推车留在馆外，进水区前卷好裤腿；官方不允许穿湿衣服继续进后面的作品。"},
+    {"at": "noon", "text": "中午：丰洲就近吃，LaLaport 丰洲美食区最好协调四个人的口味。"},
+    {"at": "pm", "opt": "pm-home", "text": "饭后回酒店，换洗、休息。今天不再接第二个项目。"},
+    {"at": "pm", "opt": "pm-park", "text": "饭后在丰洲公园和 LaLaport 海侧走 20–40 分钟（估计），看看海就回酒店。"},
+    {"at": "pm", "opt": "pm-odaiba", "text": "饭后坐百合鸥线去台场：DiverCity 7F 的 THE GUNDAM BASE TOKYO 看模型，再去海滨公园走走。户外独角兽高达立像已结束展示，只为高达店去。"},
+    {"at": "pm", "opt": "pm-boat", "text": "饭后从 LaLaport 丰洲码头坐水上巴士到浅草，航程现约 30 分钟；下船后河边短走、吃晚饭或直接回酒店。2026/8/1 起大幅减班，2027 年 3 月船班、票价与天气当天再查，到码头提前 10 分钟。"}
+   ],
+   "eat": [
+    {"text": "LaLaport 丰洲 Marina Kitchen 美食区：各点各的，洗手、休息方便。"},
+    {"opt": "pm-odaiba", "text": "台场：晚饭在 DiverCity 或 AQUA CiTY 解决，看完海就回。"},
+    {"opt": "pm-boat", "text": "坐船版：浅草下船后就近吃晚饭。"}
+   ],
+   "shop": [
+    {"opt": "pm-odaiba", "text": "THE GUNDAM BASE TOKYO：模型展示与商品为主，出发前看入店抽选／整理券公告。"},
+    {"unless": "pm-odaiba", "text": "不安排购物；大采购留给大阪。"}
+   ],
+   "see": [
+    {"text": "teamLab 是今天唯一的硬项目；下午四选一，累了就选回酒店。"},
+    {"text": "未来馆本次全程休馆（2027/4/23 才重开），丰洲燃气科学馆已闭馆，都不作雨天备选。"}
+   ],
+   "note": "2027 年 3 月时段开放后再订；订好后以票面日期为准，网页上换卡不会改票。",
+   "rel": ["eat:T6", "see:T6", "shop:T6T7@pm-odaiba"],
+   "todos": ["teamlab-slot", "water-bus@pm-boat"],
+   "checks": ["pack-teamlab"],
+   "links": [
+    {"label": "Planets 官方 Help：儿童票与陪同规则", "url": "https://teamlabplanets.dmm.com/en/help"},
+    {"label": "Planets 官方：幼儿、推车与换洗", "url": "https://support.dmm.com/teamlabplanets/article/47944"},
+    {"label": "Planets 官方：水温按季节调节", "url": "https://support.dmm.com/teamlabplanets/article/47835"},
+    {"label": "丰洲水上巴士：运营与班次", "url": "https://www.urbanlaunch.net/boarding/"}
+   ],
+   "checked": "2026/10/4"
+  },
+  {
+   "id": "ueno-akiba",
+   "city": "tokyo",
+   "size": "full",
+   "name": "上野／秋叶原",
+   "ja": "上野・秋葉原",
+   "ro": "Ueno · Akihabara",
+   "area": "東京｜上野 → 御徒町 → 秋葉原",
+   "title": "上野／御徒町／秋叶原｜酒店旁边的一整天",
+   "summary": "离酒店最近的一整天：上午上野公园和阿美横，下午经 2k540 走到秋叶原翻中古游戏和资料书。上午也可以换成一个馆：科学馆、动物园、东博最多选一个。",
+   "time": "整天，随时能回酒店",
+   "transit": "步行圈：酒店到上野、御徒町、秋叶原都能走，或坐一站",
+   "load": "near",
+   "family": "公园和阿美横让孩子边走边吃；秋叶原是爸爸的寻宝时段，ヨドバシ同楼汇合最省心。中途回酒店很容易。",
+   "booking": "街区不用预约；进馆选项按各馆规则",
+   "rain": "街区散步怕雨；下雨把上午换成科学馆",
+   "kinds": ["street", "shop", "kids"],
+   "covers": [],
+   "opts": [
+    {"id": "am-street", "group": "am", "on": true, "label": "上午：上野公园＋阿美横"},
+    {"id": "am-kahaku", "group": "am", "label": "上午换成国立科学博物馆", "closed": {"dow": [1], "text": "通常周一休馆，特别开放看官方日历"}},
+    {"id": "am-zoo", "group": "am", "label": "上午换成上野动物园", "closed": {"dow": [1], "text": "通常周一休园，特别开放看官方日历"}},
+    {"id": "am-tohaku", "group": "am", "label": "上午换成东京国立博物馆", "closed": {"dow": [1], "text": "通常周一休馆，遇节假日另看官方日历"}},
+    {"id": "kanda", "label": "顺路加神田明神"}
+   ],
+   "route": [
+    {"at": "am", "opt": "am-street", "text": "上午：上野公园、不忍池走一小段，再穿过阿美横（アメ横）边走边吃；水果串、小吃摊就是街区体验，不用挑店。"},
+    {"at": "am", "opt": "am-kahaku", "text": "上午：国立科学博物馆，挑恐龙或动物一两个展区，约 2 小时（估计）；不从每层第一块说明牌开始读。"},
+    {"at": "am", "opt": "am-zoo", "text": "上午：上野动物园，挑孩子最想看的几种动物，约 2 小时（估计）；出园后在公园歇一下。"},
+    {"at": "am", "opt": "am-tohaku", "text": "上午：东京国立博物馆本馆，选甲胄、刀剑或佛像一个方向，约 90–120 分钟（估计）；大人偏好，孩子要有耐心。"},
+    {"at": "noon", "text": "中午：上野或御徒町就近吃；想休息就先回酒店，酒店就在御徒町旁边。"},
+    {"at": "pm", "text": "下午：经铁路高架下的 2k540 AKI‑OKA ARTISAN 走到秋叶原。ヨドバシAkiba 找新品和任天堂「大統領」花札（3/19 带去吟游），Super Potato、駿河屋翻中古游戏，有兴趣再找攻略本、设定资料书。不逐店打卡。"},
+    {"at": "pm", "opt": "kanda", "text": "顺路加一站：从中央通往西走到神田明神，看看游戏店旁边的神社，约 30–45 分钟（估计）。"},
+    {"at": "eve", "text": "傍晚回御徒町吃晚饭，再去超市补给、回房洗衣。"}
+   ],
+   "eat": [
+    {"text": "阿美横边走边吃；正餐在上野、御徒町的商场餐厅层最省心。"},
+    {"text": "秋叶原：ヨドバシAkiba 餐饮层的うな匠可以吃一顿名古屋式鳗鱼三吃；省事就同楼随便吃。"}
+   ],
+   "shop": [
+    {"text": "ヨドバシAkiba：电器、玩具、相机楼层和花札，一家人同一栋楼好汇合。"},
+    {"text": "Super Potato、駿河屋：中古游戏比价看品相；想翻旧画集再加まんだらけ。"},
+    {"text": "东京最好买东京才有的：中古、限定款；常规周边和药妆留给大阪。"}
+   ],
+   "see": [
+    {"text": "上野公园免费，孩子能跑；樱花早开就顺路看两眼。"},
+    {"text": "Super Potato 楼上有复古游戏区：爸爸带孩子在老机器上玩一局初代马力欧。"}
+   ],
+   "note": "上午换成进馆时，街区上午就不再排；三个馆一次只选一个。各馆休馆按当天星期提示，2027 年日历待核对。",
+   "rel": ["see:T1", "see:T1B@am-kahaku", "see:T2", "eat:T2", "shop:T2"],
+   "todos": [],
+   "links": [
+    {"label": "国立科学博物馆：开放与休馆", "url": "https://www.kahaku.go.jp/riyou/nyukan-annai/"},
+    {"label": "上野动物园：开放与休园", "url": "https://www.tokyo-zoo.net/ueno/visitor-info/tickets/index.html"},
+    {"label": "东京国立博物馆", "url": "https://www.tnm.jp/"}
+   ],
+   "checked": "2026/10/4"
+  },
+  {
+   "id": "shibuya",
+   "city": "tokyo",
+   "size": "full",
+   "name": "涩谷",
+   "ja": "渋谷",
+   "ro": "Shibuya",
+   "area": "東京｜渋谷",
+   "title": "Nintendo + Pokémon｜再走一段428的涩谷",
+   "summary": "最明确的“游戏日本”放在一个街区：上午十字路口、八公、MAG8 和 PARCO 6F，饭后往东口去 MIYASHITA PARK，坐银座线回去。",
+   "time": "上午到午后；饭后看精神加项",
+   "transit": "上野广小路坐银座线直达涩谷，不用换乘，约 30 分钟（估计）",
+   "load": "mid",
+   "family": "MAG8 6 岁以下免费，推车要寄放，场内有台阶。PARCO 同楼有吃有逛，MIYASHITA PARK 屋顶草坪给孩子放电。",
+   "booking": "不用预约",
+   "rain": "PARCO 在室内；路口和公园怕雨",
+   "kinds": ["shop", "street"],
+   "covers": ["pokemon-center"],
+   "opts": [
+    {"id": "gigo", "label": "加项：GiGO 渋谷宮益坂"},
+    {"id": "hado", "label": "加项：茶亭羽當喝一杯"},
+    {"id": "dogenzaka", "label": "加项：道玄坂接着拍《428》"}
+   ],
+   "route": [
+    {"at": "am", "text": "上午：坐银座线到涩谷，早到就先过十字路口、看八公；MAG8 10:00 开门，上去俯拍一眼路口。"},
+    {"at": "am", "text": "然后进涩谷 PARCO 6F：Nintendo TOKYO 和 Pokémon Center 同一层，着重东京限定款。午饭在 PARCO 7F。"},
+    {"at": "pm", "text": "饭后往东走到 MIYASHITA PARK 屋顶草坪让孩子跑一跑，再从东口坐银座线回去。"},
+    {"at": "pm", "opt": "gigo", "text": "加项：东口宫益坂的 GiGO，就在去银座线的路上，进去转一圈。"},
+    {"at": "pm", "opt": "hado", "text": "加项：茶亭羽當喝一杯手冲，和 GiGO 同在东口这一侧。"},
+    {"at": "pm", "opt": "dogenzaka", "text": "加项：往西走道玄坂，接着拍《428》对照。"}
+   ],
+   "eat": [
+    {"text": "PARCO 7F 餐厅层直接解决最稳；也可回转寿司、拉面、定食。购物日吃得快、孩子吃得下更重要。"},
+    {"opt": "hado", "text": "茶亭羽當：老派手冲喫茶，自制芝士蛋糕也有名。"}
+   ],
+   "shop": [
+    {"text": "Nintendo TOKYO＋Pokémon Center SHIBUYA：着重东京限定款；常规款大阪也有，真喜欢的看到就买。"}
+   ],
+   "see": [
+    {"text": "带几张《428》截图，找原角度拍一组 2008／2027 对照：八公、路口、中心街、109 门口都还在。"},
+    {"text": "MIYASHITA PARK 给孩子放电；GiGO、道玄坂只在还有精神时加。"}
+   ],
+   "note": "睡眠不好就缩短下午，不用为了补进度晚归。",
+   "rel": ["eat:T3", "shop:T3", "see:T3"],
+   "todos": [],
+   "links": [],
+   "checked": "2026/10/4"
+  },
+  {
+   "id": "asakusa-skytree",
+   "city": "tokyo",
+   "size": "full",
+   "name": "浅草／晴空塔",
+   "ja": "浅草",
+   "ro": "Asakusa · Skytree",
+   "area": "東京｜浅草 → 押上",
+   "title": "浅草慢逛｜走到晴空塔脚下",
+   "summary": "上午浅草寺、仲见世、雷门，午后沿隅田川过河走到晴空塔：看外观、塔下拍全家照、在ソラマチ吃点东西休息。登塔、合羽桥、爸爸的银座相机街都是可选。",
+   "time": "整天，节奏慢",
+   "transit": "筑波快线新御徒町 → 浅草一站；回程押上坐都营浅草线到蔵前换大江户线，约 20 分钟（估计）",
+   "load": "near",
+   "family": "浅草寺一带人多，推车走仲见世会挤；晴空塔综合体室内有吃有坐，孩子累了好休息。",
+   "booking": "不用预约；登塔当天早上看天气在官网买票",
+   "rain": "浅草怕雨；下雨缩成ソラマチ室内",
+   "kinds": ["street", "landmark"],
+   "covers": ["skytree-area"],
+   "opts": [
+    {"id": "asakusa-core", "on": true, "label": "浅草核心（浅草寺／仲见世／雷门）", "covers": ["asakusa-core"]},
+    {"id": "skytree-up", "label": "登晴空塔展望台", "covers": ["observation-deck"]},
+    {"id": "kappabashi", "label": "合羽橋道具街", "closed": {"dow": [0], "text": "多数店周日休"}},
+    {"id": "ginza", "who": "dad", "label": "爸爸单独：银座中古相机", "closed": {"dow": [0], "text": "三共カメラ周日、节假日休"}}
+   ],
+   "route": [
+    {"at": "am", "opt": "asakusa-core", "text": "上午：浅草寺、仲见世、雷门慢慢走；不安排需要赶时段的项目。"},
+    {"at": "am", "unless": "asakusa-core", "text": "上午：浅草核心这次不逛，晚点出门，从浅草河边直接往晴空塔方向走。"},
+    {"at": "noon", "opt": "kappabashi", "text": "午饭前后从浅草往西走约 8–10 分钟（估计）到合羽橋道具街，看铁锅和厨具；看完回浅草再过河，下午会更满，孩子累了就跳过晴空塔那段直接回。"},
+    {"at": "noon", "text": "中午：浅草吃天丼、荞麦，或到ソラマチ 3F 美食区各选各的。"},
+    {"at": "pm", "text": "午后：沿隅田川经すみだリバーウォーク过河，走到晴空塔，约 30–60 分钟（估计）。河边有花就停 20–30 分钟，没开就继续。塔下拍全家照，在ソラマチ里吃点心、休息。"},
+    {"at": "pm", "opt": "skytree-up", "text": "登塔：天晴才上，当天早上在官网买票（窗口买每张多收 ¥500）。5 岁及以下免费，推车可以上；大人票按日期浮动。"},
+    {"at": "pm", "opt": "ginza", "who": "dad", "text": "爸爸单独：孩子回酒店休息或由妈妈带着时，爸爸从仲御徒町坐日比谷线到银座（约 10 分钟，估计）看中古相机和伊東屋，傍晚回来。"}
+   ],
+   "eat": [
+    {"text": "浅草：大黒家天麩羅的老店天丼，或天丼てんや；看孩子什么时候饿，就在哪一侧坐下。"},
+    {"text": "ソラマチ：3F 美食区各选各的；想吃寿司看 6F トリトン。"}
+   ],
+   "shop": [
+    {"opt": "asakusa-core", "text": "仲见世买一件记得住的小物。"},
+    {"opt": "kappabashi", "text": "合羽橋：釜浅商店、飯田屋看铁锅和钢锅铲，价格合适再考虑（压秤）。"},
+    {"opt": "ginza", "text": "银座：レモン社、三共カメラ等中古相机店多在 19:00–19:30 关门；伊東屋看文具。"},
+    {"text": "东京买的东西赶在寄箱前装进大箱子。"}
+   ],
+   "see": [
+    {"opt": "asakusa-core", "text": "浅草寺是东京传统感最集中的一站。"},
+    {"text": "晴空塔默认是地标停留：外观和塔下合照；登塔另选。"},
+    {"text": "すみだ水族館和晴空塔宝可梦店不在这张卡里；想要它们，换「押上」那张卡。"}
+   ],
+   "note": "隅田川的花只是顺路加分，没开就继续当天活动。",
+   "rel": ["eat:T5", "see:T5", "shop:T5", "shop:T8@ginza"],
+   "todos": [],
+   "links": [
+    {"label": "東京スカイツリー：票价", "url": "https://www.tokyo-skytree.jp/ticket/"}
+   ],
+   "checked": "2026/10/4"
+  },
+  {
+   "id": "oshiage",
+   "city": "tokyo",
+   "size": "half",
+   "name": "押上：晴空塔＋水族馆",
+   "ja": "押上",
+   "ro": "Oshiage · Skytree",
+   "area": "東京｜押上",
+   "title": "押上｜晴空塔展望台＋すみだ水族館",
+   "summary": "在晴空塔综合体里待一个上午：天晴上展望台，再看企鹅和水母，午饭在ソラマチ，饭后回酒店。离酒店近，几乎都在室内。",
+   "time": "上午约 3 小时（估计）",
+   "transit": "新御徒町坐大江户线一站到蔵前，换浅草线到押上；单程约 20 分钟（估计）",
+   "load": "near",
+   "family": "展望台 5 岁及以下免费，推车可以上。水族馆 3 岁以上幼儿 ¥900、3 岁以下免费；和大阪海游馆相比规模小得多。",
+   "booking": "不用预约；展望台当天早上官网买票，窗口买每张多收 ¥500",
+   "rain": "室内为主；下雨跳过展望台，水族馆＋ソラマチ照样成立",
+   "hours": "水族馆平日 10:00–20:00，无固定休馆日",
+   "kinds": ["kids", "landmark"],
+   "covers": ["skytree-area", "aquarium"],
+   "opts": [
+    {"id": "tembo", "on": true, "label": "上展望台（天晴）", "covers": ["observation-deck"]},
+    {"id": "pokemon", "label": "晴空塔宝可梦中心", "covers": ["pokemon-center"]}
+   ],
+   "route": [
+    {"at": "am", "opt": "tembo", "text": "10:00 晴空塔展望台：天晴才上。大人票 2026/4 起按日期浮动，¥1,800 起。生日当月去，凭证件在 4F 柜台领生日贴纸和遮阳帽。"},
+    {"at": "am", "text": "11:00 すみだ水族館：同一个综合体里，企鹅和水母为主，一个小时上下；大人 ¥2,700。"},
+    {"at": "noon", "text": "12:00 ソラマチ吃午饭，3F 美食区最省事。"},
+    {"at": "pm", "opt": "pokemon", "text": "饭后逛 East Yard 4F 的宝可梦中心。"},
+    {"at": "pm", "text": "午后回酒店休息。"}
+   ],
+   "eat": [
+    {"text": "ソラマチ 3F タベテラス各点各的；沾面爱好者看 6F 六厘舎。"}
+   ],
+   "shop": [
+    {"opt": "pokemon", "text": "宝可梦中心晴空塔店：涩谷已经有一家，只在孩子特别想时去。"},
+    {"unless": "pokemon", "text": "不安排购物。"}
+   ],
+   "see": [
+    {"text": "展望台和水族馆在同一个综合体里，不用来回走。"}
+   ],
+   "note": "「浅草／晴空塔」那张卡也会到晴空塔脚下，两张同时安排会重复。",
+   "rel": ["eat:T5"],
+   "todos": [],
+   "links": [
+    {"label": "すみだ水族館：票价", "url": "https://www.sumida-aquarium.com/about/price/"},
+    {"label": "東京スカイツリー：票价", "url": "https://www.tokyo-skytree.jp/ticket/"},
+    {"label": "东京晴空塔：生日服务（2025/3 改版）", "url": "https://prtimes.jp/main/html/rd/p/000000354.000041446.html"}
+   ],
+   "checked": "2026/10/3"
+  },
+  {
+   "id": "railway",
+   "city": "tokyo",
+   "size": "full",
+   "name": "鉄道博物館",
+   "ja": "大宮",
+   "ro": "Railway Museum · Omiya",
+   "area": "埼玉｜大宮",
+   "title": "鉄道博物館｜真车大厅与儿童区",
+   "summary": "火车迷的一个上午：儿童区キッズプラザ、真车大厅、户外小新干线。大宫比其他方案远，回程让孩子在车上睡。",
+   "time": "馆内约 3 小时（估计）＋往返",
+   "transit": "御徒町坐京滨东北线直达大宫约 40 分钟（或到上野换上野东京线快一些），再坐 New Shuttle 一站；单程约一小时（估计，含换乘步行）",
+   "load": "far",
+   "family": "3 岁以上学龄前当天票 ¥300、网上预购 ¥200。迷你列车要上小学才能驾驶，学龄前可以坐大人开的车；E5、车掌模拟器和驾驶体验要小学生以上，D51 要中学生以上，这次两个孩子都玩不了。",
+   "booking": "普通入馆不用预约；部分体验用「てっぱく抽選アプリ」抽选",
+   "rain": "室内为主，雨天适用",
+   "hours": "10:00–17:00",
+   "closed": {"dow": [2], "text": "每周二休馆"},
+   "kinds": ["kids"],
+   "covers": [],
+   "opts": [],
+   "route": [
+    {"at": "am", "text": "8:45 出门：御徒町坐京滨东北线直达大宫，再坐 New Shuttle 一站到“鉄道博物館”站。"},
+    {"at": "am", "text": "10:00 开馆就进：先去儿童区キッズプラザ，学龄前孩子在这里就能玩很久；再看真车大厅，户外小新干线可以坐（¥200）。"},
+    {"at": "noon", "text": "午饭：站台便当 11 点前就可能卖完，先买好；在“455 ランチトレイン”老车厢里吃，免费座位，中午前后就满。"},
+    {"at": "pm", "text": "12:30 前后往回走，14:00 前后到酒店休息。"}
+   ],
+   "eat": [
+    {"text": "馆内站台便当，在老车厢里吃。"}
+   ],
+   "shop": [],
+   "see": [
+    {"text": "真车大厅和キッズプラザ就够一个上午，不用看全馆。"}
+   ],
+   "note": "大宫是几个备选里第二远的，午后回程会碰上孩子犯困。",
+   "rel": [],
+   "todos": [],
+   "links": [
+    {"label": "鉄道博物館：利用案内", "url": "https://www.railway-museum.jp/information/"},
+    {"label": "鉄道博物館：体验的年龄与预约（FAQ）", "url": "https://www.railway-museum.jp/contact/"}
+   ],
+   "checked": "2026/10/3"
+  },
+  {
+   "id": "yokohama",
+   "city": "tokyo",
+   "size": "full",
+   "name": "横滨：面包超人＋杯面",
+   "ja": "横浜",
+   "ro": "Yokohama",
+   "area": "神奈川｜みなとみらい",
+   "title": "横滨｜杯面博物馆＋面包超人博物馆",
+   "summary": "最远的一个方案：上午自己画杯子做泡面，中午去面包超人博物馆。两处都要提前买票才保证能玩，回程让孩子在车上睡。",
+   "time": "上午到午后，约 4 小时（估计）＋往返",
+   "transit": "上野坐上野东京线到横滨约三十多分钟，再换港未来线；单程约一小时（估计，含换乘步行）",
+   "load": "far",
+   "late": true,
+   "family": "杯面博物馆高中生以下免费，大人 ¥500；画杯子做一杯泡面每杯 ¥500，约 45 分钟。面包超人博物馆一楼的店和餐厅免费进；二、三楼 1 岁以上 ¥2,200–2,800，两个孩子都要买。",
+   "booking": "杯面 DIY 提前网购带体验券的入馆票（可买到前一天），不然有余量才领号；面包超人二、三楼买指定入场时间的网票（来馆前 28 天开售），当天 8:59 前取消免费，9:00 起收 20%",
+   "rain": "室内为主，雨天适用",
+   "closed": {"dow": [2], "text": "杯面博物馆每周二休馆"},
+   "kinds": ["kids"],
+   "covers": [],
+   "opts": [],
+   "route": [
+    {"at": "am", "text": "8:45 出门：上野坐上野东京线到横滨，再换港未来线。"},
+    {"at": "am", "text": "10:00 カップヌードルミュージアム（港未来站步行约 8 分钟，估计）：画杯子、做一杯自己的泡面。"},
+    {"at": "noon", "text": "12:00 前后移到アンパンマンこどもミュージアム（新高島站 3 号出口步行约 3 分钟，估计），一楼餐厅吃午饭，再按票面时段上二、三楼；最后入场 16:00。"},
+    {"at": "pm", "text": "14:00 前后往回走，回程让孩子在车上睡。"}
+   ],
+   "eat": [
+    {"text": "午饭在面包超人博物馆一楼的餐厅解决。"}
+   ],
+   "shop": [
+    {"text": "面包超人一楼的店免费进，看到喜欢的再买。"}
+   ],
+   "see": [
+    {"text": "2027 年春面包超人博物馆要改装三楼，官方说施工期间照常营业。"}
+   ],
+   "note": "这一天回酒店比其他方案晚；放在有固定晚饭的日子，晚饭时间要往后推。",
+   "rel": [],
+   "todos": ["yokohama-tickets"],
+   "links": [
+    {"label": "カップヌードルミュージアム 横浜", "url": "https://www.cupnoodles-museum.jp/ja/yokohama/"},
+    {"label": "カップヌードルミュージアム：マイカップヌードルファクトリー", "url": "https://www.cupnoodles-museum.jp/ja/yokohama/attractions/mc-factory/"},
+    {"label": "横浜アンパンマンこどもミュージアム：门票与时间", "url": "https://www.yokohama-anpanman.jp/guide/"},
+    {"label": "横浜アンパンマン：票务与取消规则", "url": "https://www.yokohama-anpanman.jp/news/article/l1moa4r0yp0e3dns.html"}
+   ],
+   "checked": "2026/10/3"
+  },
+  {
+   "id": "toy-museum",
+   "city": "tokyo",
+   "size": "half",
+   "name": "東京おもちゃ美術館",
+   "ja": "四谷",
+   "ro": "Tokyo Toy Museum",
+   "area": "東京｜四谷三丁目",
+   "title": "東京おもちゃ美術館｜木头玩具里放电",
+   "summary": "旧小学校舍改成的玩具馆，以木头玩具为主，0 岁就能玩。下雨或只想纯放电的上午用它，可以当天取消。",
+   "time": "上午约 2 小时（估计）",
+   "transit": "地铁到丸之内线四谷三丁目，出站步行约 7 分钟；单程约半小时（估计）",
+   "load": "mid",
+   "family": "有电梯和无障碍设施。大人 ¥1,100，儿童票价看官网。",
+   "booking": "按时段网购；信用卡或 d払い 付款可在来馆当天日本时间 9:59 前整单取消，7-Eleven 店头付款不能取消",
+   "rain": "室内，雨天适用",
+   "hours": "10:00–16:00",
+   "closed": {"dow": [4], "text": "每周四休馆"},
+   "kinds": ["kids"],
+   "covers": [],
+   "opts": [],
+   "route": [
+    {"at": "am", "text": "9:30 出门，坐地铁到四谷三丁目。"},
+    {"at": "am", "text": "10:00–12:00 玩具馆：木头玩具区让孩子自己挑，不用每个房间都进。"},
+    {"at": "noon", "text": "午饭在四谷三丁目附近吃。"},
+    {"at": "pm", "text": "13:30 前后回酒店休息。"}
+   ],
+   "eat": [
+    {"text": "四谷三丁目附近就近吃。"}
+   ],
+   "shop": [],
+   "see": [],
+   "note": "早上孩子状态不好，按时取消即可。",
+   "rel": [],
+   "todos": ["toy-museum-ticket"],
+   "links": [
+    {"label": "東京おもちゃ美術館：常见问题", "url": "https://art-play.or.jp/ttm/faq/"}
+   ],
+   "checked": "2026/10/3"
+  },
+  {
+   "id": "tokyo-tower",
+   "city": "tokyo",
+   "size": "half",
+   "name": "东京塔",
+   "ja": "東京タワー",
+   "ro": "Tokyo Tower",
+   "area": "東京｜芝公園",
+   "title": "东京塔｜另一种东京地标",
+   "summary": "想要一个地标、又不想去晴空塔时的替代：红白铁塔，150 m 的 Main Deck。和晴空塔展望台二选一，不同时排。",
+   "time": "上午半天（估计）",
+   "transit": "新御徒町坐大江户线直达赤羽橋，再步行几分钟；单程约 30 分钟（估计）",
+   "load": "mid",
+   "family": "带小孩的设施与推车规定看官网“小さなお子様をお連れのお客様へ”。",
+   "booking": "票价与是否需要预约，购票前看官网",
+   "rain": "展望台在室内；下雨看不远",
+   "hours": "Main Deck 9:00–23:00（最终入场 22:30）",
+   "kinds": ["landmark"],
+   "covers": [],
+   "opts": [
+    {"id": "deck", "on": true, "label": "上 150 m Main Deck", "covers": ["observation-deck"]}
+   ],
+   "route": [
+    {"at": "am", "text": "上午：坐大江户线到赤羽橋，先在塔下和芝公园一侧拍全家照。"},
+    {"at": "am", "opt": "deck", "text": "上 150 m 的 Main Deck 看一圈；天气差就只看外观。"},
+    {"at": "noon", "text": "中午附近吃，饭后回酒店休息。"}
+   ],
+   "eat": [],
+   "shop": [],
+   "see": [],
+   "note": "票价、儿童票和开放公告这次没有逐项核对，选它之前先查官网。",
+   "rel": [],
+   "todos": [],
+   "links": [
+    {"label": "東京タワー 官网", "url": "https://www.tokyotower.co.jp/"}
+   ],
+   "checked": "2026/10/4"
+  },
+  {
+   "id": "rest-tokyo",
+   "city": "tokyo",
+   "size": "half",
+   "multi": true,
+   "name": "留白日",
+   "ja": "留白",
+   "ro": "Free Day",
+   "area": "東京｜酒店附近",
+   "title": "留白日｜什么都不排",
+   "summary": "上午在酒店附近走走，下午看状态。到日本的头几天，这种余地对两个学龄前孩子本身就很有价值。",
+   "time": "随意",
+   "transit": "酒店附近",
+   "load": "near",
+   "family": "累了随时回房；孩子想动就去竹町公园。",
+   "booking": "不用预约",
+   "rain": "下雨就在房里休息、洗衣",
+   "kinds": ["rest"],
+   "covers": [],
+   "opts": [],
+   "route": [
+    {"at": "am", "text": "上午：酒店附近散步，竹町公园让孩子跑一跑，超市、便利店补给。"},
+    {"at": "pm", "text": "下午：看状态。想动就从「宿 · 新御徒町」挑一个近场地方；不想动就在房里休息、洗衣。"}
+   ],
+   "eat": [
+    {"text": "就在酒店附近吃，选择见「宿 · 新御徒町」。"}
+   ],
+   "shop": [],
+   "see": [],
+   "note": "",
+   "rel": ["base:T"],
+   "todos": [],
+   "links": [],
+   "checked": "2026/10/4"
+  }
+ ]
+}
