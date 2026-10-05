@@ -18,7 +18,7 @@
    every day opens under a 駅名標-style station sign. Bottom tab bar switches 行程 / 宿 / 吃 / 买 / 玩 / 附录. */
 :root{
   --bg:#EEF1EF; --surface:#FFFFFF; --sunk:#E3E8E5; --ink:#15191C; --muted:#586168; --rule:#D3D9D6;
-  --tokyo:#2256A3; --hakone:#2A7A50; --osaka:#CC5420; --travel:#66717C; --night:#4D4A93; --misc:#7A6A3A;
+  --tokyo:#2256A3; --mishima:#0B7480; --hakone:#2A7A50; --osaka:#CC5420; --travel:#66717C; --night:#4D4A93; --misc:#7A6A3A;
   --check:#A8302E; --check-bg:#F6E6E3; --on-line:#FFFFFF;
   --f-ja:"BIZ UDPGothic","Hiragino Kaku Gothic ProN","Noto Sans JP","Noto Sans SC",sans-serif;
   --f-zh:"Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
@@ -27,11 +27,11 @@
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#101416; --surface:#1A1F22; --sunk:#151A1C; --ink:#E6EAE8; --muted:#98A2A7; --rule:#2B3337;
-  --tokyo:#78A2E6; --hakone:#5EBB89; --osaka:#F08A55; --travel:#A0AAB4; --night:#A4A1EA; --misc:#CDB77A;
+  --tokyo:#78A2E6; --mishima:#4CC3CC; --hakone:#5EBB89; --osaka:#F08A55; --travel:#A0AAB4; --night:#A4A1EA; --misc:#CDB77A;
   --check:#F08A84; --check-bg:#2E1E1D; --on-line:#0E1214; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#101416; --surface:#1A1F22; --sunk:#151A1C; --ink:#E6EAE8; --muted:#98A2A7; --rule:#2B3337;
-  --tokyo:#78A2E6; --hakone:#5EBB89; --osaka:#F08A55; --travel:#A0AAB4; --night:#A4A1EA; --misc:#CDB77A;
+  --tokyo:#78A2E6; --mishima:#4CC3CC; --hakone:#5EBB89; --osaka:#F08A55; --travel:#A0AAB4; --night:#A4A1EA; --misc:#CDB77A;
   --check:#F08A84; --check-bg:#2E1E1D; --on-line:#0E1214; color-scheme:dark}
 
 *{box-sizing:border-box}
@@ -43,7 +43,7 @@ a{color:inherit}
 .wrap{max-width:640px;margin:0 auto;padding-inline:16px;padding-block:0 calc(var(--tab-h) + 28px + env(safe-area-inset-bottom,0px))}
 h1,h2,h3{text-wrap:balance;margin:0;line-height:1.3}
 p{margin:0}
-.c-tokyo{--line:var(--tokyo)} .c-hakone{--line:var(--hakone)} .c-osaka{--line:var(--osaka)}
+.c-tokyo{--line:var(--tokyo)} .c-mishima{--line:var(--mishima)} .c-hakone{--line:var(--hakone)} .c-osaka{--line:var(--osaka)}
 .c-dep,.c-ret{--line:var(--travel)} .c-night{--line:var(--night)} .c-misc{--line:var(--misc)}
 
 /* ---------- masthead ---------- */
@@ -425,12 +425,12 @@ textarea.io{display:block;width:100%;margin-top:8px;font:13px/1.5 ui-monospace,M
 <div class="wrap">
   <header class="mast" id="mast">
     <div class="eyebrow">Japan 2027 · Family Field Guide</div>
-    <h1 lang="ja">東京 → 箱根 → 大阪<small>两大两小 · 2027/3/13–3/27 · 15 天</small></h1>
+    <h1 lang="ja">東京 → 三島 → 大阪<small>两大两小 · 2027/3/13–3/27 · 15 天</small></h1>
     <div class="status" id="status"></div>
     <div class="route" aria-label="全程路线">
       <div class="seg c-dep"><span class="nm">ORD</span><span class="nt">3/13</span></div>
       <div class="seg c-tokyo"><span class="nm" lang="ja">東京</span><span class="nt">5 泊 · 3/14</span></div>
-      <div class="seg c-hakone"><span class="nm" lang="ja">箱根</span><span class="nt">2 泊</span></div>
+      <div class="seg c-mishima"><span class="nm" lang="ja">三島</span><span class="nt">2 泊</span></div>
       <div class="seg c-osaka"><span class="nm" lang="ja">大阪</span><span class="nt">5 泊 · 3/21</span></div>
       <div class="seg c-ret end"><span class="nm" lang="ja">羽田</span><span class="nt">1 泊</span></div>
     </div>

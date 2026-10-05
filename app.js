@@ -10,8 +10,8 @@ let D, CARDS = dict(), TAGS = dict(), APX = dict(), APX_ORDER = [];
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const pad = n => String(n).padStart(2,'0');
-const CITY = {dep:['出发','Departure'], tokyo:['東京','Tokyo'], hakone:['箱根','Hakone'], osaka:['大阪','Osaka'], ret:['返程','Return'], misc:['索引与心得','Index & tips']};
-const STAY = {dep:'机上', tokyo:'MONday 上野新御徒町 · 5 晚', hakone:'箱根吟游 · 月・和室 · 2 晚 · 申请中', osaka:'MONday apart 心斋桥 · 5 晚', ret:'Villa Fontaine 羽田 T3 · 1 晚'};
+const CITY = {dep:['出发','Departure'], tokyo:['東京','Tokyo'], mishima:['三島','Mishima'], hakone:['箱根','Hakone'], osaka:['大阪','Osaka'], ret:['返程','Return'], misc:['索引与心得','Index & tips']};
+const STAY = {dep:'机上', tokyo:'MONday 上野新御徒町 · 5 晚', mishima:'富士山三島東急 · 2 晚 · 暂定', hakone:'本次不住 · 卡片保留', osaka:'MONday apart 心斋桥 · 5 晚', ret:'Villa Fontaine 羽田 T3 · 1 晚'};
 const BOOK = {eat:['吃','食'], shop:['买','买'], see:['玩','观']};
 const KIND = {eat:['食','吃饭'], snack:['甜','小吃甜点'], shop:['买','买'], see:['观','看 · 逛'], kids:['遊','孩子放电'], night:['夜','九点以后']};
 const CKIND = {kids:'亲子', street:'街区', shop:'购物', landmark:'地标', rest:'留白'};
@@ -339,7 +339,7 @@ function prepList(c, sel, extra){
 function renderTrip(){
   const groups = [];
   D.days.forEach(d => { const g = groups[groups.length-1]; if (g && g.city === d.city) g.days.push(d); else groups.push({city:d.city, days:[d]}); });
-  let h = '<div class="vhead"><h2>行程 · 15 站</h2><p>每天一个主项目。东京、箱根、大阪的活动日都可以“换活动”，移动日和日期固定的事不跟着变。</p></div>' + segNav('trip') + planBanner();
+  let h = '<div class="vhead"><h2>行程 · 15 站</h2><p>每天一个主项目。东京、三岛、大阪的活动日都可以“换活动”，移动日和日期固定的事不跟着变。</p></div>' + segNav('trip') + planBanner();
   groups.forEach(g => {
     h += '<div class="c-'+g.city+'"><div class="city-h"><span class="nm" lang="ja">'+CITY[g.city][0]+'</span><span class="ro">'+CITY[g.city][1]+'</span><span class="cstay">'+esc(STAY[g.city])+'</span></div>'
       + (D.cards.presets || []).filter(ps => Object.keys(ps.options[0].days).some(id => dayById(id).city === g.city)).map(presetRow).join('')
@@ -485,10 +485,10 @@ function cardItem(c){
 }
 function renderCards(){
   const v = $('#v-cards');
-  let h = '<div class="vhead"><h2>活动卡片</h2><p>可以安排到东京、箱根、大阪活动日的活动。每张卡是一次出游：推荐顺序、有限的支线、准备事项。点名字看详情，在详情里“安排到哪天”。</p></div>' + segNav('cards') + planBanner()
+  let h = '<div class="vhead"><h2>活动卡片</h2><p>可以安排到东京、三岛、大阪活动日的活动。箱根两晚本次已撤，箱根的卡片作为资料保留。每张卡是一次出游：推荐顺序、有限的支线、准备事项。点名字看详情，在详情里“安排到哪天”。</p></div>' + segNav('cards') + planBanner()
     + '<div class="tools"><div class="search"><input id="q-cards" type="search" placeholder="搜活动：中文、日文、内容…" aria-label="搜索活动卡片" autocomplete="off" value="'+esc(cfilter.q)+'"><button type="button"'+(cfilter.q?'':' hidden')+'>清除</button></div>'
     + '<div class="bchips" role="group" aria-label="筛选">'
-    + [['st','all','全部'],['st','on','已安排'],['st','off','未安排']].concat(['tokyo','hakone','osaka'].map(c => ['city',c,CITY[c][0]]), Object.entries(CKIND).map(([k,l]) => ['k',k,l]))
+    + [['st','all','全部'],['st','on','已安排'],['st','off','未安排']].concat(['tokyo','mishima','osaka','hakone'].map(c => ['city',c,CITY[c][0]]), Object.entries(CKIND).map(([k,l]) => ['k',k,l]))
         .map(([f,val,l]) => '<button type="button" class="chip'+(cfilter[f]===val?' on':'')+'" data-f="'+f+'" data-v="'+val+'" aria-pressed="'+(cfilter[f]===val)+'">'+l+'</button>').join('')
     + '</div></div><div class="cres"></div>'
     + '<p class="small">移动日（3/13–14、3/19、3/21、3/26–27）是固定行程，不放卡片。</p>';
@@ -513,7 +513,7 @@ function cardResults(){
   const out = $('#v-cards .cres');
   if (!cs.length){ out.innerHTML = '<p class="empty">没有符合的活动。'+(q ? '换个词，或者清除筛选。' : '')+'</p>'; return; }
   let h = '';
-  ['tokyo','hakone','osaka'].forEach(city => {
+  ['tokyo','mishima','osaka','hakone'].forEach(city => {
     const g = cs.filter(c => c.city === city); if (!g.length) return;
     h += '<div class="c-'+city+'"><div class="city-h"><span class="nm" lang="ja">'+CITY[city][0]+'</span><span class="ro">'+CITY[city][1]+'</span><span class="cstay">'+g.length+' 张</span></div><ul class="cards">'+g.map(cardItem).join('')+'</ul></div>';
   });
@@ -535,7 +535,9 @@ function renderCard(id){
     + '<dl class="facts">'+fact('时间', c.time)+fact('交通', c.transit+'（'+LOAD[c.load]+'）')+fact('家庭', c.family)+fact('预约', c.booking)+fact('雨天', c.rain)
       + fact('营业', c.hours)+fact('休馆', c.closed && c.closed.text)+fact('待核对', c.calendar)
       + (c.ticket ? fact('票', bookedDay(c) ? '已登记票面 '+dayById(bookedDay(c)).date+'（本机）' : '还没登记；订好后在安排到的那一天页面上登记') : '')+'</dl>'
-    + '<div class="blk"><div class="lbl">安排到哪天 <span class="en">PLACE</span></div><ul class="places">'
+    + '<div class="blk"><div class="lbl">安排到哪天 <span class="en">PLACE</span></div>'
+    + (days.length ? '' : '<p class="small">这次行程没有住'+esc(CITY[c.city][0])+'的日子，这张卡只作资料保留。</p>')
+    + '<ul class="places">'
     + days.map(d => { const cur = cardOf(d), here = cur.id === c.id, r = check(c, d, {vacate: c.multi ? [] : at.map(x => x.id)});
         return '<li class="place"><div class="pl"><a href="#d'+d.n+'"><b>'+d.date+' '+esc(d.dow)+'</b></a><span>现在：'+esc(cur.name)+((d.fixed.short||[]).length ? ' · 固定：'+esc(d.fixed.short.join('、')) : '')+'</span></div>'
           + (here ? '<p class="small"><b>已安排在这天</b></p>'+(c.multi ? '' : '<div class="pa"><button type="button" class="btn ghost" data-act="place" data-card="'+restCard(c.city).id+'" data-day="'+d.id+'">从这天移除（改成留白）</button></div>')
@@ -926,7 +928,7 @@ function renderBookBody(b){
   const B = D.books[b], q = query[b].toLowerCase();
   let h = '';
   if (!q){
-    ['tokyo','hakone','osaka','misc'].forEach(c => {
+    ['tokyo','mishima','osaka','hakone','misc'].forEach(c => {
       const secs = B.sections.filter(s => s.city === c); if (!secs.length) return;
       h += '<div class="c-'+c+'"><div class="city-h"><span class="nm" lang="ja">'+CITY[c][0]+'</span><span class="ro">'+CITY[c][1]+'</span><span class="cstay">'+secs.length+' 站</span></div>'
         + '<div class="stns">'+secs.map(s => stnLink(b, s)).join('')+'</div></div>';
