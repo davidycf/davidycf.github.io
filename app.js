@@ -11,7 +11,7 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const pad = n => String(n).padStart(2,'0');
 const CITY = {dep:['出发','Departure'], tokyo:['東京','Tokyo'], mishima:['三島','Mishima'], hakone:['箱根','Hakone'], osaka:['大阪','Osaka'], ret:['返程','Return'], misc:['索引与心得','Index & tips']};
-const STAY = {dep:'机上', tokyo:'MONday 上野新御徒町 · 5 晚', mishima:'富士山三島東急 · 2 晚 · 暂定', hakone:'本次不住 · 卡片保留', osaka:'MONday apart 心斋桥 · 5 晚', ret:'Villa Fontaine 羽田 T3 · 1 晚'};
+const STAY = {dep:'机上', tokyo:'MONday 上野新御徒町 · 5 晚', mishima:'富士山三島東急 · 2 晚 · 已订', hakone:'本次不住 · 卡片保留', osaka:'MONday apart 心斋桥 · 5 晚', ret:'Villa Fontaine 羽田 T3 · 1 晚'};
 const BOOK = {eat:['吃','食'], shop:['买','买'], see:['玩','观']};
 const KIND = {eat:['食','吃饭'], snack:['甜','小吃甜点'], shop:['买','买'], see:['观','看 · 逛'], kids:['遊','孩子放电'], night:['夜','九点以后']};
 const CKIND = {kids:'亲子', street:'街区', shop:'购物', landmark:'地标', rest:'留白'};
@@ -499,7 +499,7 @@ function cardItem(c){
 }
 function renderCards(){
   const v = $('#v-cards');
-  let h = '<div class="vhead"><h2>活动卡片</h2><p>可以安排到东京、三岛、大阪活动日的活动。箱根两晚本次已撤，箱根的卡片作为资料保留。每张卡是一次出游：推荐顺序、有限的支线、准备事项。点名字看详情，在详情里“安排到哪天”。</p></div>' + segNav('cards') + planBanner()
+  let h = '<div class="vhead"><h2>活动卡片</h2><p>可以安排到东京、三岛、大阪活动日的活动。每张卡是一次出游：推荐顺序、有限的支线、准备事项。点名字看详情，在详情里“安排到哪天”。</p></div>' + segNav('cards') + planBanner()
     + '<div class="tools"><div class="search"><input id="q-cards" type="search" placeholder="搜活动：中文、日文、内容…" aria-label="搜索活动卡片" autocomplete="off" value="'+esc(cfilter.q)+'"><button type="button"'+(cfilter.q?'':' hidden')+'>清除</button></div>'
     + '<div class="bchips" role="group" aria-label="筛选">'
     + [['st','all','全部'],['st','on','已安排'],['st','off','未安排']].concat(['tokyo','mishima','osaka','hakone'].map(c => ['city',c,CITY[c][0]]), Object.entries(CKIND).map(([k,l]) => ['k',k,l]))
