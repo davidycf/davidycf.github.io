@@ -78,7 +78,7 @@ function loadPlan(){
   let dropped = [];
   Object.entries(p.days || {}).forEach(([dayId, cid]) => {
     const d = D.days.find(x => x.id === dayId), id = alias(cid);
-    if (d && d.slot && id && CARDS[id].city === d.city) plan.days[dayId] = id;
+    if (d && d.slot && id && !blockOf(CARDS[id], d)) plan.days[dayId] = id;
     else dropped.push((d ? d.date : dayId)+' → '+cid);
   });
   Object.entries(p.opts || {}).forEach(([cid, o]) => { const id = alias(cid); if (!id || !o) return;
@@ -171,12 +171,16 @@ function view(d){
 /* ----- checks: hard block / needs verifying / preference ----- */
 // c.avoid {dow, text}: weekdays the card works but is a bad idea (e.g. Skywalk on weekends) — a hint, not a block
 const avoidOn = (c, d) => !!(c.avoid && c.avoid.dow.includes(dowOf(d)));
+// Why card c can never go on day d (null when it can). Also used to drop saved choices that no longer fit.
+function blockOf(c, d){
+  if (!d.slot) return d.date+' 是移动或固定行程日，不放活动卡';
+  if (c.city !== d.city) return '这张卡在'+CITY[c.city][0]+'，'+d.date+' 住'+CITY[d.city][0];
+  if (c.closed && c.closed.dow.includes(dowOf(d))) return d.date+' 是'+DOW[dowOf(d)]+'：'+c.closed.text;
+  if (d.slot.half && c.size === 'full') return d.date+' 只排半天的活动：'+d.slot.half;
+  return null;
+}
 function check(c, d, opts){
-  const r = {block:null, verify:[], pref:[]};
-  if (!d.slot) r.block = d.date+' 是移动或固定行程日，不放活动卡';
-  else if (c.city !== d.city) r.block = '这张卡在'+CITY[c.city][0]+'，'+d.date+' 住'+CITY[d.city][0];
-  else if (c.closed && c.closed.dow.includes(dowOf(d))) r.block = d.date+' 是'+DOW[dowOf(d)]+'：'+c.closed.text;
-  else if (d.slot.half && c.size === 'full') r.block = d.date+' 只排半天的活动：'+d.slot.half;
+  const r = {block:blockOf(c, d), verify:[], pref:[]};
   if (r.block) return r;
   if (c.calendar) r.verify.push(c.calendar);
   const bd = opts && 'booked' in opts ? opts.booked : bookedDay(c);
