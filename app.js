@@ -10,8 +10,8 @@ let D, CARDS = dict(), TAGS = dict(), APX = dict(), APX_ORDER = [];
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const pad = n => String(n).padStart(2,'0');
-const CITY = {dep:['出发','Departure'], tokyo:['東京','Tokyo'], hakone:['箱根','Hakone'], osaka:['大阪','Osaka'], ret:['返程','Return'], misc:['索引与心得','Index & tips']};
-const STAY = {dep:'机上', tokyo:'MONday 上野新御徒町 · 5 晚', hakone:'箱根吟游 · 月・和室 · 2 晚 · 申请中', osaka:'MONday apart 心斋桥 · 5 晚', ret:'Villa Fontaine 羽田 T3 · 1 晚'};
+const CITY = {dep:['出发','Departure'], tokyo:['東京','Tokyo'], mishima:['三島','Mishima'], hakone:['箱根','Hakone'], osaka:['大阪','Osaka'], ret:['返程','Return'], misc:['索引与心得','Index & tips']};
+const STAY = {dep:'机上', tokyo:'MONday 上野新御徒町 · 5 晚', mishima:'富士山三島東急 · 2 晚 · 暂定', hakone:'本次不住 · 卡片保留', osaka:'MONday apart 心斋桥 · 5 晚', ret:'Villa Fontaine 羽田 T3 · 1 晚'};
 const BOOK = {eat:['吃','食'], shop:['买','买'], see:['玩','观']};
 const KIND = {eat:['食','吃饭'], snack:['甜','小吃甜点'], shop:['买','买'], see:['观','看 · 逛'], kids:['遊','孩子放电'], night:['夜','九点以后']};
 const CKIND = {kids:'亲子', street:'街区', shop:'购物', landmark:'地标', rest:'留白'};
@@ -78,7 +78,7 @@ function loadPlan(){
   let dropped = [];
   Object.entries(p.days || {}).forEach(([dayId, cid]) => {
     const d = D.days.find(x => x.id === dayId), id = alias(cid);
-    if (d && d.slot && id && CARDS[id].city === d.city) plan.days[dayId] = id;
+    if (d && d.slot && id && !blockOf(CARDS[id], d)) plan.days[dayId] = id;
     else dropped.push((d ? d.date : dayId)+' → '+cid);
   });
   Object.entries(p.opts || {}).forEach(([cid, o]) => { const id = alias(cid); if (!id || !o) return;
@@ -130,7 +130,9 @@ function selOpts(c, d){
 const shows = (x, sel) => (!x.opt || sel.includes(x.opt)) && (!x.unless || !sel.includes(x.unless));
 // A date with its own dinner (fixed eat/plan item marked dinner) replaces the card's dinner
 // suggestions (dinner:true); items marked withFixedDinner only show on such dates.
-const hasFixedDinner = d => !!d.slot && [...d.fixed.plan, ...(d.fixed.eat || [])].some(x => x.dinner);
+// Lunch works the same way (lunch:true), e.g. 3/19's fixed eel lunch.
+const fixedMeal = (d, k) => d.slot ? [...d.fixed.plan, ...(d.fixed.eat || [])].find(x => x[k]) : null;
+const hasFixedDinner = d => !!fixedMeal(d, 'dinner');
 // One card item as it reads on day d: null when it doesn't apply, or the alt text when it is
 // closed that weekday (e.g. 2k540 on Wednesdays). Without a day (card page) everything shows.
 function itemOn(x, sel, d, adj){
@@ -139,6 +141,7 @@ function itemOn(x, sel, d, adj){
   const fd = hasFixedDinner(d);
   if (x.withFixedDinner && !fd) return null;
   if (x.dinner && fd){ adj.dinner = true; return null; }
+  if (x.lunch && fixedMeal(d, 'lunch')){ adj.lunch = true; return null; }
   if (x.closed && x.closed.dow.includes(dowOf(d))){ adj.closed.add(x.closed.text); return x.alt ? {...x, text:x.alt} : null; }
   return x;
 }
@@ -155,7 +158,7 @@ const todoActive = t => !t.card || activeRef(t.card, t.opt);
 function view(d){
   if (!d.slot) return {ja:d.ja, ro:d.ro, area:d.area, title:d.title, sub:d.sub, plan:d.plan, eat:d.eat, shop:d.shop, see:d.see,
     stay:d.stay, note:d.note, rel:d.rel, judge:d.judge, short:[]};
-  const c = cardOf(d), sel = selOpts(c, d), fx = d.fixed, adj = {dinner:false, closed:new Set()};
+  const c = cardOf(d), sel = selOpts(c, d), fx = d.fixed, adj = {dinner:false, lunch:false, closed:new Set()};
   const on = k => c[k].map(x => itemOn(x, sel, d, adj)).filter(Boolean);
   const steps = [...on('route'), ...fx.plan.map(x => ({...x, fixed:true}))]
     .map((x, i) => [x, i]).sort((a, b) => AT[a[0].at]-AT[b[0].at] || a[1]-b[1]).map(a => a[0]);
@@ -166,17 +169,25 @@ function view(d){
 }
 
 /* ----- checks: hard block / needs verifying / preference ----- */
+// c.avoid {dow, text}: weekdays the card works but is a bad idea (e.g. Skywalk on weekends) — a hint, not a block
+const avoidOn = (c, d) => !!(c.avoid && c.avoid.dow.includes(dowOf(d)));
+// Why card c can never go on day d (null when it can). Also used to drop saved choices that no longer fit.
+function blockOf(c, d){
+  if (!d.slot) return d.date+' 是移动或固定行程日，不放活动卡';
+  if (c.city !== d.city) return '这张卡在'+CITY[c.city][0]+'，'+d.date+' 住'+CITY[d.city][0];
+  if (c.closed && c.closed.dow.includes(dowOf(d))) return d.date+' 是'+DOW[dowOf(d)]+'：'+c.closed.text;
+  if (d.slot.half && c.size === 'full') return d.date+' 只排半天的活动：'+d.slot.half;
+  return null;
+}
 function check(c, d, opts){
-  const r = {block:null, verify:[], pref:[]};
-  if (!d.slot) r.block = d.date+' 是移动或固定行程日，不放活动卡';
-  else if (c.city !== d.city) r.block = '这张卡在'+CITY[c.city][0]+'，'+d.date+' 住'+CITY[d.city][0];
-  else if (c.closed && c.closed.dow.includes(dowOf(d))) r.block = d.date+' 是'+DOW[dowOf(d)]+'：'+c.closed.text;
+  const r = {block:blockOf(c, d), verify:[], pref:[]};
   if (r.block) return r;
   if (c.calendar) r.verify.push(c.calendar);
   const bd = opts && 'booked' in opts ? opts.booked : bookedDay(c);
   if (bd && bd !== d.id) r.verify.push('登记的票是 '+dayById(bd).date+'，网页改日不会改票，实际改期要本人处理');
   if (c.lottery && !bd) r.verify.push('还没登记中签：放在这天只是模拟安排，见「Museum 换日」');
   if (c.load === 'far') r.pref.push('路程远：'+c.transit);
+  if (avoidOn(c, d)) r.pref.push(d.date+' 是'+DOW[dowOf(d)]+'：'+c.avoid.text);
   if (c.late && d.fixed.plan.some(x => x.at === 'eve')) r.pref.push('回酒店偏晚，'+d.date+' 晚上有固定安排（'+(d.fixed.short || []).join('、')+'）');
   // overlap with what other days already cover (excluding the days this move would vacate)
   const sel = selOpts(c, d), skip = new Set([d.id, ...(opts && opts.vacate || [])]);
@@ -194,6 +205,7 @@ function dayWarnings(d){
   if (ck.block) out.push({k:'block', t:ck.block});
   ck.verify.forEach(t => out.push({k:'verify', t}));
   if (c.load === 'far') out.push({k:'pref', t:'路程远：'+c.transit});
+  if (avoidOn(c, d)) out.push({k:'pref', t:DOW[dowOf(d)]+'：'+c.avoid.text});
   if (c.late && d.fixed.plan.some(x => x.at === 'eve')) out.push({k:'pref', t:'这张卡回酒店偏晚，晚上的固定安排可能要往后推。'});
   Object.entries(plan.booked).filter(([cid, bd]) => bd === d.id && cid !== c.id).forEach(([cid]) =>
     out.push({k:'verify', t:'登记在 '+d.date+' 的「'+CARDS[cid].name+'」票，这天现在排的是「'+c.name+'」；网页不会改票，实际票务要本人处理。'}));
@@ -203,8 +215,10 @@ function dayWarnings(d){
   if (early && c.load === 'far') out.push({k:'pref', t:'上午要先办固定的事（'+(d.fixed.short || []).join('、')+'），再出远门会很赶：提前跟前台说好，或换近一点的卡。'});
   if (extras.length + (c.load === 'far' ? 1 : 0) + (early ? 1 : 0) >= 3 || extras.length >= 3)
     out.push({k:'pref', t:'这天加的东西比较多（'+extras.join('、')+'），孩子的体力可能撑不住；可以取消一两项。'});
-  if (adj.dinner){ const fd = [...d.fixed.plan, ...(d.fixed.eat || [])].find(x => x.dinner);
+  if (adj.dinner){ const fd = fixedMeal(d, 'dinner');
     out.push({k:'pref', t:'这天的晚饭已经定了（'+(fd.label || fd.text)+'），卡片里的晚饭建议不显示。'}); }
+  if (adj.lunch){ const fl = fixedMeal(d, 'lunch');
+    out.push({k:'pref', t:'这天的午饭已经定了（'+(fl.label || fl.text)+'），卡片里的午饭建议不显示。'}); }
   adj.closed.forEach(t => out.push({k:'pref', t:DOW[dowOf(d)]+'：'+t+'，路线里跳过这一段。'}));
   c.opts.filter(o => optOn(c, o) && optClosed(o, d)).forEach(o =>
     out.push({k:'pref', t:'「'+o.label+'」在'+DOW[dowOf(d)]+'不可行（'+o.closed.text+'），这天按默认显示；换到别的日子会恢复。'}));
@@ -339,7 +353,7 @@ function prepList(c, sel, extra){
 function renderTrip(){
   const groups = [];
   D.days.forEach(d => { const g = groups[groups.length-1]; if (g && g.city === d.city) g.days.push(d); else groups.push({city:d.city, days:[d]}); });
-  let h = '<div class="vhead"><h2>行程 · 15 站</h2><p>每天一个主项目。东京、箱根、大阪的活动日都可以“换活动”，移动日和日期固定的事不跟着变。</p></div>' + segNav('trip') + planBanner();
+  let h = '<div class="vhead"><h2>行程 · 15 站</h2><p>每天一个主项目。东京、三岛、大阪的活动日都可以“换活动”，移动日和日期固定的事不跟着变。</p></div>' + segNav('trip') + planBanner();
   groups.forEach(g => {
     h += '<div class="c-'+g.city+'"><div class="city-h"><span class="nm" lang="ja">'+CITY[g.city][0]+'</span><span class="ro">'+CITY[g.city][1]+'</span><span class="cstay">'+esc(STAY[g.city])+'</span></div>'
       + (D.cards.presets || []).filter(ps => Object.keys(ps.options[0].days).some(id => dayById(id).city === g.city)).map(presetRow).join('')
@@ -485,13 +499,13 @@ function cardItem(c){
 }
 function renderCards(){
   const v = $('#v-cards');
-  let h = '<div class="vhead"><h2>活动卡片</h2><p>可以安排到东京、箱根、大阪活动日的活动。每张卡是一次出游：推荐顺序、有限的支线、准备事项。点名字看详情，在详情里“安排到哪天”。</p></div>' + segNav('cards') + planBanner()
+  let h = '<div class="vhead"><h2>活动卡片</h2><p>可以安排到东京、三岛、大阪活动日的活动。箱根两晚本次已撤，箱根的卡片作为资料保留。每张卡是一次出游：推荐顺序、有限的支线、准备事项。点名字看详情，在详情里“安排到哪天”。</p></div>' + segNav('cards') + planBanner()
     + '<div class="tools"><div class="search"><input id="q-cards" type="search" placeholder="搜活动：中文、日文、内容…" aria-label="搜索活动卡片" autocomplete="off" value="'+esc(cfilter.q)+'"><button type="button"'+(cfilter.q?'':' hidden')+'>清除</button></div>'
     + '<div class="bchips" role="group" aria-label="筛选">'
-    + [['st','all','全部'],['st','on','已安排'],['st','off','未安排']].concat(['tokyo','hakone','osaka'].map(c => ['city',c,CITY[c][0]]), Object.entries(CKIND).map(([k,l]) => ['k',k,l]))
+    + [['st','all','全部'],['st','on','已安排'],['st','off','未安排']].concat(['tokyo','mishima','osaka','hakone'].map(c => ['city',c,CITY[c][0]]), Object.entries(CKIND).map(([k,l]) => ['k',k,l]))
         .map(([f,val,l]) => '<button type="button" class="chip'+(cfilter[f]===val?' on':'')+'" data-f="'+f+'" data-v="'+val+'" aria-pressed="'+(cfilter[f]===val)+'">'+l+'</button>').join('')
     + '</div></div><div class="cres"></div>'
-    + '<p class="small">移动日（3/13–14、3/19、3/21、3/26–27）是固定行程，不放卡片。</p>';
+    + '<p class="small">移动日（3/13–14、3/21、3/26–27）是固定行程，不放卡片；3/19 上午从东京过来，只放半天的卡。</p>';
   v.innerHTML = h;
   const inp = v.querySelector('input'), clr = v.querySelector('.search button');
   inp.addEventListener('input', () => { cfilter.q = inp.value.trim(); clr.hidden = !cfilter.q; cardResults(); });
@@ -513,7 +527,7 @@ function cardResults(){
   const out = $('#v-cards .cres');
   if (!cs.length){ out.innerHTML = '<p class="empty">没有符合的活动。'+(q ? '换个词，或者清除筛选。' : '')+'</p>'; return; }
   let h = '';
-  ['tokyo','hakone','osaka'].forEach(city => {
+  ['tokyo','mishima','osaka','hakone'].forEach(city => {
     const g = cs.filter(c => c.city === city); if (!g.length) return;
     h += '<div class="c-'+city+'"><div class="city-h"><span class="nm" lang="ja">'+CITY[city][0]+'</span><span class="ro">'+CITY[city][1]+'</span><span class="cstay">'+g.length+' 张</span></div><ul class="cards">'+g.map(cardItem).join('')+'</ul></div>';
   });
@@ -535,7 +549,9 @@ function renderCard(id){
     + '<dl class="facts">'+fact('时间', c.time)+fact('交通', c.transit+'（'+LOAD[c.load]+'）')+fact('家庭', c.family)+fact('预约', c.booking)+fact('雨天', c.rain)
       + fact('营业', c.hours)+fact('休馆', c.closed && c.closed.text)+fact('待核对', c.calendar)
       + (c.ticket ? fact('票', bookedDay(c) ? '已登记票面 '+dayById(bookedDay(c)).date+'（本机）' : '还没登记；订好后在安排到的那一天页面上登记') : '')+'</dl>'
-    + '<div class="blk"><div class="lbl">安排到哪天 <span class="en">PLACE</span></div><ul class="places">'
+    + '<div class="blk"><div class="lbl">安排到哪天 <span class="en">PLACE</span></div>'
+    + (days.length ? '' : '<p class="small">这次行程没有住'+esc(CITY[c.city][0])+'的日子，这张卡只作资料保留。</p>')
+    + '<ul class="places">'
     + days.map(d => { const cur = cardOf(d), here = cur.id === c.id, r = check(c, d, {vacate: c.multi ? [] : at.map(x => x.id)});
         return '<li class="place"><div class="pl"><a href="#d'+d.n+'"><b>'+d.date+' '+esc(d.dow)+'</b></a><span>现在：'+esc(cur.name)+((d.fixed.short||[]).length ? ' · 固定：'+esc(d.fixed.short.join('、')) : '')+'</span></div>'
           + (here ? '<p class="small"><b>已安排在这天</b></p>'+(c.multi ? '' : '<div class="pa"><button type="button" class="btn ghost" data-act="place" data-card="'+restCard(c.city).id+'" data-day="'+d.id+'">从这天移除（改成留白）</button></div>')
@@ -926,7 +942,7 @@ function renderBookBody(b){
   const B = D.books[b], q = query[b].toLowerCase();
   let h = '';
   if (!q){
-    ['tokyo','hakone','osaka','misc'].forEach(c => {
+    ['tokyo','mishima','osaka','hakone','misc'].forEach(c => {
       const secs = B.sections.filter(s => s.city === c); if (!secs.length) return;
       h += '<div class="c-'+c+'"><div class="city-h"><span class="nm" lang="ja">'+CITY[c][0]+'</span><span class="ro">'+CITY[c][1]+'</span><span class="cstay">'+secs.length+' 站</span></div>'
         + '<div class="stns">'+secs.map(s => stnLink(b, s)).join('')+'</div></div>';
