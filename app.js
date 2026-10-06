@@ -499,7 +499,7 @@ function cardItem(c){
 }
 function renderCards(){
   const v = $('#v-cards');
-  let h = '<div class="vhead"><h2>活动卡片</h2><p>可以安排到东京、三岛、大阪活动日的活动。箱根两晚本次已撤，箱根的卡片作为资料保留。每张卡是一次出游：推荐顺序、有限的支线、准备事项。点名字看详情，在详情里“安排到哪天”。</p></div>' + segNav('cards') + planBanner()
+  let h = '<div class="vhead"><h2>活动卡片</h2><p>可以安排到东京、三岛、大阪活动日的活动。每张卡是一次出游：推荐顺序、有限的支线、准备事项。点名字看详情，在详情里“安排到哪天”。</p></div>' + segNav('cards') + planBanner()
     + '<div class="tools"><div class="search"><input id="q-cards" type="search" placeholder="搜活动：中文、日文、内容…" aria-label="搜索活动卡片" autocomplete="off" value="'+esc(cfilter.q)+'"><button type="button"'+(cfilter.q?'':' hidden')+'>清除</button></div>'
     + '<div class="bchips" role="group" aria-label="筛选">'
     + [['st','all','全部'],['st','on','已安排'],['st','off','未安排']].concat(['tokyo','mishima','osaka','hakone'].map(c => ['city',c,CITY[c][0]]), Object.entries(CKIND).map(([k,l]) => ['k',k,l]))
