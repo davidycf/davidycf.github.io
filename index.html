@@ -19,7 +19,7 @@
 :root{
   --bg:#EEF1EF; --surface:#FFFFFF; --sunk:#E3E8E5; --ink:#15191C; --muted:#586168; --rule:#D3D9D6;
   --tokyo:#2256A3; --mishima:#0B7480; --hakone:#2A7A50; --osaka:#CC5420; --travel:#66717C; --night:#4D4A93; --misc:#7A6A3A;
-  --check:#A8302E; --check-bg:#F6E6E3; --on-line:#FFFFFF;
+  --check:#A8302E; --check-bg:#F6E6E3; --on-line:#FFFFFF; --treat:#B5262E;
   --f-ja:"BIZ UDPGothic","Hiragino Kaku Gothic ProN","Noto Sans JP","Noto Sans SC",sans-serif;
   --f-zh:"Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
   --f-ro:"Barlow Semi Condensed","Arial Narrow","Roboto Condensed",sans-serif;
@@ -28,11 +28,11 @@
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#101416; --surface:#1A1F22; --sunk:#151A1C; --ink:#E6EAE8; --muted:#98A2A7; --rule:#2B3337;
   --tokyo:#78A2E6; --mishima:#4CC3CC; --hakone:#5EBB89; --osaka:#F08A55; --travel:#A0AAB4; --night:#A4A1EA; --misc:#CDB77A;
-  --check:#F08A84; --check-bg:#2E1E1D; --on-line:#0E1214; color-scheme:dark}}
+  --check:#F08A84; --check-bg:#2E1E1D; --on-line:#0E1214; --treat:#F2837C; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#101416; --surface:#1A1F22; --sunk:#151A1C; --ink:#E6EAE8; --muted:#98A2A7; --rule:#2B3337;
   --tokyo:#78A2E6; --mishima:#4CC3CC; --hakone:#5EBB89; --osaka:#F08A55; --travel:#A0AAB4; --night:#A4A1EA; --misc:#CDB77A;
-  --check:#F08A84; --check-bg:#2E1E1D; --on-line:#0E1214; color-scheme:dark}
+  --check:#F08A84; --check-bg:#2E1E1D; --on-line:#0E1214; --treat:#F2837C; color-scheme:dark}
 
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-zh);font-size:15.5px;line-height:1.7;-webkit-text-size-adjust:100%}
@@ -222,6 +222,40 @@ a.sec-h{text-decoration:none}
 .kd{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:4px;border:1.5px solid var(--muted);font-family:var(--f-ja);font-style:normal;font-weight:700;font-size:11.5px;line-height:1;margin-right:4px;color:var(--ink);vertical-align:-4px;flex:none}
 .kd.k-kids{border-color:var(--hakone);color:var(--hakone)}
 .kd.k-night{background:var(--night);border-color:var(--night);color:var(--on-line)}
+/* 嘗: a round vermilion seal, the same in every city, so it reads apart from the square use badges */
+.kd.k-treat{background:var(--treat);border-color:var(--treat);color:var(--on-line);border-radius:50%}
+.ml{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;margin-top:7px;font-size:13px;line-height:1.5}
+.ml .tr{display:inline-flex;align-items:center;font-weight:700;color:var(--treat)}
+.ml .tr .kd{margin-right:5px}
+.yen{font-family:var(--f-ro);font-weight:600;letter-spacing:.06em;color:color-mix(in srgb,var(--muted) 40%,transparent);white-space:nowrap}
+.yen b{color:var(--ink);font-weight:700}
+.ym{white-space:nowrap;color:var(--muted)}
+.ym + .ym{margin-left:-4px}
+.yn{color:var(--muted)}
+.sg{margin-top:6px;font-size:14.5px}
+.sg b{display:inline-block;font-size:12px;font-weight:500;color:var(--muted);border:1px solid var(--rule);border-radius:4px;padding:0 5px;margin-right:7px;line-height:1.5;vertical-align:1px}
+.ent{scroll-margin-top:calc(env(safe-area-inset-top,0px) + 120px)}
+.ent.flash{box-shadow:0 0 0 2px var(--line)}
+.treats{margin-top:16px;background:var(--surface);border-radius:var(--r);padding:12px 14px 6px;border-top:3px solid var(--treat)}
+.treats .th{display:flex;align-items:center;gap:6px}
+.treats .th h3{margin:0;font-size:18px;font-weight:700}
+.treats .th .ct{margin-left:auto;font-family:var(--f-ro);font-size:13px;color:var(--muted)}
+.treats > .small{margin-top:6px;color:var(--muted)}
+.ykey{margin-top:4px;font-size:12.5px;color:var(--muted);line-height:1.6}
+.ykey span{white-space:nowrap;margin-right:10px}
+.ykey b{font-family:var(--f-ro);font-weight:700;color:var(--ink);letter-spacing:.06em}
+.tcity{margin-top:12px}
+.tch{font-family:var(--f-ja);font-weight:700;font-size:14px;color:var(--line);border-bottom:2px solid var(--line);padding-bottom:2px}
+.tcity ul{list-style:none;margin:0;padding:0;display:grid}
+.tcity li{min-width:0;border-bottom:1px solid var(--rule)}
+.tcity li:last-child{border-bottom:0}
+.tcity a{display:block;text-decoration:none;padding:8px 0;min-width:0}
+.tn{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.tn b{font-family:var(--f-ja);font-weight:700;font-size:15px;min-width:0;overflow-wrap:anywhere}
+.tn .yp{flex:none;display:flex;gap:8px;font-size:13px}
+.tn .yn{display:none}
+.tw{display:block;font-size:13px;color:var(--muted);line-height:1.5;margin-top:1px}
+@media (min-width:600px){.tcity ul{grid-template-columns:1fr 1fr;column-gap:18px}.tcity li:nth-last-child(2):nth-child(odd){border-bottom:0}}
 .small .kd{margin-left:2px}
 .btools{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);margin:18px -16px 0;padding:8px 16px;border-bottom:1px solid var(--rule)}
 .bchips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
@@ -232,7 +266,7 @@ a.sec-h{text-decoration:none}
 .bchips .chip.on{color:var(--bg)}
 .bchips .chip.on .ct{color:inherit;opacity:.7}
 .small .lg{white-space:nowrap;margin-right:10px}
-.bchips .chip.on .kd:not(.k-night){border-color:var(--bg);color:var(--bg)}
+.bchips .chip.on .kd:not(.k-night):not(.k-treat){border-color:var(--bg);color:var(--bg)}
 .ring{padding-top:22px}
 .rh{display:flex;align-items:center;gap:10px}
 .rh .rn{font-weight:700;font-size:18px;color:var(--line);white-space:nowrap}
