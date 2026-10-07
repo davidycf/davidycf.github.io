@@ -591,6 +591,29 @@
     "id": "T32"
    },
    {
+    "name": "井泉 本店",
+    "k": [
+     "eat"
+    ],
+    "ring": 1,
+    "walk": "约 15 分",
+    "hours": "周三休 · 只收现金",
+    "treat": true,
+    "yen": 2,
+    "sig": "软嫩的ヒレかつ，筷子就能夹开",
+    "order": "ヒレかつ定食或ロース定食；炸猪排三明治可以外带回房",
+    "body": "上野广小路旁的老派炸猪排，肉软、面衣薄，孩子也容易入口。",
+    "note": "欢迎孩子，有桌席和榻榻米。**3/17 周三休息。**只收现金。",
+    "links": [
+     {
+      "label": "井泉：菜单",
+      "url": "https://www.isen-honten.jp/menu"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E4%BA%95%E6%B3%89%20%E6%9C%AC%E5%BA%97%20%E6%B9%AF%E5%B3%B6",
+    "id": "T33"
+   },
+   {
     "name": "隅田川テラス（蔵前橋一带）",
     "k": [
      "see",
@@ -1337,6 +1360,98 @@
     "id": "O29"
    },
    {
+    "name": "美津の",
+    "k": [
+     "eat"
+    ],
+    "ring": 1,
+    "walk": "约 12 分",
+    "hours": "不能预约 · 排队",
+    "treat": true,
+    "yen": 2,
+    "sig": "山芋焼：不用面粉，用山药做底，口感松软",
+    "order": "山芋焼选猪肉或贝柱，再点一份普通大阪烧，全家分",
+    "body": "道顿堀的大阪烧店，招牌是山芋焼。千房离得近，想省事、不想排队时去千房。",
+    "note": "欢迎孩子，有桌席和吧台；不能预约，排队是主要代价。铁板很烫，留意孩子的手。",
+    "links": [
+     {
+      "label": "美津の：招牌菜",
+      "url": "https://www.mizuno-osaka.com/menu.html"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E7%BE%8E%E6%B4%A5%E3%81%AE%20%E9%81%93%E9%A0%93%E5%A0%80",
+    "id": "O33"
+   },
+   {
+    "name": "福太郎 本店",
+    "k": [
+     "eat"
+    ],
+    "ring": 1,
+    "walk": "约 15 分",
+    "hours": "平日 17:00 起 · 周末节假日 12:00 起 · 不接受预约",
+    "treat": true,
+    "yen": 2,
+    "sig": "ねぎ焼：满满的青葱，蘸自家酱油汁",
+    "order": "ねぎ焼和大阪烧各一份，对比着吃",
+    "body": "千日前的葱烧店。ねぎ焼用大量青葱做主角、蘸酱油吃，和美津の的山芋焼是两种招牌。",
+    "note": "**大阪的平日 3/23–3/25 只有晚餐；3/22 振替休日中午就开。**本店目前不接受预约；可以带孩子，四人座位的情况到店看。铁板留意孩子的手。",
+    "links": [
+     {
+      "label": "福太郎",
+      "url": "https://2951.jp/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E7%A6%8F%E5%A4%AA%E9%83%8E%20%E6%9C%AC%E5%BA%97%20%E5%8D%83%E6%97%A5%E5%89%8D",
+    "id": "O34"
+   },
+   {
+    "name": "串の坊 法善寺本店",
+    "k": [
+     "eat"
+    ],
+    "ring": 1,
+    "walk": "约 12 分",
+    "hours": "可预约",
+    "treat": true,
+    "yen": 4,
+    "sig": "一串串现炸的串揚げ：车海老、牛里脊、鱼和时令蔬菜",
+    "order": "おまかせ按串计价，吃够了说停；或点 12 串，饭和茶泡饭另加",
+    "body": "法善寺横丁里的串揚げ，一串炸好上一串。和だるま的串炸相比，食材讲究、价位高一档，两家各有用处。",
+    "note": "可以预约，有禁烟桌席。孩子和推车能不能进，订位时问清。",
+    "links": [
+     {
+      "label": "串の坊法善寺本店：菜单与预约",
+      "url": "https://kushinobou-houzenji.owst.jp/"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E4%B8%B2%E3%81%AE%E5%9D%8A%20%E6%B3%95%E5%96%84%E5%AF%BA%E6%9C%AC%E5%BA%97",
+    "id": "O35"
+   },
+   {
+    "name": "かに道楽 道頓堀本店",
+    "k": [
+     "eat"
+    ],
+    "ring": 1,
+    "walk": "约 10 分",
+    "hours": "可预约",
+    "treat": true,
+    "yen": 4,
+    "sig": "一套里吃到蟹的几种做法：刺身、茶碗蒸、焗蟹、天妇罗、蟹釜饭",
+    "order": "大人点清光或月華套餐，孩子点儿童わらべ",
+    "body": "道顿堀大螃蟹招牌的本店。套餐一道道上，一顿饭尝遍蟹的生熟几种吃法。",
+    "note": "可以带孩子、可以预约。分道上菜，估计要一个多小时。套餐里有生的蟹刺身，孩子吃熟的；儿童套餐也先看食材。",
+    "links": [
+     {
+      "label": "かに道楽道頓堀本店：套餐与儿童菜单",
+      "url": "https://douraku.co.jp/area/shop/menu/course.html"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E3%81%8B%E3%81%AB%E9%81%93%E6%A5%BD%20%E9%81%93%E9%A0%93%E5%A0%80%E6%9C%AC%E5%BA%97",
+    "id": "O37"
+   },
+   {
     "name": "なんばパークス：屋顶花园＋室内游戏区",
     "k": [
      "kids"
@@ -1398,6 +1513,29 @@
     ],
     "map": "https://www.google.com/maps/search/?api=1&query=%E6%A2%85%E7%94%B0%E3%82%B9%E3%82%AB%E3%82%A4%E3%83%93%E3%83%AB+%E7%A9%BA%E4%B8%AD%E5%BA%AD%E5%9C%92%E5%B1%95%E6%9C%9B%E5%8F%B0",
     "id": "O28"
+   },
+   {
+    "name": "美々卯 本町店",
+    "k": [
+     "eat"
+    ],
+    "ring": 2,
+    "walk": "御堂筋线一站，约 15 分",
+    "hours": "周日、节假日休",
+    "treat": true,
+    "yen": 3,
+    "sig": "うどんすき：一锅高汤煮粗乌冬和山海食材，最后连汤喝",
+    "order": "点招牌うどんすき，全家围一锅",
+    "body": "うどんすき的本家，在本町。逛累了想坐下吃一锅热的，就坐一站过去。",
+    "note": "接受各年龄孩子，可以预约。包间按含税总账加 15%，普通席不加。**周日和节假日休：3/21 周日、3/22 振替休日都不开。**锅的儿童份数和分食，订位时问店家。",
+    "links": [
+     {
+      "label": "美々卯本町店：预约与菜单",
+      "url": "https://www.tablecheck.com/ja/shops/mimiu-hommachi/reserve"
+     }
+    ],
+    "map": "https://www.google.com/maps/search/?api=1&query=%E7%BE%8E%E3%80%85%E5%8D%AF%20%E6%9C%AC%E7%94%BA%E5%BA%97",
+    "id": "O36"
    }
   ]
  }
