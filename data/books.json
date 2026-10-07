@@ -104,7 +104,17 @@
         "url": "https://r.gnavi.co.jp/g450700/"
        }
       ],
-      "map": "https://www.google.com/maps/search/?api=1&query=%E7%A5%9E%E7%94%B0%E3%81%BE%E3%81%A4%E3%82%84%20%E6%9C%AC%E5%BA%97"
+      "map": "https://www.google.com/maps/search/?api=1&query=%E7%A5%9E%E7%94%B0%E3%81%BE%E3%81%A4%E3%82%84%20%E6%9C%AC%E5%BA%97",
+      "budget": {
+       "lunch": [
+        1000,
+        1999
+       ],
+       "dinner": [
+        1000,
+        1999
+       ]
+      }
      }
     ]
    },
@@ -138,7 +148,17 @@
         "url": "https://www.tablecheck.com/ja/shops/sushinomidori-shibuya/reserve"
        }
       ],
-      "map": "https://www.google.com/maps/search/?api=1&query=%E5%AF%BF%E5%8F%B8%E3%81%AE%E7%BE%8E%E7%99%BB%E5%88%A9%20%E6%B8%8B%E8%B0%B7%E5%BA%97"
+      "map": "https://www.google.com/maps/search/?api=1&query=%E5%AF%BF%E5%8F%B8%E3%81%AE%E7%BE%8E%E7%99%BB%E5%88%A9%20%E6%B8%8B%E8%B0%B7%E5%BA%97",
+      "budget": {
+       "lunch": [
+        4000,
+        4999
+       ],
+       "dinner": [
+        5000,
+        5999
+       ]
+      }
      },
      {
       "name": "渋谷PARCO 7F 博多天ぷら たかお",
@@ -210,6 +230,10 @@
        "lunch": [
         1000,
         1999
+       ],
+       "dinner": [
+        1000,
+        1999
        ]
       },
       "body": "老派安静的喫茶，一杯一杯手冲，杯子从店里收藏的古董杯里配。很安静，和 GiGO、MIYASHITA PARK 同在东口这一侧，饭后往银座线走时顺路坐下喝一杯；据说有位第三波咖啡的创始人也很推崇这家。自制芝士蛋糕也有名。",
@@ -256,6 +280,10 @@
       "name": "大黒家天麩羅",
       "tag": "浅草老店／天丼／有排队就再判断",
       "budget": {
+       "lunch": [
+        2000,
+        2999
+       ],
        "dinner": [
         2000,
         2999
@@ -360,7 +388,17 @@
         "url": "https://tonkatsu-hasegawa.com/info-ryogoku/"
        }
       ],
-      "map": "https://www.google.com/maps/search/?api=1&query=%E3%81%A8%E3%82%93%E3%81%8B%E3%81%A4%20%E3%81%AF%E3%81%9B%E5%B7%9D%20%E4%B8%A1%E5%9B%BD%E5%BA%97"
+      "map": "https://www.google.com/maps/search/?api=1&query=%E3%81%A8%E3%82%93%E3%81%8B%E3%81%A4%20%E3%81%AF%E3%81%9B%E5%B7%9D%20%E4%B8%A1%E5%9B%BD%E5%BA%97",
+      "budget": {
+       "lunch": [
+        1000,
+        1999
+       ],
+       "dinner": [
+        2000,
+        2999
+       ]
+      }
      }
     ]
    },
@@ -554,7 +592,17 @@
         "url": "https://www.suminobo.jp/honchou/"
        }
       ],
-      "map": "https://www.google.com/maps/search/?api=1&query=%E3%81%86%E3%81%AA%E3%81%8E%20%E3%81%99%E3%81%BF%E3%81%AE%E5%9D%8A%20%E6%9C%AC%E7%94%BA%E5%BA%97%20%E4%B8%89%E5%B3%B6"
+      "map": "https://www.google.com/maps/search/?api=1&query=%E3%81%86%E3%81%AA%E3%81%8E%20%E3%81%99%E3%81%BF%E3%81%AE%E5%9D%8A%20%E6%9C%AC%E7%94%BA%E5%BA%97%20%E4%B8%89%E5%B3%B6",
+      "budget": {
+       "lunch": [
+        5000,
+        5999
+       ],
+       "dinner": [
+        10000,
+        14999
+       ]
+      }
      },
      {
       "name": "富士山三島十割そば 元年堂",
@@ -638,10 +686,12 @@
       "name": "御膳屋丸天",
       "tag": "海鲜御膳／周末 7:00–15:30／周三休",
       "treat": true,
-      "budget": [
-       2000,
-       2999
-      ],
+      "budget": {
+       "lunch": [
+        2000,
+        2999
+       ]
+      },
       "sig": "刺身＋海鲜天妇罗御膳",
       "order": "大人点刺身御膳；孩子吃天妇罗、煮鱼这类熟的",
       "body": "刺身御膳「竹」是刺身、天妇罗加 6 个小碟；丸天招牌的海鲜炸天妇罗这里也有。2025 年 4 月由丸天鱼河岸店改装而来。",
@@ -820,6 +870,10 @@
       "name": "串かつだるま 新世界総本店",
       "tag": "串炸标志店／当前不接受预约",
       "budget": {
+       "lunch": [
+        2000,
+        2999
+       ],
        "dinner": [
         2000,
         2999
@@ -1066,6 +1120,10 @@
       "tag": "釜饭／坐下吃一顿／现场排队",
       "budget": {
        "lunch": [
+        2000,
+        2999
+       ],
+       "dinner": [
         1000,
         1999
        ]
