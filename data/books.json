@@ -56,6 +56,66 @@
       "map": "https://www.google.com/maps/search/?api=1&query=%E3%83%A8%E3%83%89%E3%83%90%E3%82%B7Akiba+%E3%83%AC%E3%82%B9%E3%83%88%E3%83%A9%E3%83%B3"
      },
      {
+      "id": "nikuyayokocho-akiba",
+      "name": "秋葉原 肉屋横丁 焼肉",
+      "tag": "黑毛和牛烧肉放题／含软饮／秋葉原站电气街口旁",
+      "budget": {
+       "lunch": [
+        6000,
+        7999
+       ],
+       "dinner": [
+        6000,
+        7999
+       ]
+      },
+      "body": "黑毛和牛烧肉食べ放題：先吃店家端上的拼盘，再拿点单券到展示柜挑追加的肉，配菜用手机点。烧肉看“和牛まみれコース”，含软饮；神户牛烧肉档价位高出很多，先不考虑。想换成涮锅，同店另有和牛しゃぶしゃぶ放题套餐，预约时选对应区域。",
+      "fam": "5 岁及以下免费，哥哥和妹妹都免费；可带婴儿车。100 分钟用餐，80 分钟停止点单；同桌选同一套餐。追加的肉由家长去展示柜拿，饮料自取。核对：2026/10/7；出发前再看当期菜单。",
+      "links": [
+       {
+        "label": "肉屋横丁秋葉原：菜单、儿童收费与入店流程",
+        "url": "https://nikuyayokocho.jp/shoplist/akihabara/"
+       },
+       {
+        "label": "食べログ：肉屋横丁 秋葉原 焼肉",
+        "url": "https://tabelog.com/tokyo/A1310/A131001/13252988/"
+       }
+      ],
+      "map": "https://www.google.com/maps/search/?api=1&query=%E8%82%89%E5%B1%8B%E6%A8%AA%E4%B8%81%20%E7%A7%8B%E8%91%89%E5%8E%9F%20BiTO%20AKIBA"
+     },
+     {
+      "id": "kizunasushi-akiba",
+      "name": "きづなすし 秋葉原店",
+      "tag": "寿司食べ放題／中トロ与熟食／可带孩子",
+      "budget": {
+       "lunch": [
+        2000,
+        2999
+       ],
+       "dinner": [
+        4000,
+        4999
+       ]
+      },
+      "body": "手握寿司加熟食配菜的点单式放题，先看 100 种的“きづなコース”：有中トロ、赤海老，也有烤鲑鱼腹这类熟食。逛完秋叶原，全家坐下来吃一顿。",
+      "fam": "4 岁及以下免费：妹妹免费，哥哥按儿童价；孩子和婴儿车都能进。用餐 120 分钟，90 分钟停止点单；每轮点的种类和数量有限，分几轮点。核对：2026/10/7；出发前再看当期菜单。",
+      "links": [
+       {
+        "label": "きづなすし秋葉原：100 种套餐、儿童价与时间",
+        "url": "https://tabelog.com/tokyo/A1310/A131001/13219829/party/146876029/"
+       },
+       {
+        "label": "きづなすし品牌官网",
+        "url": "https://www.sfpdining.jp/brand/kizunasushi/"
+       },
+       {
+        "label": "食べログ：きづなすし 秋葉原店",
+        "url": "https://tabelog.com/tokyo/A1310/A131001/13219829/"
+       }
+      ],
+      "map": "https://www.google.com/maps/search/?api=1&query=%E3%81%8D%E3%81%A5%E3%81%AA%E3%81%99%E3%81%97%20%E7%A7%8B%E8%91%89%E5%8E%9F%E5%BA%97"
+     },
+     {
       "name": "返回御徒町吃晚餐",
       "tag": "近场移动／和酒店休息接起来",
       "body": "秋叶原逛完就回御徒町：晚饭、超市、回房洗衣一起解决。",
@@ -245,6 +305,51 @@
        }
       ],
       "map": "https://www.google.com/maps/search/?api=1&query=%E8%8C%B6%E4%BA%AD%20%E7%BE%BD%E7%95%B6%20%E6%B8%8B%E8%B0%B71-15-19"
+     }
+    ]
+   },
+   {
+    "code": "T3B",
+    "city": "tokyo",
+    "sign": "新宿",
+    "ro": "Shinjuku",
+    "area": "新宿西口",
+    "head": "专程去吃一顿烧肉放题",
+    "lead": "新宿西口京王百货对面，适合专程来吃一顿午饭。",
+    "hint": "新御徒町坐都营大江户线直达新宿西口，估计 20 分钟；出站走几分钟。",
+    "tip": "订午餐时段，订位时报两个孩子的年龄。",
+    "entries": [
+     {
+      "id": "rokkasen-nishiguchi",
+      "name": "やきにく亭 六歌仙 西口本店（京王デパート前）",
+      "tag": "烧肉放题／优先午餐／新宿西口",
+      "budget": {
+       "lunch": [
+        10000,
+        14999
+       ],
+       "dinner": [
+        10000,
+        14999
+       ]
+      },
+      "body": "新宿西口的烧肉食べ放題，除了烧肉也有しゃぶしゃぶ、すき焼き一类吃法，海鲜烤物也能选。优先看午餐“雪の宴”，含饮料和酒水；蟹放题是更贵的升级套餐。",
+      "fam": "3 岁及以下免费，4–6 岁按幼儿价：哥哥收费，妹妹免费。用餐 120 分钟；能同时选哪些料理以预约页的套餐为准，不一定几种锅都能一起吃。午餐价只限午餐时段。核对：2026/10/7；出发前再看当期菜单。",
+      "links": [
+       {
+        "label": "六歌仙：午餐放题",
+        "url": "https://rokkasen.co.jp/jp/lunch/"
+       },
+       {
+        "label": "六歌仙西口本店：预约",
+        "url": "https://www.tablecheck.com/ja/shops/rokkasen-shinhonten/reserve"
+       },
+       {
+        "label": "食べログ：六歌仙 西口本店",
+        "url": "https://tabelog.com/tokyo/A1304/A130401/13297712/"
+       }
+      ],
+      "map": "https://www.google.com/maps/search/?api=1&query=%E3%82%84%E3%81%8D%E3%81%AB%E3%81%8F%E4%BA%AD%20%E5%85%AD%E6%AD%8C%E4%BB%99%20%E8%A5%BF%E5%8F%A3%E6%9C%AC%E5%BA%97%20%E8%A5%BF%E6%96%B0%E5%AE%BF1-10-2"
      }
     ]
    },
@@ -924,6 +1029,38 @@
        }
       ],
       "map": "https://www.google.com/maps/search/?api=1&query=%E3%81%82%E3%81%B9%E3%81%AE%E3%83%8F%E3%83%AB%E3%82%AB%E3%82%B9+%E3%83%AC%E3%82%B9%E3%83%88%E3%83%A9%E3%83%B3"
+     },
+     {
+      "id": "etoile-tennoji",
+      "name": "都シティ 大阪天王寺 スカイレストラン Étoile",
+      "tag": "蟹与烤牛肉自助／天王寺站旁／三月价格待确认",
+      "budget": {
+       "lunch": [
+        6000,
+        7999
+       ],
+       "dinner": [
+        6000,
+        7999
+       ]
+      },
+      "body": "都シティ大阪天王寺 17F 的酒店自助。现在的蟹主题有本ズワイ蟹、マルズワイガニ和美国 Prime 烤牛肉，含软饮，官方公告办到 2027/3/31。蟹主题自助成人费用高于这里显示的全店预算区间，三月价格和当季菜色待确认。",
+      "fam": "未满 4 岁免费：哥哥按幼儿价，妹妹免费。现在午餐 90 分钟、晚餐 120 分钟；平日、周末和午晚的儿童价不同，订位时看对应场次。熟食多，不想一直吃生鱼的家人也有得选。核对：2026/10/7；出发前再看当期菜单。",
+      "links": [
+       {
+        "label": "Étoile：当期蟹主题自助",
+        "url": "https://www.miyakohotels.ne.jp/tennoji/restaurant/skyrestaurant/menu/62480/"
+       },
+       {
+        "label": "蟹主题活动公告（日期）",
+        "url": "https://report.iko-yo.net/articles/33061"
+       },
+       {
+        "label": "食べログ：スカイレストラン Étoile",
+        "url": "https://tabelog.com/osaka/A2701/A270203/27006144/"
+       }
+      ],
+      "map": "https://www.google.com/maps/search/?api=1&query=%E9%83%BD%E3%82%B7%E3%83%86%E3%82%A3%20%E5%A4%A7%E9%98%AA%E5%A4%A9%E7%8E%8B%E5%AF%BA%20%E3%82%B9%E3%82%AB%E3%82%A4%E3%83%AC%E3%82%B9%E3%83%88%E3%83%A9%E3%83%B3%20%E3%82%A8%E3%83%88%E3%83%AF%E3%83%BC%E3%83%AB"
      }
     ]
    },
@@ -964,6 +1101,38 @@
        }
       ],
       "map": "https://www.google.com/maps/search/?api=1&query=%E5%8F%99%E3%80%85%E8%8B%91+%E3%83%AB%E3%82%AF%E3%82%A2%E5%A4%A7%E9%98%AA%E5%BA%97"
+     },
+     {
+      "id": "no8-umeda",
+      "name": "寿司としゃぶしゃぶ No.8 梅田店",
+      "tag": "寿司＋しゃぶしゃぶ放题／学龄前免费／梅田堂山町",
+      "budget": {
+       "lunch": [
+        3000,
+        3999
+       ],
+       "dinner": [
+        4000,
+        4999
+       ]
+      },
+      "body": "寿司加热锅的食べ放題：锅里的肉可以选牛肉和猪肉，也可以升级到蟹或黑毛和牛，家里有人想吃寿司、有人想吃热锅时正合适。在梅田堂山町一栋楼的 3F。套餐按所选档位收费，蟹或和牛档高于全店预算区间。蟹或黑毛和牛是二选一的档；两样都要就选更高一档。",
+      "fam": "未上小学的孩子免费，两个孩子都免费。**座位 120 分钟，食物 70 分钟停止点单，饮料 90 分钟停止点单。**周五、六、日和节假日及前一天加价，饮料另选。平日傍晚开门，午餐看周末和节假日的时段。核对：2026/10/7；出发前再看当期菜单。",
+      "links": [
+       {
+        "label": "No.8 梅田：全部套餐",
+        "url": "https://numbereight.owst.jp/courses"
+       },
+       {
+        "label": "No.8 梅田：蟹或黑毛和牛套餐",
+        "url": "https://numbereight.owst.jp/courses/222902764"
+       },
+       {
+        "label": "食べログ：No.8 梅田店",
+        "url": "https://tabelog.com/osaka/A2701/A270101/27130393/"
+       }
+      ],
+      "map": "https://www.google.com/maps/search/?api=1&query=%E5%AF%BF%E5%8F%B8%E3%81%A8%E3%81%97%E3%82%83%E3%81%B6%E3%81%97%E3%82%83%E3%81%B6%20No.8%20%E6%A2%85%E7%94%B0%E5%BA%97%20%E5%A0%82%E5%B1%B1%E7%94%BA"
      },
      {
       "name": "LUCUA SOUTH 14F餐饮",
