@@ -41,36 +41,32 @@ const kd = k => '<i class="kd k-'+k+'" title="'+KIND[k][1]+'">'+KIND[k][0]+'</i>
 // 嘗 marks a meal worth setting aside (a property of a food entry, not one of the KIND uses)
 const TREAT = ['嘗','好好吃一顿'];
 const treatKd = '<i class="kd k-treat" title="'+TREAT[1]+'">'+TREAT[0]+'</i>';
-// rough spend per adult per meal; 5 = usually over the ¥10,000 budget
-const YEN = [null, '约 ¥1,500 以内', '约 ¥1,500–3,000', '约 ¥3,000–6,000', '约 ¥6,000–10,000', '通常超过 ¥10,000'];
-const yenTier = n => '<span class="yen" role="img" aria-label="每个大人'+YEN[n]+'" title="每个大人'+YEN[n]+'"><b>'+'¥'.repeat(Math.min(n,4))+'</b>'
-  + (n > 4 ? '<b>+</b>' : '¥'.repeat(4-n))+'</span>';
-const overDinner = y => typeof y === 'object' && y.dinner > 4 && y.lunch < 5;
-function yenHTML(y){
-  if (!y) return '';
-  if (typeof y === 'number') return yenTier(y);
-  return [['lunch','午'],['dinner','晚']].filter(([m]) => y[m]).map(([m, l]) => '<span class="ym">'+l+' '+yenTier(y[m])+'</span>').join('')
-    + (overDinner(y) ? '<span class="yn">推荐午餐 · 晚餐通常超预算</span>' : '');
+// 食べログ 予算: what diners report spending per adult per meal. budget is [lo, hi] (one range, no meal split)
+// or {lunch:[lo, hi], dinner:[lo, hi]}; lo 0 is 「～¥999」, hi null is 「¥30,000～」
+const yen = n => '¥'+n.toLocaleString('en-US');
+const range = ([lo, hi]) => !lo ? '～'+yen(hi) : hi == null ? yen(lo)+'～' : yen(lo)+'–'+hi.toLocaleString('en-US');
+const MEALS = [['lunch','午'],['dinner','晚']];
+const budgetRanges = bg => Array.isArray(bg) ? [bg] : MEALS.filter(([m]) => bg[m]).map(([m]) => bg[m]);
+const budgetText = bg => !bg ? '' : Array.isArray(bg) ? range(bg) : MEALS.filter(([m]) => bg[m]).map(([m, l]) => l+' '+range(bg[m])).join(' · ');
+// dinner over the ¥10,000-a-head budget while lunch is under: lunch is the one to book
+const overDinner = bg => !!bg && !Array.isArray(bg) && !!bg.dinner && !!bg.lunch && bg.dinner[0] >= 10000 && bg.lunch[0] < 10000;
+const OVER = '推荐午餐 · 晚餐通常超预算';
+const budgetHTML = bg => !bg ? '' : '<span class="bg"><span class="src" lang="ja">食べログ</span>'+esc(budgetText(bg))+'</span>'
+  + (overDinner(bg) ? '<span class="yn">'+OVER+'</span>' : '');
+// the overview's one ballpark: lunch when dinner runs over, otherwise lowest to highest
+function budgetSpan(bg){
+  if (overDinner(bg)) return range(bg.lunch);
+  const rs = budgetRanges(bg), his = rs.map(r => r[1]);
+  return range([Math.min(...rs.map(r => r[0])), his.includes(null) ? null : Math.max(...his)]);
 }
 // the 嘗 / price line, then 吃什么 / 怎么点; empty for entries that have neither
 function mealHTML(e, q){
-  const ml = (e.treat ? '<span class="tr">'+treatKd+TREAT[1]+'</span>' : '') + yenHTML(e.yen);
+  const ml = (e.treat ? '<span class="tr">'+treatKd+TREAT[1]+'</span>' : '') + budgetHTML(e.budget);
   return (ml ? '<div class="ml">'+ml+'</div>' : '')
     + (e.sig ? '<p class="sg"><b>吃什么</b>'+fmt(e.sig,q)+'</p>' : '') + (e.order ? '<p class="sg"><b>怎么点</b>'+fmt(e.order,q)+'</p>' : '');
 }
-// the tier's symbols and words, as shown in the ¥ key, so a search for 「¥¥¥」 or 「3,000–6,000」 finds it
-const YEN_SYM = n => n > 4 ? '¥¥¥¥+' : '¥'.repeat(n);
-const YEN_WORD = [null, '1,500 以内', '1,500–3,000', '3,000–6,000', '6,000–10,000', '通常过一万'];
-const yenWords = n => YEN_SYM(n)+' '+YEN[n]+' '+YEN_WORD[n];
-function yenText(y){
-  if (!y) return '';
-  if (typeof y === 'number') return yenWords(y);
-  return [['lunch','午'],['dinner','晚']].filter(([m]) => y[m]).map(([m, l]) => l+' '+yenWords(y[m])).join(' ') + (overDinner(y) ? ' 推荐午餐 · 晚餐通常超预算' : '');
-}
 // searchable text of the meal fields; 吃 and 宿 both use it
-const mealText = e => [e.treat ? TREAT.join(' ') : '', e.sig, e.order, yenText(e.yen)];
-const YEN_KEY = '<p class="ykey">¥ 是每个大人一餐的大概花费：'+[1,2,3,4,5]
-  .map(n => '<span><b>'+YEN_SYM(n)+'</b> '+YEN_WORD[n]+'</span>').join(' ')+'</p>';
+const mealText = e => [e.treat ? TREAT.join(' ') : '', e.sig, e.order, e.budget ? '食べログ '+budgetText(e.budget) : '', overDinner(e.budget) ? OVER : ''];
 const txt = x => typeof x === 'string' ? x : x.text;
 
 /* ----- dates ----- */
@@ -1005,15 +1001,16 @@ function treatList(){
 }
 // the overview names the dish only: 吃什么 up to its first ：；or ，
 const sigHead = t => t.split(/[：；，]/)[0];
+let treatsOpen = false;   // folded by default; stays as the reader left it while the page is open
 function treatsHTML(){
   const all = treatList(); if (!all.length) return '';
-  return '<section class="treats"><div class="th">'+treatKd+'<h3>'+TREAT[1]+'</h3><span class="ct">'+all.length+' 家</span></div>'
-    + '<p class="small">值得认真留一顿饭给它的招牌菜，按城市排，点开看怎么点、带孩子怎么安排。</p>'+YEN_KEY
+  return '<details class="treats"'+(treatsOpen ? ' open' : '')+'><summary class="th">'+treatKd+'<h3>'+TREAT[1]+'</h3><span class="ct">'+all.length+' 家</span><span class="chev" aria-hidden="true"></span></summary>'
+    + '<p class="small">值得认真留一顿饭给它的招牌菜，按城市排，点开看怎么点、带孩子怎么安排。价格是食べログ上每个大人一餐的花费区间。</p>'
     + ['tokyo','mishima','osaka','hakone'].map(c => { const xs = all.filter(x => x.city === c); if (!xs.length) return '';
       return '<div class="tcity c-'+c+'"><div class="tch" lang="ja">'+CITY[c][0]+'</div><ul>'+xs.map(({e, href, where}) =>
-        '<li><a href="'+href+'"><span class="tn"><b'+langAttr(e.name)+'>'+esc(e.name)+'</b>'+(e.yen ? '<span class="yp">'+(overDinner(e.yen) ? yenTier(e.yen.lunch) : yenHTML(e.yen))+'</span>' : '')+'</span>'
-        + '<span class="tw"><span lang="ja">'+esc(where)+'</span>'+(e.sig ? ' · '+esc(sigHead(e.sig)) : '')+(overDinner(e.yen) ? ' · 推荐午餐' : '')+'</span></a></li>').join('')+'</ul></div>'; }).join('')
-    + '</section>';
+        '<li><a href="'+href+'"><span class="tn"><b'+langAttr(e.name)+'>'+esc(e.name)+'</b>'+(e.budget ? '<span class="yp">'+esc(budgetSpan(e.budget))+'</span>' : '')+'</span>'
+        + '<span class="tw"><span lang="ja">'+esc(where)+'</span>'+(e.sig ? ' · '+esc(sigHead(e.sig)) : '')+(overDinner(e.budget) ? ' · 推荐午餐' : '')+'</span></a></li>').join('')+'</ul></div>'; }).join('')
+    + '</details>';
 }
 const HOTEL_HEAD = {eat:'走几分钟就能吃：正餐、小吃甜点', shop:'走几分钟就能买', see:'走几分钟能看、能让孩子跑'};
 function hotelLink(b, bs){
@@ -1048,7 +1045,9 @@ function renderBookBody(b){
       h += '<div class="c-'+c+'"><div class="city-h"><span class="nm" lang="ja">'+CITY[c][0]+'</span><span class="ro">'+CITY[c][1]+'</span><span class="cstay">'+secs.length+' 站</span></div>'
         + '<div class="stns">'+D.base.filter(bs => bs.city === c).map(bs => hotelLink(b, bs)).join('')+secs.map(s => stnLink(b, s)).join('')+'</div></div>';
     });
-    $('#v-'+b+' .body').innerHTML = h; return;
+    $('#v-'+b+' .body').innerHTML = h;
+    const tr = $('#v-'+b+' .treats'); if (tr) tr.addEventListener('toggle', () => { treatsOpen = tr.open; });
+    return;
   }
   const match = e => [e.name,e.tag,e.body,e.fam,...mealText(e),...e.links.map(l=>l.label)].join(' ').toLowerCase().includes(q);
   let total = 0;
