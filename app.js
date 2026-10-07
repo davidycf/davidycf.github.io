@@ -393,16 +393,7 @@ function renderTrip(){
       h += '<li class="'+cls+'"><a href="#d'+d.n+'"><span class="dn">DAY<b>'+pad(d.n)+'</b></span>'
         + '<span class="t1"><span class="sn" lang="ja">'+esc(v.ja)+'</span><span class="dt">'+d.date+' <span class="zh">'+esc(d.dow)+'</span></span>'
         + (d.n===todayN?'<span class="tag-today">TODAY</span>':'')+'</span>'
-        + '<span class="t2">'+esc(v.title)+'</span></a>';
-      if (d.slot){
-        const ws = dayWarnings(d), pend = !isMine(d) && d.slot.pending;
-        h += '<div class="sx"><span class="bdg'+(isMine(d)?' mine':'')+'">'+(isMine(d)?'我的选择':'推荐')+'</span>'
-          + (pend ? '<span class="bdg pend">'+esc(d.slot.pending)+'</span>' : '')
-          + v.short.map(s => '<span class="fx">固定 · '+esc(s)+'</span>').join('')
-          + (ws.length ? '<span class="fx">'+ws.length+' 条提示</span>' : '')
-          + '<a class="btn sm" href="#d'+d.n+'-swap">换活动</a></div>';
-      }
-      h += '</li>';
+        + '<span class="t2">'+esc(v.title)+'</span></a></li>';
     });
     h += '</ol></div>';
   });
