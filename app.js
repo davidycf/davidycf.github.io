@@ -850,7 +850,25 @@ const inScope = (e, sc) => !sc || SCOPE[sc].some(k => e.k.includes(k));
 const scopeLabel = sc => SCOPE[sc].map(k => KIND[k][1]).join('、');
 const sfx = sc => sc ? '~'+sc : '';
 function baseById(id){ for (const bs of D.base){ const e = bs.entries.find(x => x.id === id); if (e) return {bs, e}; } return null; }
-const baseMatch = (e, q) => !q || baseText(e).includes(q.toLowerCase());
+// book entries that point at a 宿 record ({b, s, e} by base id), built on first use
+let REFS = null;
+function refsOf(id, sc){
+  if (!REFS){ REFS = dict(); ['eat','shop','see'].forEach(b => D.books[b].sections.forEach(s => s.entries.forEach(e => { if (e.base) (REFS[e.base] ||= []).push({b, s, e}); }))); }
+  return (REFS[id] || []).filter(r => !sc || r.b === sc);
+}
+const secText = s => (s.area+s.head+s.lead).toLowerCase();
+const hotelText = bs => [bs.sign, bs.kana, bs.ro, bs.stay].join(' ').toLowerCase();
+// One rule for "does this 宿 record match the search", shared by the 宿 pages and the 吃买玩 search, so following a
+// result into 宿 with the same words shows the same places: its own text, its hotel or neighbourhood (like a station
+// name brings in the whole station), or a book entry pointing at it (that entry's tag or station). sc limits the refs to one book.
+function baseMatch(e, q, sc){
+  if (!q) return true;
+  q = q.toLowerCase();
+  const bs = D.base.find(x => x.entries.includes(e));
+  return baseText(e).includes(q) || hotelText(bs).includes(q) || refsOf(e.id, sc).some(r => secText(r.s).includes(q) || (r.e.tag || '').toLowerCase().includes(q));
+}
+// a book shows its own uses plus any 宿 record it points at
+const inBook = (e, sc) => inScope(e, sc) || (!!sc && refsOf(e.id, sc).length > 0);
 function searchBox(id, ph, label, val){
   return '<div class="search"><input id="'+id+'" type="search" placeholder="'+ph+'" aria-label="'+label+'" autocomplete="off" value="'+esc(val)+'"><button type="button"'+(val?'':' hidden')+'>清除</button></div>';
 }
@@ -911,9 +929,9 @@ function renderBase(code, focus, sc){
   const fk = code+sfx(sc);   // use filter per hotel and per entry book, so one never leaks into the other
   // A deep link must always reveal its entry: drop the use filter, and drop a search
   // that would hide it (e.g. after going back in history), so the box matches what is shown.
-  if (target){ bfilter[fk] = 'all'; if (!baseMatch(target, bq)) bq = ''; }
+  if (target){ bfilter[fk] = 'all'; if (!baseMatch(target, bq, sc)) bq = ''; }
   const bs = D.base[i], prev = D.base[i-1], next = D.base[i+1];
-  const count = k => bs.entries.filter(e => inScope(e, sc) && bfHas(e, k)).length;
+  const count = k => bs.entries.filter(e => inBook(e, sc) && bfHas(e, k)).length;
   const fs = ['all', ...BF].filter(k => !sc || count(k));
   if (!fs.includes(bfilter[fk])) bfilter[fk] = 'all';
   const f = bfilter[fk];
@@ -953,7 +971,7 @@ function applyFilter(code, sc){
   bar.scrollLeft = on.offsetLeft - bar.clientWidth/2 + on.offsetWidth/2;
   const bs = D.base.find(x => x.code === code);
   v.querySelectorAll('.be').forEach(li => { const e = bs.entries.find(x => 'be-'+x.id === li.id);
-    li.hidden = !inScope(e, sc) || !bfHas(e, f) || !baseMatch(e, bq); });
+    li.hidden = !inBook(e, sc) || !bfHas(e, f) || !baseMatch(e, bq, sc); });
   let any = false;
   v.querySelectorAll('.ring').forEach(r => { const vis = !!r.querySelector('.be:not([hidden])'); r.hidden = !vis; any = any || vis; });
   const em = v.querySelector('.empty'); em.hidden = any;
@@ -999,7 +1017,7 @@ function treatsHTML(){
 }
 const HOTEL_HEAD = {eat:'走几分钟就能吃：正餐、小吃甜点', shop:'走几分钟就能买', see:'走几分钟能看、能让孩子跑'};
 function hotelLink(b, bs){
-  const n = bs.entries.filter(e => inScope(e, b)).length;
+  const n = bs.entries.filter(e => inBook(e, b)).length;
   return '<a class="stn hotel c-'+bs.city+'" href="#base-'+bs.code+'~'+b+'"><span class="msign"><b lang="ja">'+esc(bs.sign)+'</b><span>'+esc(bs.ro)+'</span></span>'
     + '<span class="tx"><b><i class="kd k-base">宿</i>酒店步行圈</b><span>'+HOTEL_HEAD[b]+'</span></span>'
     + '<span class="n">'+n+' 处 →<small>'+esc(bs.dates)+'</small></span></a>';
@@ -1034,11 +1052,9 @@ function renderBookBody(b){
   }
   const match = e => [e.name,e.tag,e.body,e.fam,...mealText(e),...e.links.map(l=>l.label)].join(' ').toLowerCase().includes(q);
   let total = 0;
-  // a reference hits on its own tag, its station, or the 宿 record; the 宿 record then shows once, below
-  const refHits = dict();
   B.sections.forEach(s => {
-    const secHit = (s.area+s.head+s.lead).toLowerCase().includes(q);
-    s.entries.forEach(e => { if (e.base && (secHit || (e.tag || '').toLowerCase().includes(q) || baseMatch(baseById(e.base).e, query[b]))) (refHits[e.base] ||= []).push({b, s, e}); });
+    const secHit = secText(s).includes(q);
+    // references show once, as their 宿 record below
     const ents = s.entries.filter(e => !e.base && (secHit || match(e)));
     if (!ents.length) return;
     total += ents.length;
@@ -1046,15 +1062,13 @@ function renderBookBody(b){
       + '<div class="ttl"><div class="ar"'+langAttr(s.area)+'>'+fmt(s.area,q)+' →</div><h3>'+fmt(s.head,q)+'</h3></div></a>'
       + '<ol class="ents">'+ents.map(e => entHTML(s, e, q, b)).join('')+'</ol></section>';
   });
-  // the hotels' walking circles, limited to this book's uses
+  // the hotels' walking circles, limited to this book's uses; same matching rule as the 宿 page the header opens
   D.base.forEach(bs => {
-    // naming the hotel or its neighbourhood brings in all its places for this book, like a station name does
-    const hotelHit = [bs.sign, bs.kana, bs.ro, bs.stay].join(' ').toLowerCase().includes(q);
-    const es = bs.entries.filter(e => e.id in refHits || (inScope(e, b) && (hotelHit || baseMatch(e, query[b])))); if (!es.length) return;
+    const es = bs.entries.filter(e => inBook(e, b) && baseMatch(e, query[b], b)); if (!es.length) return;
     total += es.length;
     h += '<section class="sec c-'+bs.city+'"><a class="sec-h" href="#base-'+bs.code+'~'+b+'" data-bq="'+esc(query[b])+'"><div class="msign"><b lang="ja">'+esc(bs.sign)+'</b><span>'+esc(bs.ro)+'</span></div>'
       + '<div class="ttl"><div class="ar" lang="ja">宿 · '+esc(bs.sign)+' →</div><h3>酒店步行圈 '+es.length+' 处</h3></div></a>'
-      + '<ol class="bents">'+es.map(e => baseEnt(e, q, bs, b, refHits[e.id])).join('')+'</ol></section>';
+      + '<ol class="bents">'+es.map(e => { const rs = refsOf(e.id, b); return baseEnt(e, q, bs, b, rs.length ? rs : null); }).join('')+'</ol></section>';
   });
   if (!total) h = '<p class="empty">「'+BOOK[b][0]+'」和两家酒店周边都没有找到“'+esc(query[b])+'”。换个词，比如日文店名或料理。</p>';
   $('#v-'+b+' .body').innerHTML = h;
@@ -1239,7 +1253,7 @@ function route(keep){
     const [, code, num, sc] = m, id = num ? code+num : null, f = id && baseById(id);
     if (sc !== undefined && !(sc in SCOPE)) { location.replace('#base-'+(f ? id : code)); return; }
     if (id && (!f || f.bs.code !== code)) { location.replace('#base-'+code+sfx(sc)); return; }
-    if (f && sc && !inScope(f.e, sc)) { location.replace('#base-'+id); return; }
+    if (f && sc && !inBook(f.e, sc)) { location.replace('#base-'+id); return; }
     renderBase(code, id, sc); show('base'); tab = sc || 'base';
     if (id){ target = document.getElementById('be-'+id); target.classList.add('flash'); }
   }
