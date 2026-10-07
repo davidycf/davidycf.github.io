@@ -973,6 +973,8 @@ function treatList(){
   D.books.eat.sections.forEach(s => s.entries.forEach(e => { if (e.treat) out.push({e, city:s.city, href:'#eat-'+s.code+'-'+e.id, where:s.sign}); }));
   return out;
 }
+// the overview names the dish only: 吃什么 up to its first ：or ；
+const sigHead = t => t.split(/[：；]/)[0];
 function treatsHTML(){
   const all = treatList(); if (!all.length) return '';
   return '<section class="treats"><div class="th">'+treatKd+'<h3>'+TREAT[1]+'</h3><span class="ct">'+all.length+' 家</span></div>'
@@ -980,7 +982,7 @@ function treatsHTML(){
     + ['tokyo','mishima','osaka','hakone'].map(c => { const xs = all.filter(x => x.city === c); if (!xs.length) return '';
       return '<div class="tcity c-'+c+'"><div class="tch" lang="ja">'+CITY[c][0]+'</div><ul>'+xs.map(({e, href, where}) =>
         '<li><a href="'+href+'"><span class="tn"><b'+langAttr(e.name)+'>'+esc(e.name)+'</b>'+(e.yen ? '<span class="yp">'+(overDinner(e.yen) ? yenTier(e.yen.lunch) : yenHTML(e.yen))+'</span>' : '')+'</span>'
-        + '<span class="tw"><span lang="ja">'+esc(where)+'</span>'+(e.sig ? ' · '+esc(e.sig) : '')+(overDinner(e.yen) ? ' · 推荐午餐' : '')+'</span></a></li>').join('')+'</ul></div>'; }).join('')
+        + '<span class="tw"><span lang="ja">'+esc(where)+'</span>'+(e.sig ? ' · '+esc(sigHead(e.sig)) : '')+(overDinner(e.yen) ? ' · 推荐午餐' : '')+'</span></a></li>').join('')+'</ul></div>'; }).join('')
     + '</section>';
 }
 const HOTEL_HEAD = {eat:'走几分钟就能吃：正餐、小吃甜点', shop:'走几分钟就能买', see:'走几分钟能看、能让孩子跑'};
