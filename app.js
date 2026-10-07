@@ -844,8 +844,31 @@ const BF = ['eat','treat',...Object.keys(KIND).filter(k => k !== 'eat')];
 const bfLabel = f => f === 'treat' ? TREAT[1] : KIND[f][1];
 const bfKd = f => f === 'treat' ? treatKd : kd(f);
 const bfHas = (e, f) => f === 'all' || (f === 'treat' ? !!e.treat : e.k.includes(f));
-const baseMatch = (e, q) => !q || baseText(e).includes(q.toLowerCase());
-const baseHits = q => D.base.reduce((n, bs) => n + bs.entries.filter(e => baseMatch(e, q)).length, 0);
+// 宿 places also show up in 吃 / 买 / 玩 by use (night alone never counts); one record, shown in several books
+const SCOPE = dict({eat:['eat','snack'], shop:['shop'], see:['see','kids']});
+const inScope = (e, sc) => !sc || SCOPE[sc].some(k => e.k.includes(k));
+const scopeLabel = sc => SCOPE[sc].map(k => KIND[k][1]).join('、');
+const sfx = sc => sc ? '~'+sc : '';
+function baseById(id){ for (const bs of D.base){ const e = bs.entries.find(x => x.id === id); if (e) return {bs, e}; } return null; }
+// book entries that point at a 宿 record ({b, s, e} by base id), built on first use
+let REFS = null;
+function refsOf(id, sc){
+  if (!REFS){ REFS = dict(); ['eat','shop','see'].forEach(b => D.books[b].sections.forEach(s => s.entries.forEach(e => { if (e.base) (REFS[e.base] ||= []).push({b, s, e}); }))); }
+  return (REFS[id] || []).filter(r => !sc || r.b === sc);
+}
+const secText = s => (s.area+s.head+s.lead).toLowerCase();
+const hotelText = bs => [bs.sign, bs.kana, bs.ro, bs.stay].join(' ').toLowerCase();
+// One rule for "does this 宿 record match the search", shared by the 宿 pages and the 吃买玩 search, so following a
+// result into 宿 with the same words shows the same places: its own text, its hotel or neighbourhood (like a station
+// name brings in the whole station), or a book entry pointing at it (that entry's tag or station). sc limits the refs to one book.
+function baseMatch(e, q, sc){
+  if (!q) return true;
+  q = q.toLowerCase();
+  const bs = D.base.find(x => x.entries.includes(e));
+  return baseText(e).includes(q) || hotelText(bs).includes(q) || refsOf(e.id, sc).some(r => secText(r.s).includes(q) || (r.e.tag || '').toLowerCase().includes(q));
+}
+// a book shows its own uses plus any 宿 record it points at
+const inBook = (e, sc) => inScope(e, sc) || (!!sc && refsOf(e.id, sc).length > 0);
 function searchBox(id, ph, label, val){
   return '<div class="search"><input id="'+id+'" type="search" placeholder="'+ph+'" aria-label="'+label+'" autocomplete="off" value="'+esc(val)+'"><button type="button"'+(val?'':' hidden')+'>清除</button></div>';
 }
@@ -886,36 +909,43 @@ function renderBaseIndex(){
   wireSearch(v.querySelector('.tools'), renderBaseResults);
   renderBaseResults();
 }
-function baseEnt(e, q, from){
+// refs: book entries that point at this record and matched the search ({s, e}); shown so the hit is visible
+function baseEnt(e, q, from, sc, refs){
   return '<li class="be" id="be-'+e.id+'"><div class="bh"><h4'+langAttr(e.name)+'>'+fmt(e.name,q)+'</h4><span class="wk">'+esc(e.walk)+'</span></div>'
     + '<div class="kl">'+Object.keys(KIND).filter(k => e.k.includes(k)).map(kd).join('')+'<span class="hr">'+fmt(e.hours,q)+'</span></div>'
+    + (refs ? '<p class="xref">'+refs.map(({b, s, e:r}) => '也在<a href="#'+b+'-'+s.code+'">「'+BOOK[b][0]+' · '+esc(s.sign)+'」</a>'+(r.tag ? '：'+fmt(r.tag,q) : '')).join('；')+'</p>' : '')
     + mealHTML(e, q) + '<p class="bd">'+fmt(e.body,q)+'</p>' + (e.note ? '<p class="fm">'+fmt(e.note,q)+'</p>' : '') + linkRow(e)
-    + (from ? '<a class="goto" href="#base-'+e.id+'">在「宿 · '+esc(from.sign)+'」的'+esc(from.rings[e.ring][0])+'里看 →</a>' : '') + '</li>';
+    + (from ? '<a class="goto" href="#base-'+e.id+sfx(sc)+'">在「宿 · '+esc(from.sign)+'」的'+esc(from.rings[e.ring][0])+'里看 →</a>' : '') + '</li>';
 }
 function ringsHTML(bs){
   return bs.rings.map((r, ri) => { const es = bs.entries.filter(e => e.ring === ri);
     return '<section class="ring"><div class="rh"><span class="rn">'+esc(r[0])+'</span><span class="en">'+esc(r[1])+'</span></div><p class="rd">'+fmt(r[2])+'</p><ol class="bents">'+es.map(e => baseEnt(e, bq)).join('')+'</ol></section>'; }).join('');
 }
-function renderBase(code, focus){
+// sc = the book this page was opened from (#base-T~eat): only that book's uses, and the way back leads there
+function renderBase(code, focus, sc){
   const i = D.base.findIndex(x => x.code === code); if (i < 0) return false;
   const target = focus && D.base[i].entries.find(e => e.id === focus);
   if (focus && !target) return false;
+  const fk = code+sfx(sc);   // use filter per hotel and per entry book, so one never leaks into the other
   // A deep link must always reveal its entry: drop the use filter, and drop a search
   // that would hide it (e.g. after going back in history), so the box matches what is shown.
-  if (target){ bfilter[code] = 'all'; if (!baseMatch(target, bq)) bq = ''; }
+  if (target){ bfilter[fk] = 'all'; if (!baseMatch(target, bq, sc)) bq = ''; }
   const bs = D.base[i], prev = D.base[i-1], next = D.base[i+1];
-  const f = bfilter[code] || 'all';
-  const count = k => bs.entries.filter(e => bfHas(e, k)).length;
-  let h = '<div class="c-'+bs.city+'"><a class="back" href="#base">← 两个大本营</a>'
+  const count = k => bs.entries.filter(e => inBook(e, sc) && bfHas(e, k)).length;
+  const fs = ['all', ...BF].filter(k => !sc || count(k));
+  if (!fs.includes(bfilter[fk])) bfilter[fk] = 'all';
+  const f = bfilter[fk];
+  let h = '<div class="c-'+bs.city+'">'+(sc ? '<a class="back" href="#'+sc+'">← '+BOOK[sc][0]+' · 全部站</a>' : '<a class="back" href="#base">← 两个大本营</a>')
     + '<div class="sign"><div class="top"><div class="kana" lang="ja">'+esc(bs.kana)+'</div><div class="big" lang="ja">'+esc(bs.sign)+'</div><div class="rom">'+esc(bs.ro)+'</div></div>'
     + '<div class="band">'
-    + (prev ? '<a href="#base-'+prev.code+'"><small>◀</small><b lang="ja">'+esc(prev.sign)+'</b></a>' : '<span class="nil"></span>')
+    + (prev ? '<a href="#base-'+prev.code+sfx(sc)+'"><small>◀</small><b lang="ja">'+esc(prev.sign)+'</b></a>' : '<span class="nil"></span>')
     + '<span class="mid">宿 · '+bs.nights+' 泊</span>'
-    + (next ? '<a href="#base-'+next.code+'"><b lang="ja">'+esc(next.sign)+'</b><small>▶</small></a>' : '<span class="nil"></span>')
+    + (next ? '<a href="#base-'+next.code+sfx(sc)+'"><b lang="ja">'+esc(next.sign)+'</b><small>▶</small></a>' : '<span class="nil"></span>')
     + '</div><div class="under"><span>2027 · '+esc(bs.dates)+'</span><span class="zh" lang="ja">'+esc(bs.stay)+'</span></div></div>'
     + '<div class="dtitle"><p>'+fmt(bs.lead)+'</p><p class="hint">'+esc(bs.hint)+'</p></div>'
+    + (sc ? '<p class="scope">从「'+BOOK[sc][0]+'」进来，只看'+scopeLabel(sc)+'。<a href="#base-'+code+'">看全部用途 →</a></p>' : '')
     + '<div class="btools">'+searchBox('q-base-'+code, '在这里搜：店名、用途、正文…', '搜索'+bs.sign+'周边', bq)+'<div class="bchips">'
-    + [['all','全部']].concat(BF.map(k => [k, bfLabel(k)])).map(([k,l]) =>
+    + fs.map(k => [k, k === 'all' ? '全部' : bfLabel(k)]).map(([k,l]) =>
         '<button type="button" class="chip'+(k===f?' on':'')+'" data-f="'+k+'">'+(k==='all'?'':bfKd(k))+l+' <span class="ct">'+count(k)+'</span></button>').join('')
     + '</div></div>'
     + '<div class="brings">'+ringsHTML(bs)+'</div>'
@@ -924,36 +954,42 @@ function renderBase(code, focus){
     + '<div class="blk"><div class="lbl">住在这里的日子 <span class="en">DAYS</span></div>'+dayChips(bs.days)+'</div>'
     + '</div>';
   const v = $('#v-base'); v.innerHTML = h;
-  applyFilter(code);
-  wireSearch(v.querySelector('.btools'), () => { v.querySelector('.brings').innerHTML = ringsHTML(bs); applyFilter(code); });
+  applyFilter(code, sc);
+  wireSearch(v.querySelector('.btools'), () => { v.querySelector('.brings').innerHTML = ringsHTML(bs); applyFilter(code, sc); });
   v.querySelector('.bchips').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
-    bfilter[code] = b.dataset.f; applyFilter(code);
+    bfilter[fk] = b.dataset.f; applyFilter(code, sc);
     const top = v.querySelector('.btools').getBoundingClientRect().top + scrollY;
     if (scrollY > top) window.scrollTo({top, behavior:'instant'});
   });
   return true;
 }
-function applyFilter(code){
-  const v = $('#v-base'), f = bfilter[code] || 'all';
+function applyFilter(code, sc){
+  const v = $('#v-base'), f = bfilter[code+sfx(sc)] || 'all';
   v.querySelectorAll('.bchips .chip').forEach(c => c.classList.toggle('on', c.dataset.f === f));
   const on = v.querySelector('.bchips .chip.on'), bar = on.parentElement;
   bar.scrollLeft = on.offsetLeft - bar.clientWidth/2 + on.offsetWidth/2;
   const bs = D.base.find(x => x.code === code);
   v.querySelectorAll('.be').forEach(li => { const e = bs.entries.find(x => 'be-'+x.id === li.id);
-    li.hidden = !bfHas(e, f) || !baseMatch(e, bq); });
+    li.hidden = !inBook(e, sc) || !bfHas(e, f) || !baseMatch(e, bq, sc); });
   let any = false;
   v.querySelectorAll('.ring').forEach(r => { const vis = !!r.querySelector('.be:not([hidden])'); r.hidden = !vis; any = any || vis; });
   const em = v.querySelector('.empty'); em.hidden = any;
-  if (!any) em.textContent = bq ? '这里没有找到“'+bq+'”'+(f !== 'all' ? '（当前只看「'+bfLabel(f)+'」，可以切回全部）' : '')+'。' : '这一类在这里没有收录。';
+  if (!any) em.textContent = bq ? '这里没有找到“'+bq+'”'+(f !== 'all' ? '（当前只看「'+bfLabel(f)+'」，可以切回全部）' : sc ? '（当前只看'+scopeLabel(sc)+'）' : '')+'。' : '这一类在这里没有收录。';
 }
 
 /* ----- companion books: station index + one page per station ----- */
 const query = {eat:'', shop:'', see:''};
 // "on days" follows the current plan: a station is passed on a day if the day's view links it
 const daysFor = (b, code) => D.days.filter(d => view(d).rel.includes(b+':'+code)).map(d => d.n);
-function entHTML(s, e, q){
+function entHTML(s, e, q, b){
   const i = s.entries.indexOf(e)+1;
+  // a shop kept once in 宿: the station lists it, the content comes from there
+  if (e.base){ const {bs, e:be} = baseById(e.base);
+    return '<li class="ent"><div class="hd"><span class="no">'+pad(i)+'</span><div style="min-width:0"><h4'+langAttr(be.name)+'>'+fmt(be.name,q)+'</h4>'
+      + '<div class="tg">'+fmt(e.tag || be.hours,q)+'</div></div></div>'
+      + mealHTML(be, q) + '<p class="bd">'+fmt(be.body,q)+'</p>' + (be.note ? '<p class="fm">'+fmt(be.note,q)+'</p>' : '')
+      + linkRow(be) + '<a class="goto" href="#base-'+be.id+sfx(b)+'">收在「宿 · '+esc(bs.sign)+'」，离酒店'+esc(be.walk)+' →</a></li>'; }
   return '<li class="ent"'+(e.id ? ' id="ee-'+e.id+'"' : '')+'><div class="hd"><span class="no">'+pad(i)+'</span><div style="min-width:0"><h4'+langAttr(e.name)+'>'+fmt(e.name,q)+'</h4>'
     + '<div class="tg">'+fmt(e.tag,q)+'</div></div></div>'
     + mealHTML(e, q) + '<p class="bd">'+fmt(e.body,q)+'</p>'
@@ -963,7 +999,7 @@ function entHTML(s, e, q){
 // every 嘗 entry in 吃 and 宿, by city; derived from the entries themselves
 function treatList(){
   const out = [];
-  D.base.forEach(bs => bs.entries.forEach(e => { if (e.treat) out.push({e, city:bs.city, href:'#base-'+e.id, where:'宿 · '+bs.sign}); }));
+  D.base.forEach(bs => bs.entries.forEach(e => { if (e.treat) out.push({e, city:bs.city, href:'#base-'+e.id+'~eat', where:'宿 · '+bs.sign}); }));
   D.books.eat.sections.forEach(s => s.entries.forEach(e => { if (e.treat) out.push({e, city:s.city, href:'#eat-'+s.code+'-'+e.id, where:s.sign}); }));
   return out;
 }
@@ -978,6 +1014,13 @@ function treatsHTML(){
         '<li><a href="'+href+'"><span class="tn"><b'+langAttr(e.name)+'>'+esc(e.name)+'</b>'+(e.yen ? '<span class="yp">'+(overDinner(e.yen) ? yenTier(e.yen.lunch) : yenHTML(e.yen))+'</span>' : '')+'</span>'
         + '<span class="tw"><span lang="ja">'+esc(where)+'</span>'+(e.sig ? ' · '+esc(sigHead(e.sig)) : '')+(overDinner(e.yen) ? ' · 推荐午餐' : '')+'</span></a></li>').join('')+'</ul></div>'; }).join('')
     + '</section>';
+}
+const HOTEL_HEAD = {eat:'走几分钟就能吃：正餐、小吃甜点', shop:'走几分钟就能买', see:'走几分钟能看、能让孩子跑'};
+function hotelLink(b, bs){
+  const n = bs.entries.filter(e => inBook(e, b)).length;
+  return '<a class="stn hotel c-'+bs.city+'" href="#base-'+bs.code+'~'+b+'"><span class="msign"><b lang="ja">'+esc(bs.sign)+'</b><span>'+esc(bs.ro)+'</span></span>'
+    + '<span class="tx"><b><i class="kd k-base">宿</i>酒店步行圈</b><span>'+HOTEL_HEAD[b]+'</span></span>'
+    + '<span class="n">'+n+' 处 →<small>'+esc(bs.dates)+'</small></span></a>';
 }
 function stnLink(b, s){
   const dn = daysFor(b, s.code);
@@ -1003,26 +1046,31 @@ function renderBookBody(b){
     ['tokyo','mishima','osaka','hakone','misc'].forEach(c => {
       const secs = B.sections.filter(s => s.city === c); if (!secs.length) return;
       h += '<div class="c-'+c+'"><div class="city-h"><span class="nm" lang="ja">'+CITY[c][0]+'</span><span class="ro">'+CITY[c][1]+'</span><span class="cstay">'+secs.length+' 站</span></div>'
-        + '<div class="stns">'+secs.map(s => stnLink(b, s)).join('')+'</div></div>';
+        + '<div class="stns">'+D.base.filter(bs => bs.city === c).map(bs => hotelLink(b, bs)).join('')+secs.map(s => stnLink(b, s)).join('')+'</div></div>';
     });
     $('#v-'+b+' .body').innerHTML = h; return;
   }
   const match = e => [e.name,e.tag,e.body,e.fam,...mealText(e),...e.links.map(l=>l.label)].join(' ').toLowerCase().includes(q);
   let total = 0;
   B.sections.forEach(s => {
-    const secHit = (s.area+s.head+s.lead).toLowerCase().includes(q);
-    const ents = s.entries.filter(e => secHit || match(e));
+    const secHit = secText(s).includes(q);
+    // references show once, as their 宿 record below
+    const ents = s.entries.filter(e => !e.base && (secHit || match(e)));
     if (!ents.length) return;
     total += ents.length;
     h += '<section class="sec c-'+s.city+'"><a class="sec-h" href="#'+b+'-'+s.code+'"><div class="msign"><b lang="ja">'+esc(s.sign)+'</b><span>'+esc(s.ro)+'</span></div>'
       + '<div class="ttl"><div class="ar"'+langAttr(s.area)+'>'+fmt(s.area,q)+' →</div><h3>'+fmt(s.head,q)+'</h3></div></a>'
-      + '<ol class="ents">'+ents.map(e => entHTML(s, e, q)).join('')+'</ol></section>';
+      + '<ol class="ents">'+ents.map(e => entHTML(s, e, q, b)).join('')+'</ol></section>';
   });
-  const bn = baseHits(query[b]);
-  const toBase = '<a href="#base" data-bq="'+esc(query[b])+'">在「宿」里搜“'+esc(query[b])+'”（'+bn+' 处）→</a>';
-  if (!total) h = '<p class="empty">「'+BOOK[b][0]+'」里没有找到“'+esc(query[b])+'”。'
-    + (bn ? '<br>酒店步行圈的地点收在「宿」：'+toBase : '<br>两家酒店周边（「宿」）也没有。换个词，比如日文店名或料理。')+'</p>';
-  else if (bn) h += '<p class="xhint">酒店步行圈的地点收在「宿」，那里还有 '+bn+' 处匹配：'+toBase+'</p>';
+  // the hotels' walking circles, limited to this book's uses; same matching rule as the 宿 page the header opens
+  D.base.forEach(bs => {
+    const es = bs.entries.filter(e => inBook(e, b) && baseMatch(e, query[b], b)); if (!es.length) return;
+    total += es.length;
+    h += '<section class="sec c-'+bs.city+'"><a class="sec-h" href="#base-'+bs.code+'~'+b+'" data-bq="'+esc(query[b])+'"><div class="msign"><b lang="ja">'+esc(bs.sign)+'</b><span>'+esc(bs.ro)+'</span></div>'
+      + '<div class="ttl"><div class="ar" lang="ja">宿 · '+esc(bs.sign)+' →</div><h3>酒店步行圈 '+es.length+' 处</h3></div></a>'
+      + '<ol class="bents">'+es.map(e => { const rs = refsOf(e.id, b); return baseEnt(e, q, bs, b, rs.length ? rs : null); }).join('')+'</ol></section>';
+  });
+  if (!total) h = '<p class="empty">「'+BOOK[b][0]+'」和两家酒店周边都没有找到“'+esc(query[b])+'”。换个词，比如日文店名或料理。</p>';
   $('#v-'+b+' .body').innerHTML = h;
 }
 function renderStation(b, code){
@@ -1036,7 +1084,7 @@ function renderStation(b, code){
     + (next ? '<a href="#'+b+'-'+next.code+'" aria-label="下一站"><b'+langAttr(next.sign)+'>'+esc(next.sign)+'</b><small>▶</small></a>' : '<span class="nil"></span>')
     + '</div><div class="under"><span class="zh"'+langAttr(s.area)+'>'+esc(s.area)+'</span><span class="zh">'+s.entries.length+' 项</span></div></div>'
     + '<div class="dtitle"><h2>'+esc(s.head)+'</h2>'+(s.lead ? '<p>'+fmt(s.lead)+'</p>' : '')+'<p class="hint"'+langAttr(s.hint)+'>'+esc(s.hint)+'</p></div>'
-    + '<ol class="ents">'+s.entries.map(e => entHTML(s, e, '')).join('')+'</ol>'
+    + '<ol class="ents">'+s.entries.map(e => entHTML(s, e, '', b)).join('')+'</ol>'
     + (s.tip ? '<div class="tip"><span class="tl">今天这样挑</span><span>'+fmt(s.tip)+'</span></div>' : '')
     + (dn.length ? '<div class="blk"><div class="lbl">哪天会经过 <span class="en">ON DAYS</span></div>'+dayChips(dn)+'</div>' : '<div class="blk"><p class="small">当前行程里没有哪天经过这一站；资料照常可查。</p></div>')
     + '<div class="pager">'
@@ -1200,10 +1248,14 @@ function route(keep){
     show('card');
   }
   else if (h === 'base'){ renderBaseIndex(); show('base'); tab='base'; }
-  else if ((m = h.match(/^base-([A-Z])$/)) && renderBase(m[1])){ show('base'); tab='base'; }
-  else if ((m = h.match(/^base-(([A-Z])\d{2})$/)) && renderBase(m[2], m[1])){
-    show('base'); tab='base'; target = document.getElementById('be-'+m[1]);
-    target.classList.add('flash');
+  else if ((m = h.match(/^base-([A-Z])(\d{2})?(?:~(.*))?$/)) && D.base.some(bs => bs.code === m[1])){
+    // #base-T, #base-T10, and from a book #base-T~eat / #base-T10~eat; an unknown suffix or entry falls back safely
+    const [, code, num, sc] = m, id = num ? code+num : null, f = id && baseById(id);
+    if (sc !== undefined && !(sc in SCOPE)) { location.replace('#base-'+(f ? id : code)); return; }
+    if (id && (!f || f.bs.code !== code)) { location.replace('#base-'+code+sfx(sc)); return; }
+    if (f && sc && !inBook(f.e, sc)) { location.replace('#base-'+id); return; }
+    renderBase(code, id, sc); show('base'); tab = sc || 'base';
+    if (id){ target = document.getElementById('be-'+id); target.classList.add('flash'); }
   }
   else if ((m = h.match(/^(eat|shop|see)(?:-([A-Z0-9]+)(?:-([a-z0-9-]+))?)?$/))){
     // one entry: #eat-T5-toriton; the entry id is unique in its book, so a moved entry follows to its station
