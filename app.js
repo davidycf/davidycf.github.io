@@ -891,9 +891,11 @@ function renderBaseIndex(){
   wireSearch(v.querySelector('.tools'), renderBaseResults);
   renderBaseResults();
 }
-function baseEnt(e, q, from, sc){
+// refs: book entries that point at this record and matched the search ({s, e}); shown so the hit is visible
+function baseEnt(e, q, from, sc, refs){
   return '<li class="be" id="be-'+e.id+'"><div class="bh"><h4'+langAttr(e.name)+'>'+fmt(e.name,q)+'</h4><span class="wk">'+esc(e.walk)+'</span></div>'
     + '<div class="kl">'+Object.keys(KIND).filter(k => e.k.includes(k)).map(kd).join('')+'<span class="hr">'+fmt(e.hours,q)+'</span></div>'
+    + (refs ? '<p class="xref">'+refs.map(({b, s, e:r}) => '也在<a href="#'+b+'-'+s.code+'">「'+BOOK[b][0]+' · '+esc(s.sign)+'」</a>'+(r.tag ? '：'+fmt(r.tag,q) : '')).join('；')+'</p>' : '')
     + mealHTML(e, q) + '<p class="bd">'+fmt(e.body,q)+'</p>' + (e.note ? '<p class="fm">'+fmt(e.note,q)+'</p>' : '') + linkRow(e)
     + (from ? '<a class="goto" href="#base-'+e.id+sfx(sc)+'">在「宿 · '+esc(from.sign)+'」的'+esc(from.rings[e.ring][0])+'里看 →</a>' : '') + '</li>';
 }
@@ -1032,8 +1034,11 @@ function renderBookBody(b){
   }
   const match = e => [e.name,e.tag,e.body,e.fam,...mealText(e),...e.links.map(l=>l.label)].join(' ').toLowerCase().includes(q);
   let total = 0;
+  // a reference hits on its own tag, its station, or the 宿 record; the 宿 record then shows once, below
+  const refHits = dict();
   B.sections.forEach(s => {
     const secHit = (s.area+s.head+s.lead).toLowerCase().includes(q);
+    s.entries.forEach(e => { if (e.base && (secHit || (e.tag || '').toLowerCase().includes(q) || baseMatch(baseById(e.base).e, query[b]))) (refHits[e.base] ||= []).push({b, s, e}); });
     const ents = s.entries.filter(e => !e.base && (secHit || match(e)));
     if (!ents.length) return;
     total += ents.length;
@@ -1043,11 +1048,13 @@ function renderBookBody(b){
   });
   // the hotels' walking circles, limited to this book's uses
   D.base.forEach(bs => {
-    const es = bs.entries.filter(e => inScope(e, b) && baseMatch(e, query[b])); if (!es.length) return;
+    // naming the hotel or its neighbourhood brings in all its places for this book, like a station name does
+    const hotelHit = [bs.sign, bs.kana, bs.ro, bs.stay].join(' ').toLowerCase().includes(q);
+    const es = bs.entries.filter(e => e.id in refHits || (inScope(e, b) && (hotelHit || baseMatch(e, query[b])))); if (!es.length) return;
     total += es.length;
     h += '<section class="sec c-'+bs.city+'"><a class="sec-h" href="#base-'+bs.code+'~'+b+'" data-bq="'+esc(query[b])+'"><div class="msign"><b lang="ja">'+esc(bs.sign)+'</b><span>'+esc(bs.ro)+'</span></div>'
       + '<div class="ttl"><div class="ar" lang="ja">宿 · '+esc(bs.sign)+' →</div><h3>酒店步行圈 '+es.length+' 处</h3></div></a>'
-      + '<ol class="bents">'+es.map(e => baseEnt(e, q, bs, b)).join('')+'</ol></section>';
+      + '<ol class="bents">'+es.map(e => baseEnt(e, q, bs, b, refHits[e.id])).join('')+'</ol></section>';
   });
   if (!total) h = '<p class="empty">「'+BOOK[b][0]+'」和两家酒店周边都没有找到“'+esc(query[b])+'”。换个词，比如日文店名或料理。</p>';
   $('#v-'+b+' .body').innerHTML = h;
