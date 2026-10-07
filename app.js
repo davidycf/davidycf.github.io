@@ -58,9 +58,19 @@ function mealHTML(e, q){
   return (ml ? '<div class="ml">'+ml+'</div>' : '')
     + (e.sig ? '<p class="sg"><b>吃什么</b>'+fmt(e.sig,q)+'</p>' : '') + (e.order ? '<p class="sg"><b>怎么点</b>'+fmt(e.order,q)+'</p>' : '');
 }
-const mealText = e => [e.treat ? TREAT.join(' ') : '', e.sig, e.order];
-const YEN_KEY = '<p class="ykey">¥ 是每个大人一餐的大概花费：'+[['¥','1,500 以内'],['¥¥','1,500–3,000'],['¥¥¥','3,000–6,000'],['¥¥¥¥','6,000–10,000'],['¥¥¥¥+','通常过一万']]
-  .map(([y, t]) => '<span><b>'+y+'</b> '+t+'</span>').join(' ')+'</p>';
+// the tier's symbols and words, as shown in the ¥ key, so a search for 「¥¥¥」 or 「3,000–6,000」 finds it
+const YEN_SYM = n => n > 4 ? '¥¥¥¥+' : '¥'.repeat(n);
+const YEN_WORD = [null, '1,500 以内', '1,500–3,000', '3,000–6,000', '6,000–10,000', '通常过一万'];
+const yenWords = n => YEN_SYM(n)+' '+YEN[n]+' '+YEN_WORD[n];
+function yenText(y){
+  if (!y) return '';
+  if (typeof y === 'number') return yenWords(y);
+  return [['lunch','午'],['dinner','晚']].filter(([m]) => y[m]).map(([m, l]) => l+' '+yenWords(y[m])).join(' ') + (overDinner(y) ? ' 推荐午餐 · 晚餐通常超预算' : '');
+}
+// searchable text of the meal fields; 吃 and 宿 both use it
+const mealText = e => [e.treat ? TREAT.join(' ') : '', e.sig, e.order, yenText(e.yen)];
+const YEN_KEY = '<p class="ykey">¥ 是每个大人一餐的大概花费：'+[1,2,3,4,5]
+  .map(n => '<span><b>'+YEN_SYM(n)+'</b> '+YEN_WORD[n]+'</span>').join(' ')+'</p>';
 const txt = x => typeof x === 'string' ? x : x.text;
 
 /* ----- dates ----- */
@@ -868,7 +878,7 @@ function renderBaseIndex(){
     h += '<a class="bcard c-'+bs.city+(here?' today':'')+'" href="#base-'+bs.code+'">'
       + '<div class="top"><div class="kana" lang="ja">'+esc(bs.kana)+'</div><div class="big" lang="ja">'+esc(bs.sign)+'</div><div class="rom">'+esc(bs.ro)+'</div></div>'
       + '<div class="band"><span lang="ja">'+CITY[bs.city][0]+'</span><span class="mid">'+bs.nights+' 泊</span><span>'+esc(bs.dates)+'</span></div>'
-      + '<div class="under">'+BF.map(k => '<span>'+bfKd(k)+bs.entries.filter(e => bfHas(e, k)).length+'</span>').join('')
+      + '<div class="under">'+Object.keys(KIND).map(k => '<span>'+kd(k)+bs.entries.filter(e => e.k.includes(k)).length+'</span>').join('')
       + (here ? '<span class="tag-today">TODAY</span>' : '<span class="go">'+bs.entries.length+' 处 →</span>')+'</div></a>';
   });
   h += '</div><p class="small legend">图例　'+BF.map(k => '<span class="lg">'+bfKd(k)+bfLabel(k)+'</span>').join('')+'</p>';
