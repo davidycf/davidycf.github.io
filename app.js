@@ -38,6 +38,29 @@ const langAttr = t => JA_RX.test(t) ? ' lang="ja"' : '';
 const extLinks = ls => ls.map(l => '<a href="'+esc(l.url)+'" target="_blank" rel="noopener"'+langAttr(l.label)+'>'+esc(l.label)+' <span class="ar">↗</span></a>').join('');
 const linkRow = e => '<div class="lk">'+(e.map ? '<a class="map" href="'+esc(e.map)+'" target="_blank" rel="noopener">地图 <span class="ar">↗</span></a>' : '') + extLinks(e.links)+'</div>';
 const kd = k => '<i class="kd k-'+k+'" title="'+KIND[k][1]+'">'+KIND[k][0]+'</i>';
+// 嘗 marks a meal worth setting aside (a property of a food entry, not one of the KIND uses)
+const TREAT = ['嘗','好好吃一顿'];
+const treatKd = '<i class="kd k-treat" title="'+TREAT[1]+'">'+TREAT[0]+'</i>';
+// rough spend per adult per meal; 5 = usually over the ¥10,000 budget
+const YEN = [null, '约 ¥1,500 以内', '约 ¥1,500–3,000', '约 ¥3,000–6,000', '约 ¥6,000–10,000', '通常超过 ¥10,000'];
+const yenTier = n => '<span class="yen" role="img" aria-label="每个大人'+YEN[n]+'" title="每个大人'+YEN[n]+'"><b>'+'¥'.repeat(Math.min(n,4))+'</b>'
+  + (n > 4 ? '<b>+</b>' : '¥'.repeat(4-n))+'</span>';
+const overDinner = y => typeof y === 'object' && y.dinner > 4 && y.lunch < 5;
+function yenHTML(y){
+  if (!y) return '';
+  if (typeof y === 'number') return yenTier(y);
+  return [['lunch','午'],['dinner','晚']].filter(([m]) => y[m]).map(([m, l]) => '<span class="ym">'+l+' '+yenTier(y[m])+'</span>').join('')
+    + (overDinner(y) ? '<span class="yn">推荐午餐 · 晚餐通常超预算</span>' : '');
+}
+// the 嘗 / price line, then 吃什么 / 怎么点; empty for entries that have neither
+function mealHTML(e, q){
+  const ml = (e.treat ? '<span class="tr">'+treatKd+TREAT[1]+'</span>' : '') + yenHTML(e.yen);
+  return (ml ? '<div class="ml">'+ml+'</div>' : '')
+    + (e.sig ? '<p class="sg"><b>吃什么</b>'+fmt(e.sig,q)+'</p>' : '') + (e.order ? '<p class="sg"><b>怎么点</b>'+fmt(e.order,q)+'</p>' : '');
+}
+const mealText = e => [e.treat ? TREAT.join(' ') : '', e.sig, e.order];
+const YEN_KEY = '<p class="ykey">¥ 是每个大人一餐的大概花费：'+[['¥','1,500 以内'],['¥¥','1,500–3,000'],['¥¥¥','3,000–6,000'],['¥¥¥¥','6,000–10,000'],['¥¥¥¥+','通常过一万']]
+  .map(([y, t]) => '<span><b>'+y+'</b> '+t+'</span>').join(' ')+'</p>';
 const txt = x => typeof x === 'string' ? x : x.text;
 
 /* ----- dates ----- */
@@ -805,7 +828,12 @@ function ioAction(a, b){
 /* ----- home bases ----- */
 const bfilter = {};
 let bq = '';   // 宿 search, shared by the index (both hotels) and each hotel page
-const baseText = e => [e.name, e.hours, e.body, e.note, e.walk, ...e.k.map(k => KIND[k][1]), ...e.links.map(l => l.label)].join(' ').toLowerCase();
+const baseText = e => [e.name, e.hours, e.body, e.note, e.walk, ...mealText(e), ...e.k.map(k => KIND[k][1]), ...e.links.map(l => l.label)].join(' ').toLowerCase();
+// 宿 use filters: the KIND uses plus 嘗 right after 吃饭
+const BF = ['eat','treat',...Object.keys(KIND).filter(k => k !== 'eat')];
+const bfLabel = f => f === 'treat' ? TREAT[1] : KIND[f][1];
+const bfKd = f => f === 'treat' ? treatKd : kd(f);
+const bfHas = (e, f) => f === 'all' || (f === 'treat' ? !!e.treat : e.k.includes(f));
 const baseMatch = (e, q) => !q || baseText(e).includes(q.toLowerCase());
 const baseHits = q => D.base.reduce((n, bs) => n + bs.entries.filter(e => baseMatch(e, q)).length, 0);
 function searchBox(id, ph, label, val){
@@ -840,18 +868,18 @@ function renderBaseIndex(){
     h += '<a class="bcard c-'+bs.city+(here?' today':'')+'" href="#base-'+bs.code+'">'
       + '<div class="top"><div class="kana" lang="ja">'+esc(bs.kana)+'</div><div class="big" lang="ja">'+esc(bs.sign)+'</div><div class="rom">'+esc(bs.ro)+'</div></div>'
       + '<div class="band"><span lang="ja">'+CITY[bs.city][0]+'</span><span class="mid">'+bs.nights+' 泊</span><span>'+esc(bs.dates)+'</span></div>'
-      + '<div class="under">'+Object.keys(KIND).map(k => '<span>'+kd(k)+bs.entries.filter(e => e.k.includes(k)).length+'</span>').join('')
+      + '<div class="under">'+BF.map(k => '<span>'+bfKd(k)+bs.entries.filter(e => bfHas(e, k)).length+'</span>').join('')
       + (here ? '<span class="tag-today">TODAY</span>' : '<span class="go">'+bs.entries.length+' 处 →</span>')+'</div></a>';
   });
-  h += '</div><p class="small legend">图例　'+Object.keys(KIND).map(k => '<span class="lg">'+kd(k)+KIND[k][1]+'</span>').join('')+'</p>';
+  h += '</div><p class="small legend">图例　'+BF.map(k => '<span class="lg">'+bfKd(k)+bfLabel(k)+'</span>').join('')+'</p>';
   const v = $('#v-base'); v.innerHTML = h;
   wireSearch(v.querySelector('.tools'), renderBaseResults);
   renderBaseResults();
 }
 function baseEnt(e, q, from){
-  return '<li class="be" id="be-'+e.id+'" data-k="'+e.k.join(' ')+'"><div class="bh"><h4'+langAttr(e.name)+'>'+fmt(e.name,q)+'</h4><span class="wk">'+esc(e.walk)+'</span></div>'
+  return '<li class="be" id="be-'+e.id+'"><div class="bh"><h4'+langAttr(e.name)+'>'+fmt(e.name,q)+'</h4><span class="wk">'+esc(e.walk)+'</span></div>'
     + '<div class="kl">'+Object.keys(KIND).filter(k => e.k.includes(k)).map(kd).join('')+'<span class="hr">'+fmt(e.hours,q)+'</span></div>'
-    + '<p class="bd">'+fmt(e.body,q)+'</p>' + (e.note ? '<p class="fm">'+fmt(e.note,q)+'</p>' : '') + linkRow(e)
+    + mealHTML(e, q) + '<p class="bd">'+fmt(e.body,q)+'</p>' + (e.note ? '<p class="fm">'+fmt(e.note,q)+'</p>' : '') + linkRow(e)
     + (from ? '<a class="goto" href="#base-'+e.id+'">在「宿 · '+esc(from.sign)+'」的'+esc(from.rings[e.ring][0])+'里看 →</a>' : '') + '</li>';
 }
 function ringsHTML(bs){
@@ -867,7 +895,7 @@ function renderBase(code, focus){
   if (target){ bfilter[code] = 'all'; if (!baseMatch(target, bq)) bq = ''; }
   const bs = D.base[i], prev = D.base[i-1], next = D.base[i+1];
   const f = bfilter[code] || 'all';
-  const count = k => k === 'all' ? bs.entries.length : bs.entries.filter(e => e.k.includes(k)).length;
+  const count = k => bs.entries.filter(e => bfHas(e, k)).length;
   let h = '<div class="c-'+bs.city+'"><a class="back" href="#base">← 两个大本营</a>'
     + '<div class="sign"><div class="top"><div class="kana" lang="ja">'+esc(bs.kana)+'</div><div class="big" lang="ja">'+esc(bs.sign)+'</div><div class="rom">'+esc(bs.ro)+'</div></div>'
     + '<div class="band">'
@@ -877,8 +905,8 @@ function renderBase(code, focus){
     + '</div><div class="under"><span>2027 · '+esc(bs.dates)+'</span><span class="zh" lang="ja">'+esc(bs.stay)+'</span></div></div>'
     + '<div class="dtitle"><p>'+fmt(bs.lead)+'</p><p class="hint">'+esc(bs.hint)+'</p></div>'
     + '<div class="btools">'+searchBox('q-base-'+code, '在这里搜：店名、用途、正文…', '搜索'+bs.sign+'周边', bq)+'<div class="bchips">'
-    + [['all','全部']].concat(Object.keys(KIND).map(k => [k, KIND[k][1]])).map(([k,l]) =>
-        '<button type="button" class="chip'+(k===f?' on':'')+'" data-f="'+k+'">'+(k==='all'?'':kd(k))+l+' <span class="ct">'+count(k)+'</span></button>').join('')
+    + [['all','全部']].concat(BF.map(k => [k, bfLabel(k)])).map(([k,l]) =>
+        '<button type="button" class="chip'+(k===f?' on':'')+'" data-f="'+k+'">'+(k==='all'?'':bfKd(k))+l+' <span class="ct">'+count(k)+'</span></button>').join('')
     + '</div></div>'
     + '<div class="brings">'+ringsHTML(bs)+'</div>'
     + '<p class="empty" hidden></p>'
@@ -903,11 +931,11 @@ function applyFilter(code){
   bar.scrollLeft = on.offsetLeft - bar.clientWidth/2 + on.offsetWidth/2;
   const bs = D.base.find(x => x.code === code);
   v.querySelectorAll('.be').forEach(li => { const e = bs.entries.find(x => 'be-'+x.id === li.id);
-    li.hidden = (f !== 'all' && !li.dataset.k.split(' ').includes(f)) || !baseMatch(e, bq); });
+    li.hidden = !bfHas(e, f) || !baseMatch(e, bq); });
   let any = false;
   v.querySelectorAll('.ring').forEach(r => { const vis = !!r.querySelector('.be:not([hidden])'); r.hidden = !vis; any = any || vis; });
   const em = v.querySelector('.empty'); em.hidden = any;
-  if (!any) em.textContent = bq ? '这里没有找到“'+bq+'”'+(f !== 'all' ? '（当前只看「'+KIND[f][1]+'」，可以切回全部）' : '')+'。' : '这一类在这里没有收录。';
+  if (!any) em.textContent = bq ? '这里没有找到“'+bq+'”'+(f !== 'all' ? '（当前只看「'+bfLabel(f)+'」，可以切回全部）' : '')+'。' : '这一类在这里没有收录。';
 }
 
 /* ----- companion books: station index + one page per station ----- */
@@ -916,11 +944,28 @@ const query = {eat:'', shop:'', see:''};
 const daysFor = (b, code) => D.days.filter(d => view(d).rel.includes(b+':'+code)).map(d => d.n);
 function entHTML(s, e, q){
   const i = s.entries.indexOf(e)+1;
-  return '<li class="ent"><div class="hd"><span class="no">'+pad(i)+'</span><div style="min-width:0"><h4'+langAttr(e.name)+'>'+fmt(e.name,q)+'</h4>'
+  return '<li class="ent"'+(e.id ? ' id="ee-'+e.id+'"' : '')+'><div class="hd"><span class="no">'+pad(i)+'</span><div style="min-width:0"><h4'+langAttr(e.name)+'>'+fmt(e.name,q)+'</h4>'
     + '<div class="tg">'+fmt(e.tag,q)+'</div></div></div>'
-    + '<p class="bd">'+fmt(e.body,q)+'</p>'
+    + mealHTML(e, q) + '<p class="bd">'+fmt(e.body,q)+'</p>'
     + (e.fam ? '<p class="fm"><b>一家四口</b>　'+fmt(e.fam,q)+'</p>' : '')
     + linkRow(e) + '</li>';
+}
+// every 嘗 entry in 吃 and 宿, by city; derived from the entries themselves
+function treatList(){
+  const out = [];
+  D.base.forEach(bs => bs.entries.forEach(e => { if (e.treat) out.push({e, city:bs.city, href:'#base-'+e.id, where:'宿 · '+bs.sign}); }));
+  D.books.eat.sections.forEach(s => s.entries.forEach(e => { if (e.treat) out.push({e, city:s.city, href:'#eat-'+s.code+'-'+e.id, where:s.sign}); }));
+  return out;
+}
+function treatsHTML(){
+  const all = treatList(); if (!all.length) return '';
+  return '<section class="treats"><div class="th">'+treatKd+'<h3>'+TREAT[1]+'</h3><span class="ct">'+all.length+' 家</span></div>'
+    + '<p class="small">值得认真留一顿饭给它的招牌菜，按城市排，点开看怎么点、带孩子怎么安排。</p>'+YEN_KEY
+    + ['tokyo','mishima','osaka','hakone'].map(c => { const xs = all.filter(x => x.city === c); if (!xs.length) return '';
+      return '<div class="tcity c-'+c+'"><div class="tch" lang="ja">'+CITY[c][0]+'</div><ul>'+xs.map(({e, href, where}) =>
+        '<li><a href="'+href+'"><span class="tn"><b'+langAttr(e.name)+'>'+esc(e.name)+'</b>'+(e.yen ? '<span class="yp">'+(overDinner(e.yen) ? yenTier(e.yen.lunch) : yenHTML(e.yen))+'</span>' : '')+'</span>'
+        + '<span class="tw"><span lang="ja">'+esc(where)+'</span>'+(e.sig ? ' · '+esc(e.sig) : '')+(overDinner(e.yen) ? ' · 推荐午餐' : '')+'</span></a></li>').join('')+'</ul></div>'; }).join('')
+    + '</section>';
 }
 function stnLink(b, s){
   const dn = daysFor(b, s.code);
@@ -942,6 +987,7 @@ function renderBookBody(b){
   const B = D.books[b], q = query[b].toLowerCase();
   let h = '';
   if (!q){
+    if (b === 'eat') h += treatsHTML();
     ['tokyo','mishima','osaka','hakone','misc'].forEach(c => {
       const secs = B.sections.filter(s => s.city === c); if (!secs.length) return;
       h += '<div class="c-'+c+'"><div class="city-h"><span class="nm" lang="ja">'+CITY[c][0]+'</span><span class="ro">'+CITY[c][1]+'</span><span class="cstay">'+secs.length+' 站</span></div>'
@@ -949,7 +995,7 @@ function renderBookBody(b){
     });
     $('#v-'+b+' .body').innerHTML = h; return;
   }
-  const match = e => [e.name,e.tag,e.body,e.fam,...e.links.map(l=>l.label)].join(' ').toLowerCase().includes(q);
+  const match = e => [e.name,e.tag,e.body,e.fam,...mealText(e),...e.links.map(l=>l.label)].join(' ').toLowerCase().includes(q);
   let total = 0;
   B.sections.forEach(s => {
     const secHit = (s.area+s.head+s.lead).toLowerCase().includes(q);
@@ -1147,9 +1193,16 @@ function route(keep){
     show('base'); tab='base'; target = document.getElementById('be-'+m[1]);
     target.classList.add('flash');
   }
-  else if ((m = h.match(/^(eat|shop|see)(?:-([A-Z0-9]+))?$/))){
+  else if ((m = h.match(/^(eat|shop|see)(?:-([A-Z0-9]+)(?:-([a-z0-9-]+))?)?$/))){
+    // one entry: #eat-T5-toriton; the entry id is unique in its book, so a moved entry follows to its station
+    if (m[3]){
+      const s = D.books[m[1]].sections.find(x => x.entries.some(e => e.id === m[3]));
+      if (!s) { location.replace('#'+m[1]+'-'+m[2]); return; }
+      if (s.code !== m[2]) { location.replace('#'+m[1]+'-'+s.code+'-'+m[3]); return; }
+    }
     show(m[1]); tab = m[1];
     const v = $('#v-'+m[1]), st = m[2] && renderStation(m[1], m[2]);
+    if (st && m[3]){ target = document.getElementById('ee-'+m[3]); target.classList.add('flash'); }
     if (!st) renderBookBody(m[1]);
     v.querySelector('.idx').hidden = !!st; v.querySelector('.stp').hidden = !st;
   }
@@ -1171,7 +1224,7 @@ function route(keep){
   document.getElementById('mast').hidden = !idx;
   document.querySelectorAll('.tabs a').forEach(a => a.classList.toggle('on', a.dataset.t === tab));
   if (keep) return;
-  if (target) requestAnimationFrame(() => target.scrollIntoView({block: target.matches('.be, .atile') ? 'center' : 'start', behavior:'instant'}));
+  if (target) requestAnimationFrame(() => target.scrollIntoView({block: target.matches('.be, .ent, .atile') ? 'center' : 'start', behavior:'instant'}));
   else window.scrollTo({top:0, behavior:'instant'});
 }
 function onAction(e){
