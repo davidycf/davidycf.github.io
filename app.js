@@ -957,8 +957,8 @@ function treatList(){
   D.books.eat.sections.forEach(s => s.entries.forEach(e => { if (e.treat) out.push({e, city:s.city, href:'#eat-'+s.code+'-'+e.id, where:s.sign}); }));
   return out;
 }
-// the overview names the dish only: 吃什么 up to its first ：or ；
-const sigHead = t => t.split(/[：；]/)[0];
+// the overview names the dish only: 吃什么 up to its first ：；or ，
+const sigHead = t => t.split(/[：；，]/)[0];
 function treatsHTML(){
   const all = treatList(); if (!all.length) return '';
   return '<section class="treats"><div class="th">'+treatKd+'<h3>'+TREAT[1]+'</h3><span class="ct">'+all.length+' 家</span></div>'
