@@ -978,7 +978,6 @@ const daysFor = (b, code) => D.days.filter(d => view(d).rel.includes(b+':'+code)
 const mains = s => s.entries.filter(e => !e.fb);
 const fbs = s => s.entries.filter(e => e.fb);
 const entCount = s => { const m = fbs(s).length; return mains(s).length+' 项'+(m ? '<span class="fbn"> +'+m+' 兜底</span>' : ''); };
-const treatCount = n => n ? '<span class="trn">'+treatKd+n+'</span> · ' : '';
 function entsHTML(s, ents, q, b){
   const m = ents.filter(e => !e.fb), f = ents.filter(e => e.fb);
   return (m.length ? '<ol class="ents">'+m.map(e => entHTML(s, e, q, b)).join('')+'</ol>' : '')
@@ -1031,16 +1030,16 @@ function treatsHTML(){
 }
 const HOTEL_HEAD = {eat:'走几分钟就能吃：正餐、小吃甜点', shop:'走几分钟就能买', see:'走几分钟能看、能让孩子跑'};
 function hotelLink(b, bs){
-  const es = bs.entries.filter(e => inBook(e, b));
+  const es = bs.entries.filter(e => inBook(e, b)), n = b === 'eat' ? es.filter(e => e.treat).length : 0;
   return '<a class="stn hotel c-'+bs.city+'" href="#base-'+bs.code+'~'+b+'"><span class="msign"><b lang="ja">'+esc(bs.sign)+'</b><span>'+esc(bs.ro)+'</span></span>'
-    + '<span class="tx"><b><i class="kd k-base">宿</i>酒店步行圈</b><span>'+HOTEL_HEAD[b]+'</span></span>'
-    + '<span class="n">'+(b === 'eat' ? treatCount(es.filter(e => e.treat).length) : '')+es.length+' 处 →<small>'+esc(bs.dates)+'</small></span></a>';
+    + '<span class="tx"><b class="hb"><i class="hn"><i class="kd k-base">宿</i>酒店步行圈</i>'+(n ? '<i class="trn">'+treatKd+n+'</i>' : '')+'</b><span>'+HOTEL_HEAD[b]+'</span></span>'
+    + '<span class="n">'+es.length+' 处 →<small>'+esc(bs.dates)+'</small></span></a>';
 }
 function stnLink(b, s){
   const dn = daysFor(b, s.code);
   return '<a class="stn c-'+s.city+'" href="#'+b+'-'+s.code+'"><span class="msign"><b lang="ja">'+esc(s.sign)+'</b><span>'+esc(s.ro)+'</span></span>'
-    + '<span class="tx"><b'+langAttr(s.area)+'>'+esc(s.area)+'</b><span>'+esc(s.head)+'</span></span>'
-    + '<span class="n">'+treatCount(s.entries.filter(e => e.treat).length)+entCount(s)+' →'+(dn.length ? '<small>DAY '+dn.map(pad).join(' · ')+'</small>' : '')+'</span></a>';
+    + '<span class="tx"><b'+langAttr(s.area)+'>'+esc(s.area)+(s.entries.some(e => e.treat) ? treatKd : '')+'</b><span>'+esc(s.head)+'</span></span>'
+    + '<span class="n">'+(dn.length ? 'DAY '+dn.map(pad).join(' · ')+' ' : '')+'→</span></a>';
 }
 function renderBookShell(b){
   const B = D.books[b], el = $('#v-'+b);
