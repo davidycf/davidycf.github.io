@@ -234,6 +234,22 @@ a.sec-h{text-decoration:none}
 .sg b{display:inline-block;font-size:12px;font-weight:500;color:var(--muted);border:1px solid var(--rule);border-radius:4px;padding:0 5px;margin-right:7px;line-height:1.5;vertical-align:1px}
 .ent{scroll-margin-top:calc(env(safe-area-inset-top,0px) + 120px)}
 .ent.flash{box-shadow:0 0 0 2px var(--line)}
+.ent .bd + .bd{margin-top:5px}
+.fbh{margin-top:18px}
+.ents.fbs{margin-top:0;gap:6px}
+.ent.fb{position:relative;padding:0}
+.ent.fb summary{list-style:none;cursor:pointer;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;padding:9px 76px 9px 30px;position:relative}
+.ent.fb summary::-webkit-details-marker{display:none}
+.ent.fb summary::before{content:"▸";position:absolute;left:12px;top:9px;color:var(--muted);font-size:13px}
+.ent.fb details[open] summary::before{content:"▾"}
+.ent.fb summary h4{font-size:15px}
+.ent.fb summary .tg{margin-top:0;min-width:0;overflow-wrap:anywhere}
+.ent.fb details > :not(summary){margin-left:14px;margin-right:14px}
+.ent.fb details[open]{padding-bottom:12px}
+.ent.fb .fbm{position:absolute;top:7px;right:10px;margin:0}
+.fbn{font-size:11.5px}
+.trn{color:var(--treat);font-weight:700}
+.trn .kd{width:16px;height:16px;font-size:9.5px;margin-right:2px;vertical-align:-3px}
 .treats{margin-top:16px;background:var(--surface);border-radius:var(--r);padding:12px 14px;border-top:3px solid var(--treat)}
 .treats[open]{padding-bottom:6px}
 .treats summary{list-style:none;cursor:pointer}
