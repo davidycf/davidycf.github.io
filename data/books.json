@@ -1473,6 +1473,24 @@
       "map": "https://www.google.com/maps/search/?api=1&query=%E3%83%A8%E3%83%89%E3%83%90%E3%82%B7%E3%82%AB%E3%83%A1%E3%83%A9+%E3%83%9E%E3%83%AB%E3%83%81%E3%83%A1%E3%83%87%E3%82%A3%E3%82%A2Akiba"
      },
      {
+      "id": "jins-akiba",
+      "name": "JINS ヨドバシAkiba店",
+      "tag": "平价眼镜／ヨドバシAkiba 7F／9:30–22:00",
+      "body": "想顺手配一副便宜眼镜，在ヨドバシ楼里就能办：镜架连薄型非球面镜片 ¥5,900 起（含税）。店里免费验光，也可以照现在戴的眼镜或处方配。标准镜片有库存时最快 30 分钟取，下单后先去别的楼层逛，回来拿。",
+      "fam": "在哪家下单就在哪家取，眼镜寄不出日本，所以当天下单、当天取最稳：选标准镜片，度数在店里能做的范围内；加选镜片或渐进镜片要等 10 天到两周。能不能退税在柜台问，做法看 附录#tax-free。车站旁的アトレ秋葉原1 2F 也有一家 JINS（10:00–21:00）。核对：2026/10/7。",
+      "links": [
+       {
+        "label": "ヨドバシAkiba：JINS",
+        "url": "https://www.yodobashi-akiba.com/fashionMB/fashionMB_jins.html"
+       },
+       {
+        "label": "JINS アトレ秋葉原1店",
+        "url": "https://www.atre.co.jp/akihabara/shop/5659/"
+       }
+      ],
+      "map": "https://www.google.com/maps/search/?api=1&query=JINS%20%E3%83%A8%E3%83%89%E3%83%90%E3%82%B7Akiba%E5%BA%97"
+     },
+     {
       "name": "スーパーポテト 秋葉原店",
       "tag": "老游戏第一站／30–60分钟",
       "body": "FC、SFC、N64、GC、GB、GBA等品类很适合建立价格与品相概念。你熟悉游戏，看看旧盒子和硬件本身也会有趣。",
