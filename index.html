@@ -54,6 +54,8 @@ p{margin:0}
 .status{margin-top:14px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
 .status b{font-family:var(--f-ro);font-size:30px;font-weight:700;color:var(--ink);line-height:1;font-variant-numeric:tabular-nums}
 .status a{font-weight:500;color:var(--ink)}
+.status .off{font-size:12px;font-weight:500;color:var(--muted);border:1px solid var(--rule);border-radius:999px;padding:1px 8px;align-self:center}
+.offline{margin-top:14px;padding:10px 12px;border-radius:9px;background:var(--check-bg);border-left:3px solid var(--check);font-size:14px;overflow-wrap:anywhere}
 .next{margin-top:10px;display:flex;gap:10px;align-items:baseline;font-size:14px}
 .next .nl{flex:none;font-size:12.5px;font-weight:700;letter-spacing:.08em;color:var(--muted)}
 .next > div{min-width:0;display:grid;gap:2px}
@@ -67,8 +69,6 @@ p{margin:0}
 .due-later{color:var(--muted);font-weight:500}
 .todo input:checked+span .due{text-decoration:none}
 .inav .chip .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--check);margin-left:2px;align-self:center}
-details.done{margin-top:6px}
-details.done > summary{cursor:pointer;font-size:13px;color:var(--muted);padding:6px 0}
 
 /* route strip: the whole trip as one line */
 .route{margin-top:18px;display:grid;grid-template-columns:52px 5fr 2.6fr 5fr 44px;align-items:start;gap:0}
@@ -139,6 +139,23 @@ details.done > summary{cursor:pointer;font-size:13px;color:var(--muted);padding:
 .steps li::before{content:counter(s);position:absolute;left:0;top:3px;width:21px;height:21px;border-radius:50%;background:var(--line);color:var(--surface);font:700 12.5px/21px var(--f-ro);text-align:center}
 .steps li::after{content:"";position:absolute;left:9.5px;top:26px;bottom:2px;width:2px;background:var(--rule)}
 .steps li:last-child::after{display:none}
+.steps li.seg{counter-increment:none;padding:0 0 8px 30px;font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--muted)}
+.steps li.seg::before,.steps li.seg::after{display:none}
+.steps li.op::before{box-sizing:border-box;background:transparent;border:2px solid var(--line);color:var(--line);line-height:17px}
+.steps .sub{margin-top:4px;font-size:13.5px;color:var(--muted)}
+details.optsum > summary.lbl{cursor:pointer;list-style:none;margin-bottom:0;align-items:baseline}
+details.optsum > summary.lbl::-webkit-details-marker{display:none}
+details.optsum > summary.lbl::before{content:"▸";color:var(--muted);font-size:13px;letter-spacing:0}
+details.optsum[open] > summary.lbl::before{content:"▾"}
+details.optsum > summary.lbl span{min-width:0;overflow-wrap:anywhere;letter-spacing:.04em}
+details.optsum > summary.lbl::after{min-width:16px;align-self:center}
+details.optsum[open] > summary.lbl{margin-bottom:8px}
+details.done{margin-top:6px}
+details.done > summary{cursor:pointer;font-size:13px;color:var(--muted);padding:6px 0}
+.trio .go{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.trio .go a{font-size:13px;text-decoration:none;border:1px solid var(--rule);border-radius:6px;padding:2px 8px;line-height:1.4;max-width:100%}
+.stay .lk{margin-top:10px}
+.sign .band .tag-today{background:var(--on-line);color:var(--line);margin-left:6px;vertical-align:1px}
 .stay{background:var(--surface);border-radius:var(--r);padding:14px 16px}
 .stay p+p{margin-top:6px}
 .stay .l0{font-weight:700}
@@ -508,6 +525,7 @@ textarea.io{display:block;width:100%;margin-top:8px;font:13px/1.5 ui-monospace,M
     </div>
   </header>
 
+  <p class="offline" id="offline" hidden></p>
   <main>
     <section class="view" id="v-trip" aria-label="行程"></section>
     <section class="view" id="v-day" hidden></section>
@@ -537,7 +555,7 @@ textarea.io{display:block;width:100%;margin-top:8px;font:13px/1.5 ui-monospace,M
 
 
 <script>
-// Retain reading preferences and offline access at the existing Site address.
+// Reading size preference (this device only).
 try {
   const size = Number(localStorage.getItem('japan-reading-size'));
   if (size >= 14 && size <= 28) document.body.style.fontSize = size + 'px';
