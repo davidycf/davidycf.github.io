@@ -857,9 +857,10 @@
   "code": "O",
   "city": "osaka",
   "sign": "心斎橋",
+  "zh": "心斋桥",
   "kana": "しんさいばし",
   "ro": "Shinsaibashi",
-  "stay": "MONday apart 心斋桥",
+  "stay": "Premium MONday 心斎橋",
   "dates": "3/21–3/26",
   "nights": 5,
   "days": [
@@ -1315,6 +1316,7 @@
     "ring": 1,
     "walk": "约 12–15 分",
     "hours": "11:30–21:30（最后点单 21:00）· 无休",
+    "treat": true,
     "budget": {
      "lunch": [
       2000,
@@ -1325,12 +1327,27 @@
       1999
      ]
     },
+    "arrive": "午饭建议 11:15 左右到、11:30 开门；11:30–21:30 连续营业",
+    "sig": "1925 年在这里诞生的オムライス：招牌チキンオムライス，另有淋ハヤシ酱的一种",
+    "order": "大人孩子都点チキンオムライス，想换口味点ハヤシオムライス；加一份エビフライ或唐揚全家分",
     "body": "1925 年在这里发明了蛋包饭的店。房子是 1950 年的町屋，榻榻米座位，窗外有小庭院。孩子大人都能点，是大阪很稳的一顿家庭晚饭。",
-    "note": "",
+    "note": "食べログ写可以带孩子；座席是榻榻米和掘りごたつ，可能要脱鞋。推车能不能进没有确认，带可折叠的，到门口问放哪儿。食べログ写不能预约，店家的预约页又有订座，想订先打电话问清，不然按现场等位。可以刷卡，QR 码支付不行。核对于 2026/10/7，出发前再看官网。",
     "links": [
      {
       "label": "北极星心斋桥本店",
       "url": "https://osakamania.jp/shop/omelet-rice_01/"
+     },
+     {
+      "label": "北極星：店铺与营业时间",
+      "url": "https://www.hokkyokusei.online/shoplist"
+     },
+     {
+      "label": "北極星心斎橋本店：菜单（ぐるなび）",
+      "url": "https://r.gnavi.co.jp/n2vf7hd90000/menu1/"
+     },
+     {
+      "label": "食べログ：北極星 心斎橋本店",
+      "url": "https://tabelog.com/osaka/A2701/A270202/27001274/"
      }
     ],
     "map": "https://www.google.com/maps/search/?api=1&query=%E5%8C%97%E6%A5%B5%E6%98%9F+%E5%BF%83%E6%96%8E%E6%A9%8B%E6%9C%AC%E5%BA%97",
