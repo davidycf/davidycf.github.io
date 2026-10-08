@@ -659,5 +659,27 @@
    "h": "地图与引用",
    "p": "每条的官方入口就是出处；“地图”只是按店名搜索，路线自己再看。"
   }
+ ],
+ "hotels": [
+  {
+   "city": "tokyo",
+   "name": "MONday Apart 上野新御徒町",
+   "q": "MONday Apart 上野新御徒町"
+  },
+  {
+   "city": "mishima",
+   "name": "富士山三島東急ホテル",
+   "q": "富士山三島東急ホテル"
+  },
+  {
+   "city": "osaka",
+   "name": "Premium MONday 心斎橋",
+   "q": "Premium MONday 心斎橋"
+  },
+  {
+   "city": "ret",
+   "name": "Villa Fontaine Grand 羽田空港",
+   "q": "ヴィラフォンテーヌグランド羽田空港"
+  }
  ]
 }
