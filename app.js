@@ -1420,7 +1420,9 @@ function boot(){
 /* ----- offline copy (sw.js) ----- */
 // sw.js marks what it served from its saved copy (x-jp27-from-cache) and when that copy was saved
 // (x-jp27-saved); the page goes by those headers, never by navigator.onLine
-const src = [];
+let src = [], flaky = false;
+const DATA = ['days','cards','books','base','info'];
+const coreCache = async () => { const n = (await caches.keys()).filter(k => k.startsWith('jp27-core-')).pop(); return n && caches.open(n); };
 const stamp = t => { const d = new Date(t); return (d.getMonth()+1)+'/'+d.getDate()+' '+pad(d.getHours())+':'+pad(d.getMinutes()); };
 function offlineBanner(){
   const cached = src.filter(x => x.cache);
@@ -1428,8 +1430,8 @@ function offlineBanner(){
   const times = cached.map(x => Date.parse(x.saved)).filter(n => !isNaN(n));
   const at = times.length ? stamp(Math.min(...times)) : '之前';
   const el = $('#offline');
-  el.textContent = cached.length === src.length
-    ? '离线版本 · 保存于 '+at+'。地图和官方链接要有网络才能打开。'
+  el.textContent = flaky ? '网络不稳，这次显示的是 '+at+' 保存的版本。有网时刷新一次。'
+    : cached.length === src.length ? '离线版本 · 保存于 '+at+'。地图和官方链接要有网络才能打开。'
     : '网络不稳，部分资料来自 '+at+' 保存的版本。有网时刷新一次。';
   el.hidden = false;
 }
@@ -1437,8 +1439,8 @@ function offlineBanner(){
 async function offlineMark(){
   let all = false;
   try {
-    const list = await caches.match('jp27-core.json');
-    if (list) all = (await Promise.all((await list.json()).map(u => caches.match(u, {ignoreSearch:true})))).every(Boolean);
+    const c = await coreCache(), list = c && await c.match('jp27-core.json');
+    if (list) all = (await Promise.all((await list.json()).map(u => c.match(u, {ignoreSearch:true})))).every(Boolean);
   } catch(e){ return; }
   const el = $('#status');
   el.querySelector('.off')?.remove();
@@ -1451,15 +1453,33 @@ if ('serviceWorker' in navigator && 'caches' in window) addEventListener('load',
   }).catch(() => {});
 });
 
+const meta = r => ({cache: r.headers.get('x-jp27-from-cache') === '1', saved: r.headers.get('x-jp27-saved')});
 const get = f => fetch('data/'+f+'.json', {cache:'no-cache'}).then(r => {
   if (!r.ok) throw new Error(f+'.json '+r.status);
-  src.push({cache: r.headers.get('x-jp27-from-cache') === '1', saved: r.headers.get('x-jp27-saved')});
-  return r.json();
+  return r.json().then(j => [j, meta(r)]);
 });
-Promise.all(['days','cards','books','base','info'].map(get)).then(([days, cards, books, base, info]) => {
+// Some files fresh, some from the saved copy: the two may come from different releases (fresh days.json
+// naming a card the old cards.json lacks). Use the saved copy for all five, which were saved together.
+async function oneRelease(got){
+  if (!got.some(([, m]) => m.cache) || got.every(([, m]) => m.cache) || !('caches' in window)) return got;
+  try {
+    const c = await coreCache(), rs = c && await Promise.all(DATA.map(f => c.match(new URL('data/'+f+'.json', location.href).href)));
+    if (!rs || !rs.every(Boolean)) return got;
+    flaky = true;
+    return Promise.all(rs.map(r => r.json().then(j => [j, {...meta(r), cache:true}])));
+  } catch(e){ return got; }
+}
+Promise.all(DATA.map(get)).then(oneRelease).then(got => {
+  src = got.map(([, m]) => m);
+  const [days, cards, books, base, info] = got.map(([j]) => j);
   D = {days, cards, books, base, todo:info.todo, apx:info.apx, ref:info.ref, apxAliases:dict(info.aliases)};
   offlineBanner();
-  try { boot(); }
+  try {
+    boot();
+    // started cleanly on fresh data: this release becomes the saved offline copy
+    if (!src.some(x => x.cache) && navigator.serviceWorker && navigator.serviceWorker.controller)
+      navigator.serviceWorker.controller.postMessage({type:'jp27-commit'});
+  }
   catch(err){
     // a render bug or an unexpected saved plan: say so, and offer the way back to the recommended plan
     show('trip');

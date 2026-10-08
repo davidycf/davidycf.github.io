@@ -1,8 +1,11 @@
 // Offline copy of the guide. Network first (4 s), the saved copy when the network fails.
-// Content updates need no change here: every successful fetch refreshes the saved copy.
-// Rename CORE only when this file's caching logic changes, or when a file joins FILES.
+// The page, app.js and the data files belong together (one release): fresh copies wait in a per-tab
+// staging cache and replace the saved copy only when that tab reports it started up on all-fresh data
+// (message jp27-commit), so a half-arrived update never mixes into the saved copy.
+// Content updates need no change here. Rename CORE only when this file's caching logic changes,
+// or when a file joins FILES.
 'use strict';
-const CORE = 'jp27-core-v1', FONTS = 'jp27-fonts', TIMEOUT = 4000, FONT_MAX = 300;
+const CORE = 'jp27-core-v2', FONTS = 'jp27-fonts', STAGE = 'jp27-next-', TIMEOUT = 4000, FONT_MAX = 300;
 const FILES = ['./', './app.js',
   './data/days.json', './data/cards.json', './data/books.json', './data/base.json', './data/info.json',
   './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './favicon-32.png'];
@@ -10,6 +13,8 @@ const FILES = ['./', './app.js',
 const LIST = './jp27-core.json';
 const abs = f => new URL(f, self.registration.scope).href;
 const ROOT = abs('./'), KEYS = new Set(FILES.map(abs));
+// files that change with a release; the rest (manifest, icons) are saved as they come
+const RELEASE = new Set(FILES.filter(f => f === './' || /\.(js|json)$/.test(f)).map(abs));
 
 // copy a response with the time it was saved (and, when served from the cache, a flag)
 async function tagged(res, extra){
@@ -17,7 +22,7 @@ async function tagged(res, extra){
   Object.entries(extra).forEach(([k, v]) => h.set(k, v));
   return new Response(await res.blob(), {status:res.status, statusText:res.statusText, headers:h});
 }
-const save = async (key, res) => (await caches.open(CORE)).put(key, await tagged(res, {'x-jp27-saved': new Date().toISOString()}));
+const save = async (key, res, cache = CORE) => (await caches.open(cache)).put(key, await tagged(res, {'x-jp27-saved': new Date().toISOString()}));
 
 // save every listed file the cache doesn't have yet. A file that fails now (a dropped request on the
 // first visit) is tried again after the next page load that reaches the network.
@@ -47,6 +52,21 @@ self.addEventListener('activate', e => {
   })());
 });
 
+// a tab reports a clean start on fresh data: its staged files become the saved copy.
+// Staging left by tabs that are gone is dropped.
+self.addEventListener('message', e => {
+  if (!e.data || e.data.type !== 'jp27-commit' || !e.source) return;
+  e.waitUntil((async () => {
+    const name = STAGE+e.source.id;
+    if (await caches.has(name)){
+      const st = await caches.open(name), core = await caches.open(CORE);
+      await Promise.all((await st.keys()).map(async k => core.put(k, await st.match(k))));
+    }
+    const live = new Set((await self.clients.matchAll()).map(c => STAGE+c.id));
+    await Promise.all((await caches.keys()).filter(n => n.startsWith(STAGE) && (n === name || !live.has(n))).map(n => caches.delete(n)));
+  })());
+});
+
 // the cache key for a core file: the page itself (any query or hash) is ROOT
 function coreKey(req, u){
   const bare = u.origin + u.pathname;
@@ -56,8 +76,11 @@ function coreKey(req, u){
 
 function networkFirst(e, key){
   let saving;
-  // the page itself loaded from the network: also top up anything still missing
-  const net = fetch(e.request).then(res => { if (res.ok) saving = Promise.all([save(key, res.clone()), key === ROOT && fill()]); return res; });
+  // release files wait in this tab's staging cache; manifest and icons are saved straight away.
+  // The page itself loaded from the network: also top up anything still missing.
+  const tab = e.request.mode === 'navigate' ? e.resultingClientId : e.clientId;
+  const keep = res => !RELEASE.has(key) ? save(key, res) : tab ? save(key, res, STAGE+tab) : null;
+  const net = fetch(e.request).then(res => { if (res.ok) saving = Promise.all([keep(res.clone()), key === ROOT && fill()]); return res; });
   e.waitUntil(net.then(() => saving, () => {}));
   const cached = async () => {
     const r = await (await caches.open(CORE)).match(key);
