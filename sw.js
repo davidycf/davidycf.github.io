@@ -19,15 +19,22 @@ async function tagged(res, extra){
 }
 const save = async (key, res) => (await caches.open(CORE)).put(key, await tagged(res, {'x-jp27-saved': new Date().toISOString()}));
 
+// save every listed file the cache doesn't have yet. A file that fails now (a dropped request on the
+// first visit) is tried again after the next page load that reaches the network.
+async function fill(){
+  const c = await caches.open(CORE);
+  await Promise.allSettled(FILES.map(async f => {
+    if (await c.match(abs(f))) return;
+    const res = await fetch(abs(f), {cache:'no-cache'});
+    if (res.ok) await save(abs(f), res);
+  }));
+}
+
 self.addEventListener('install', e => {
   e.waitUntil((async () => {
     const c = await caches.open(CORE);
     await c.put(abs(LIST), new Response(JSON.stringify(FILES.map(abs)), {headers:{'content-type':'application/json'}}));
-    // one file failing leaves it for the next online visit to fill in
-    await Promise.allSettled(FILES.map(async f => {
-      const res = await fetch(abs(f), {cache:'no-cache'});
-      if (res.ok) await save(abs(f), res);
-    }));
+    await fill();
     await self.skipWaiting();
   })());
 });
@@ -49,7 +56,8 @@ function coreKey(req, u){
 
 function networkFirst(e, key){
   let saving;
-  const net = fetch(e.request).then(res => { if (res.ok) saving = save(key, res.clone()); return res; });
+  // the page itself loaded from the network: also top up anything still missing
+  const net = fetch(e.request).then(res => { if (res.ok) saving = Promise.all([save(key, res.clone()), key === ROOT && fill()]); return res; });
   e.waitUntil(net.then(() => saving, () => {}));
   const cached = async () => {
     const r = await (await caches.open(CORE)).match(key);
