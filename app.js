@@ -142,6 +142,10 @@ function savePlan(){
   catch(e){ canSave = false; }
 }
 const slotDays = () => D.days.filter(d => d.slot);
+// a city with no nights in the plan (now 箱根): its stations and cards stay as spare material,
+// folded away on the 吃买玩 home pages and in the card library; derived from days.json, no flag
+const idle = c => ['tokyo','mishima','osaka','hakone'].includes(c) && !D.days.some(d => d.city === c);
+const spareOpen = {};   // folded by default; kept as the reader left it while the page is open
 const dayById = id => D.days.find(d => d.id === id);
 const restCard = city => D.cards.cards.find(c => c.multi && c.city === city);
 const cardOf = d => CARDS[plan.days[d.id] || d.slot.card];
@@ -554,9 +558,13 @@ function cardResults(){
   let h = '';
   ['tokyo','mishima','osaka','hakone'].forEach(city => {
     const g = cs.filter(c => c.city === city); if (!g.length) return;
-    h += '<div class="c-'+city+'"><div class="city-h"><span class="nm" lang="ja">'+CITY[city][0]+'</span><span class="ro">'+CITY[city][1]+'</span><span class="cstay">'+g.length+' 张</span></div><ul class="cards">'+g.map(cardItem).join('')+'</ul></div>';
+    // a city with no nights folds away unless it was asked for (its city filter, or a search)
+    if (idle(city) && !q && cfilter.city !== city)
+      h += '<details class="spare c-'+city+'"'+(spareOpen.cards ? ' open' : '')+'><summary><span lang="ja">'+CITY[city][0]+'</span> '+g.length+' 张 · 现在没有住'+CITY[city][0]+'的日子</summary><ul class="cards">'+g.map(cardItem).join('')+'</ul></details>';
+    else h += '<div class="c-'+city+'"><div class="city-h"><span class="nm" lang="ja">'+CITY[city][0]+'</span><span class="ro">'+CITY[city][1]+'</span><span class="cstay">'+g.length+' 张</span></div><ul class="cards">'+g.map(cardItem).join('')+'</ul></div>';
   });
   out.innerHTML = h;
+  const sp = out.querySelector('.spare'); if (sp) sp.addEventListener('toggle', () => { spareOpen.cards = sp.open; });
 }
 function renderCard(id){
   const c = CARDS[id]; if (!c) return false;
@@ -1058,13 +1066,16 @@ function renderBookBody(b){
   let h = '';
   if (!q){
     if (b === 'eat') h += treatsHTML();
-    ['tokyo','mishima','osaka','hakone','misc'].forEach(c => {
-      const secs = B.sections.filter(s => s.city === c); if (!secs.length) return;
-      h += '<div class="c-'+c+'"><div class="city-h"><span class="nm" lang="ja">'+CITY[c][0]+'</span><span class="ro">'+CITY[c][1]+'</span><span class="cstay">'+secs.length+' 站</span></div>'
-        + '<div class="stns">'+D.base.filter(bs => bs.city === c).map(bs => hotelLink(b, bs)).join('')+secs.map(s => stnLink(b, s)).join('')+'</div></div>';
-    });
+    const cityLine = c => { const secs = B.sections.filter(s => s.city === c); if (!secs.length) return '';
+      return '<div class="c-'+c+'"><div class="city-h"><span class="nm" lang="ja">'+CITY[c][0]+'</span><span class="ro">'+CITY[c][1]+'</span><span class="cstay">'+secs.length+' 站</span></div>'
+        + '<div class="stns">'+D.base.filter(bs => bs.city === c).map(bs => hotelLink(b, bs)).join('')+secs.map(s => stnLink(b, s)).join('')+'</div></div>'; };
+    const cities = ['tokyo','mishima','osaka','hakone','misc'], spare = cities.filter(c => idle(c) && B.sections.some(s => s.city === c));
+    h += cities.filter(c => !idle(c)).map(cityLine).join('');
+    if (spare.length) h += '<details class="spare"'+(spareOpen[b] ? ' open' : '')+'><summary>备用 · '+spare.map(c => CITY[c][0]).join('、')+' '
+      + B.sections.filter(s => spare.includes(s.city)).length+' 站</summary>'+spare.map(cityLine).join('')+'</details>';
     $('#v-'+b+' .body').innerHTML = h;
     const tr = $('#v-'+b+' .treats'); if (tr) tr.addEventListener('toggle', () => { treatsOpen = tr.open; });
+    const sp = $('#v-'+b+' .spare'); if (sp) sp.addEventListener('toggle', () => { spareOpen[b] = sp.open; });
     return;
   }
   const match = e => [e.name,e.tag,e.body,e.fam,...mealText(e),...e.links.map(l=>l.label)].join(' ').toLowerCase().includes(q);
@@ -1198,7 +1209,7 @@ function renderApx(id){
   let h = '<nav class="crumb" aria-label="位置"><a href="#info">附录</a><span aria-hidden="true">›</span><a href="#info-'+a.id+'">'+a.id+' '+esc(secName(a))+'</a></nav>'
     + '<article class="apx apage" id="apx-'+id+'"><div class="id">APPENDIX '+a.id+' · '+(a.parts.indexOf(p)+1)+'/'+a.parts.length+'</div>'
     + '<h2>'+esc(n)+'</h2>'+(g.length ? '<p class="ld">'+esc(g.join('：'))+'</p>' : '')
-    + (p.p || []).map(x => '<p>'+fmt(x)+'</p>').join('')
+    + (p.p || []).map(x => '<p>'+x.split('\n').map(l => fmt(l)).join('<br>')+'</p>').join('')
     + (cl.length ? '<ul class="todo">'+cl.map(t => checkbox(t.id, t.id, t.text)).join('')+'</ul>' : '')
     + off.map(t => '<p class="small">'+esc(CARDS[t.card].name)+' 不在当前行程，相关一项收在<a class="ax" href="#card-'+t.card+'">卡片</a>里。</p>').join('')
     + (p.links && p.links.length ? '<div class="lk">'+extLinks(p.links)+'</div>' : '')+'</article>';
