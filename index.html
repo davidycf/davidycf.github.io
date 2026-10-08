@@ -475,6 +475,11 @@ textarea.io{display:block;width:100%;margin-top:8px;font:13px/1.5 ui-monospace,M
 .pnote .btn{margin-top:8px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--tab-h) + 12px + env(safe-area-inset-bottom,0px));z-index:20;width:min(608px,calc(100% - 32px));display:flex;align-items:center;gap:12px;background:var(--ink);color:var(--bg);border-radius:10px;padding:10px 12px;font-size:14px;box-shadow:0 4px 16px rgba(0,0,0,.2)}
 .toast span{flex:1}
+details.spare{margin-top:26px;border-top:1px solid var(--rule);padding-top:4px}
+details.spare > summary{cursor:pointer;list-style:none;font-size:14px;font-weight:700;color:var(--muted);padding:10px 0 10px 18px;position:relative}
+details.spare > summary::-webkit-details-marker{display:none}
+details.spare > summary::before{content:"▸";position:absolute;left:0;font-size:13px}
+details.spare[open] > summary::before{content:"▾"}
 .toast .btn{--line:var(--bg);color:var(--ink);background:var(--bg);border-color:var(--bg)}
 @media (min-width:560px){.trio{grid-template-columns:1fr}.sign .big{font-size:48px}}
 </style>
