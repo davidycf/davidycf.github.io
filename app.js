@@ -355,7 +355,8 @@ function dayChips(ns){
   return '<div class="dchips">'+ns.map(n => { const d = D.days[n-1], v = view(d);
     return '<a class="c-'+d.city+'" href="#d'+n+'"><b>DAY '+pad(n)+'</b><span lang="ja">'+esc(v.ja)+'</span><small>'+d.date+' '+esc(d.dow)+'</small></a>'; }).join('')+'</div>';
 }
-const segNav = on => '<nav class="pseg" aria-label="行程入口"><a href="#trip"'+(on==='trip'?' aria-current="page" class="on"':'')+'>我的行程</a><a href="#cards"'+(on==='cards'?' aria-current="page" class="on"':'')+'>活动卡片</a></nav>';
+// the way between the day list and the card library: one button beside each page's title
+const vhead = (title, lead, btn) => '<div class="vhead"><div class="vt"><h2>'+title+'</h2>'+btn+'</div><p>'+lead+'</p></div>';
 function planBanner(){
   let h = '';
   planNotes.forEach(t => { h += '<p class="pnote">'+esc(t)+'</p>'; });
@@ -386,7 +387,7 @@ function prepList(c, sel, extra){
 function renderTrip(){
   const groups = [];
   D.days.forEach(d => { const g = groups[groups.length-1]; if (g && g.city === d.city) g.days.push(d); else groups.push({city:d.city, days:[d]}); });
-  let h = '<div class="vhead"><h2>行程 · 15 站</h2><p>每天一个主项目。东京、三岛、大阪的活动日都可以“换活动”，移动日和日期固定的事不跟着变。</p></div>' + segNav('trip') + planBanner();
+  let h = vhead('行程 · 15 站', '每天一个主项目。东京、三岛、大阪的活动日都可以“换活动”，移动日和日期固定的事不跟着变。', '<a class="btn sm ghost" href="#cards">活动卡片 →</a>') + planBanner();
   groups.forEach(g => {
     h += '<div class="c-'+g.city+'"><div class="city-h"><span class="nm" lang="ja">'+CITY[g.city][0]+'</span><span class="ro">'+CITY[g.city][1]+'</span><span class="cstay">'+esc(STAY[g.city])+'</span></div>'
       + (D.cards.presets || []).filter(ps => Object.keys(ps.options[0].days).some(id => dayById(id).city === g.city)).map(presetRow).join('')
@@ -523,7 +524,7 @@ function cardItem(c){
 }
 function renderCards(){
   const v = $('#v-cards');
-  let h = '<div class="vhead"><h2>活动卡片</h2><p>可以安排到东京、三岛、大阪活动日的活动。每张卡是一次出游：推荐顺序、有限的支线、准备事项。点名字看详情，在详情里“安排到哪天”。</p></div>' + segNav('cards') + planBanner()
+  let h = vhead('活动卡片', '可以安排到东京、三岛、大阪活动日的活动。每张卡是一次出游：推荐顺序、有限的支线、准备事项。点名字看详情，在详情里“安排到哪天”。', '<a class="btn sm ghost" href="#trip">← 行程</a>') + planBanner()
     + '<div class="tools"><div class="search"><input id="q-cards" type="search" placeholder="搜活动：中文、日文、内容…" aria-label="搜索活动卡片" autocomplete="off" value="'+esc(cfilter.q)+'"><button type="button"'+(cfilter.q?'':' hidden')+'>清除</button></div>'
     + '<div class="bchips" role="group" aria-label="筛选">'
     + [['st','all','全部'],['st','on','已安排'],['st','off','未安排']].concat(['tokyo','mishima','osaka','hakone'].map(c => ['city',c,CITY[c][0]]), Object.entries(CKIND).map(([k,l]) => ['k',k,l]))

@@ -69,6 +69,8 @@ p{margin:0}
 .view[hidden]{display:none}
 .vhead{padding-block:22px 10px}
 .vhead h2{font-size:24px;font-weight:700}
+.vhead .vt{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.vhead .vt .btn{flex:none;text-decoration:none;white-space:nowrap}
 .vhead h2 .k{font-family:var(--f-ja);display:inline-block;width:38px;height:38px;border-radius:50%;background:var(--ink);color:var(--bg);text-align:center;line-height:38px;font-size:19px;margin-right:10px;vertical-align:-4px}
 .vhead p{color:var(--muted);margin-top:8px;font-size:14.5px;max-width:34em}
 
@@ -368,9 +370,6 @@ a.sec-h{text-decoration:none}
 .tabs a.on .g{color:var(--ink);text-decoration:underline;text-decoration-thickness:3px;text-underline-offset:5px}
 
 /* ---------- plan: cards, swap, options ---------- */
-.pseg{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--sunk);border-radius:10px;padding:4px;margin:2px 0 6px}
-.pseg a{text-align:center;text-decoration:none;font-weight:700;font-size:14.5px;padding:8px 6px;border-radius:7px;color:var(--muted)}
-.pseg a.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 0 var(--rule)}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:40px;border:1.5px solid var(--line,var(--ink));background:var(--line,var(--ink));color:var(--on-line);font:inherit;font-size:14px;font-weight:700;border-radius:8px;padding:6px 14px;cursor:pointer;text-decoration:none;text-align:left}
 .btn.sm{min-height:34px;font-size:13px;padding:3px 11px}
 .btn.ghost{background:transparent;color:var(--line,var(--ink))}
