@@ -664,22 +664,22 @@
   {
    "city": "tokyo",
    "name": "MONday Apart 上野新御徒町",
-   "q": "MONday Apart 上野新御徒町"
+   "q": "東京都台東区東上野1-27-11"
   },
   {
    "city": "mishima",
    "name": "富士山三島東急ホテル",
-   "q": "富士山三島東急ホテル"
+   "q": "静岡県三島市一番町17-1"
   },
   {
    "city": "osaka",
-   "name": "Premium MONday 心斎橋",
-   "q": "Premium MONday 心斎橋"
+   "name": "Premium MONday 大阪心斎橋",
+   "q": "大阪府大阪市中央区東心斎橋1-17-31"
   },
   {
    "city": "ret",
-   "name": "Villa Fontaine Grand 羽田空港",
-   "q": "ヴィラフォンテーヌグランド羽田空港"
+   "name": "ヴィラフォンテーヌ グランド 羽田空港",
+   "q": "東京都大田区羽田空港2丁目7-1"
   }
  ]
 }
