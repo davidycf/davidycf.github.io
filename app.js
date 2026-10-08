@@ -59,14 +59,18 @@ function budgetSpan(bg){
   const rs = budgetRanges(bg), his = rs.map(r => r[1]);
   return range([Math.min(...rs.map(r => r[0])), his.includes(null) ? null : Math.max(...his)]);
 }
-// the 嘗 / price line, then 吃什么 / 怎么点; empty for entries that have neither
+// the 嘗 / price line, then 几点到 / 吃什么 / 怎么点; empty for entries that have none
+const ARRIVE = '几点到';
 function mealHTML(e, q){
   const ml = (e.treat ? '<span class="tr">'+treatKd+TREAT[1]+'</span>' : '') + budgetHTML(e.budget);
   return (ml ? '<div class="ml">'+ml+'</div>' : '')
+    + (e.arrive ? '<p class="sg"><b>'+ARRIVE+'</b>'+fmt(e.arrive,q)+'</p>' : '')
     + (e.sig ? '<p class="sg"><b>吃什么</b>'+fmt(e.sig,q)+'</p>' : '') + (e.order ? '<p class="sg"><b>怎么点</b>'+fmt(e.order,q)+'</p>' : '');
 }
 // searchable text of the meal fields; 吃 and 宿 both use it
-const mealText = e => [e.treat ? TREAT.join(' ') : '', e.sig, e.order, e.budget ? '食べログ '+budgetText(e.budget) : '', overDinner(e.budget) ? OVER : ''];
+const mealText = e => [e.treat ? TREAT.join(' ') : '', e.arrive ? ARRIVE+' '+e.arrive : '', e.sig, e.order, e.budget ? '食べログ '+budgetText(e.budget) : '', overDinner(e.budget) ? OVER : ''];
+// a body may run to several paragraphs, one per line
+const paras = (t, q) => t.split('\n').map(p => '<p class="bd">'+fmt(p,q)+'</p>').join('');
 const txt = x => typeof x === 'string' ? x : x.text;
 
 /* ----- dates ----- */
@@ -412,7 +416,7 @@ function relCard(r){
   }
   const s = D.books[b].sections.find(x => x.code === c);
   if (!s) return '';
-  return '<a class="c-'+s.city+'" href="#'+b+'-'+s.code+'"><span class="bk" lang="ja">'+BOOK[b][1]+'</span><span class="tx"><b'+langAttr(s.area)+'>'+BOOK[b][0]+' · '+esc(s.area)+'</b><span>'+esc(s.head)+'</span></span><span class="n">'+s.entries.length+' 项 →</span></a>';
+  return '<a class="c-'+s.city+'" href="#'+b+'-'+s.code+'"><span class="bk" lang="ja">'+BOOK[b][1]+'</span><span class="tx"><b'+langAttr(s.area)+'>'+BOOK[b][0]+' · '+esc(s.area)+'</b><span>'+esc(s.head)+'</span></span><span class="n">'+entCount(s)+' →</span></a>';
 }
 const tagFor = x => (x.fixed ? '<span class="fxt">固定</span>' : '') + (x.who ? '<span class="fxt who">'+WHO[x.who]+'</span>' : '');
 function cardMeta(c){
@@ -969,8 +973,30 @@ function applyFilter(code, sc){
 const query = {eat:'', shop:'', see:''};
 // "on days" follows the current plan: a station is passed on a day if the day's view links it
 const daysFor = (b, code) => D.days.filter(d => view(d).rel.includes(b+':'+code)).map(d => d.n);
+// 兜底 (fb) entries are the ones you find on the spot: a mall food floor, a directory, going back to the hotel.
+// They follow the station's real picks as one-line rows that open to the full entry, and are not numbered or counted.
+const mains = s => s.entries.filter(e => !e.fb);
+const fbs = s => s.entries.filter(e => e.fb);
+const entCount = s => { const m = fbs(s).length; return mains(s).length+' 项'+(m ? '<span class="fbn"> +'+m+' 兜底</span>' : ''); };
+const treatCount = n => n ? '<span class="trn">'+treatKd+n+'</span> · ' : '';
+function entsHTML(s, ents, q, b){
+  const m = ents.filter(e => !e.fb), f = ents.filter(e => e.fb);
+  return (m.length ? '<ol class="ents">'+m.map(e => entHTML(s, e, q, b)).join('')+'</ol>' : '')
+    + (f.length ? '<div class="fbh"><div class="lbl">兜底 <span class="en">FALLBACK</span></div><ul class="ents fbs">'+f.map(e => fbHTML(e, q)).join('')+'</ul></div>' : '');
+}
+function fbHTML(e, q){
+  // opened in search only when the hit is in the folded part, so it can be seen; a row listed because
+  // its station matched stays one line
+  const has = xs => !!q && xs.join(' ').toLowerCase().includes(q.toLowerCase());
+  const hid = !has([e.name, e.tag]) && has([e.body, e.fam, ...mealText(e), ...e.links.map(l => l.label)]);
+  return '<li class="ent fb"'+(e.id ? ' id="ee-'+e.id+'"' : '')+'><details'+(hid ? ' open' : '')+'><summary><h4'+langAttr(e.name)+'>'+fmt(e.name,q)+'</h4><span class="tg">'+fmt(e.tag,q)+'</span></summary>'
+    + mealHTML(e, q) + paras(e.body, q)
+    + (e.fam ? '<p class="fm"><b>一家四口</b>　'+fmt(e.fam,q)+'</p>' : '')
+    + (e.links.length ? '<div class="lk">'+extLinks(e.links)+'</div>' : '') + '</details>'
+    + (e.map ? '<div class="lk fbm"><a class="map" href="'+esc(e.map)+'" target="_blank" rel="noopener">地图 <span class="ar">↗</span></a></div>' : '') + '</li>';
+}
 function entHTML(s, e, q, b){
-  const i = s.entries.indexOf(e)+1;
+  const i = mains(s).indexOf(e)+1;
   // a shop kept once in 宿: the station lists it, the content comes from there
   if (e.base){ const {bs, e:be} = baseById(e.base);
     return '<li class="ent"><div class="hd"><span class="no">'+pad(i)+'</span><div style="min-width:0"><h4'+langAttr(be.name)+'>'+fmt(be.name,q)+'</h4>'
@@ -979,7 +1005,7 @@ function entHTML(s, e, q, b){
       + linkRow(be) + '<a class="goto" href="#base-'+be.id+sfx(b)+'">收在「宿 · '+esc(bs.sign)+'」，离酒店'+esc(be.walk)+' →</a></li>'; }
   return '<li class="ent"'+(e.id ? ' id="ee-'+e.id+'"' : '')+'><div class="hd"><span class="no">'+pad(i)+'</span><div style="min-width:0"><h4'+langAttr(e.name)+'>'+fmt(e.name,q)+'</h4>'
     + '<div class="tg">'+fmt(e.tag,q)+'</div></div></div>'
-    + mealHTML(e, q) + '<p class="bd">'+fmt(e.body,q)+'</p>'
+    + mealHTML(e, q) + paras(e.body, q)
     + (e.fam ? '<p class="fm"><b>一家四口</b>　'+fmt(e.fam,q)+'</p>' : '')
     + linkRow(e) + '</li>';
 }
@@ -1005,16 +1031,16 @@ function treatsHTML(){
 }
 const HOTEL_HEAD = {eat:'走几分钟就能吃：正餐、小吃甜点', shop:'走几分钟就能买', see:'走几分钟能看、能让孩子跑'};
 function hotelLink(b, bs){
-  const n = bs.entries.filter(e => inBook(e, b)).length;
+  const es = bs.entries.filter(e => inBook(e, b));
   return '<a class="stn hotel c-'+bs.city+'" href="#base-'+bs.code+'~'+b+'"><span class="msign"><b lang="ja">'+esc(bs.sign)+'</b><span>'+esc(bs.ro)+'</span></span>'
     + '<span class="tx"><b><i class="kd k-base">宿</i>酒店步行圈</b><span>'+HOTEL_HEAD[b]+'</span></span>'
-    + '<span class="n">'+n+' 处 →<small>'+esc(bs.dates)+'</small></span></a>';
+    + '<span class="n">'+(b === 'eat' ? treatCount(es.filter(e => e.treat).length) : '')+es.length+' 处 →<small>'+esc(bs.dates)+'</small></span></a>';
 }
 function stnLink(b, s){
   const dn = daysFor(b, s.code);
   return '<a class="stn c-'+s.city+'" href="#'+b+'-'+s.code+'"><span class="msign"><b lang="ja">'+esc(s.sign)+'</b><span>'+esc(s.ro)+'</span></span>'
     + '<span class="tx"><b'+langAttr(s.area)+'>'+esc(s.area)+'</b><span>'+esc(s.head)+'</span></span>'
-    + '<span class="n">'+s.entries.length+' 项 →'+(dn.length ? '<small>DAY '+dn.map(pad).join(' · ')+'</small>' : '')+'</span></a>';
+    + '<span class="n">'+treatCount(s.entries.filter(e => e.treat).length)+entCount(s)+' →'+(dn.length ? '<small>DAY '+dn.map(pad).join(' · ')+'</small>' : '')+'</span></a>';
 }
 function renderBookShell(b){
   const B = D.books[b], el = $('#v-'+b);
@@ -1050,7 +1076,7 @@ function renderBookBody(b){
     total += ents.length;
     h += '<section class="sec c-'+s.city+'"><a class="sec-h" href="#'+b+'-'+s.code+'"><div class="msign"><b lang="ja">'+esc(s.sign)+'</b><span>'+esc(s.ro)+'</span></div>'
       + '<div class="ttl"><div class="ar"'+langAttr(s.area)+'>'+fmt(s.area,q)+' →</div><h3>'+fmt(s.head,q)+'</h3></div></a>'
-      + '<ol class="ents">'+ents.map(e => entHTML(s, e, q, b)).join('')+'</ol></section>';
+      + entsHTML(s, ents, q, b)+'</section>';
   });
   // the hotels' walking circles, limited to this book's uses; same matching rule as the 宿 page the header opens
   D.base.forEach(bs => {
@@ -1072,10 +1098,11 @@ function renderStation(b, code){
     + (prev ? '<a href="#'+b+'-'+prev.code+'" aria-label="上一站"><small>◀</small><b'+langAttr(prev.sign)+'>'+esc(prev.sign)+'</b></a>' : '<span class="nil"></span>')
     + '<span class="mid">'+BOOK[b][0]+' '+pad(i+1)+'/'+pad(B.sections.length)+'</span>'
     + (next ? '<a href="#'+b+'-'+next.code+'" aria-label="下一站"><b'+langAttr(next.sign)+'>'+esc(next.sign)+'</b><small>▶</small></a>' : '<span class="nil"></span>')
-    + '</div><div class="under"><span class="zh"'+langAttr(s.area)+'>'+esc(s.area)+'</span><span class="zh">'+s.entries.length+' 项</span></div></div>'
-    + '<div class="dtitle"><h2>'+esc(s.head)+'</h2>'+(s.lead ? '<p>'+fmt(s.lead)+'</p>' : '')+'<p class="hint"'+langAttr(s.hint)+'>'+esc(s.hint)+'</p></div>'
-    + '<ol class="ents">'+s.entries.map(e => entHTML(s, e, '', b)).join('')+'</ol>'
+    + '</div><div class="under"><span class="zh"'+langAttr(s.area)+'>'+esc(s.area)+'</span><span class="zh">'+entCount(s)+'</span></div></div>'
+    + '<div class="dtitle"><h2>'+esc(s.head)+'</h2>'+(s.lead ? '<p>'+fmt(s.lead)+'</p>' : '')
     + (s.tip ? '<div class="tip"><span class="tl">今天这样挑</span><span>'+fmt(s.tip)+'</span></div>' : '')
+    + '<p class="hint"'+langAttr(s.hint)+'>'+esc(s.hint)+'</p></div>'
+    + entsHTML(s, s.entries, '', b)
     + (dn.length ? '<div class="blk"><div class="lbl">哪天会经过 <span class="en">ON DAYS</span></div>'+dayChips(dn)+'</div>' : '<div class="blk"><p class="small">当前行程里没有哪天经过这一站；资料照常可查。</p></div>')
     + '<div class="pager">'
     + (prev ? '<a href="#'+b+'-'+prev.code+'">← '+esc(prev.sign)+'<b'+langAttr(prev.area)+'>'+esc(prev.area)+'</b></a>' : '<span></span>')
@@ -1256,7 +1283,7 @@ function route(keep){
     }
     show(m[1]); tab = m[1];
     const v = $('#v-'+m[1]), st = m[2] && renderStation(m[1], m[2]);
-    if (st && m[3]){ target = document.getElementById('ee-'+m[3]); target.classList.add('flash'); }
+    if (st && m[3]){ target = document.getElementById('ee-'+m[3]); target.classList.add('flash'); const dt = target.querySelector('details'); if (dt) dt.open = true; }
     if (!st) renderBookBody(m[1]);
     v.querySelector('.idx').hidden = !!st; v.querySelector('.stp').hidden = !st;
   }
