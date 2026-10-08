@@ -54,6 +54,8 @@ p{margin:0}
 .status{margin-top:14px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
 .status b{font-family:var(--f-ro);font-size:30px;font-weight:700;color:var(--ink);line-height:1;font-variant-numeric:tabular-nums}
 .status a{font-weight:500;color:var(--ink)}
+.status .off{font-size:12px;font-weight:500;color:var(--muted);border:1px solid var(--rule);border-radius:999px;padding:1px 8px;align-self:center}
+.offline{margin-top:14px;padding:10px 12px;border-radius:9px;background:var(--check-bg);border-left:3px solid var(--check);font-size:14px;overflow-wrap:anywhere}
 
 /* route strip: the whole trip as one line */
 .route{margin-top:18px;display:grid;grid-template-columns:52px 5fr 2.6fr 5fr 44px;align-items:start;gap:0}
@@ -509,6 +511,7 @@ textarea.io{display:block;width:100%;margin-top:8px;font:13px/1.5 ui-monospace,M
     </div>
   </header>
 
+  <p class="offline" id="offline" hidden></p>
   <main>
     <section class="view" id="v-trip" aria-label="行程"></section>
     <section class="view" id="v-day" hidden></section>
@@ -538,7 +541,7 @@ textarea.io{display:block;width:100%;margin-top:8px;font:13px/1.5 ui-monospace,M
 
 
 <script>
-// Retain reading preferences and offline access at the existing Site address.
+// Reading size preference (this device only).
 try {
   const size = Number(localStorage.getItem('japan-reading-size'));
   if (size >= 14 && size <= 28) document.body.style.fontSize = size + 'px';
