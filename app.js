@@ -515,9 +515,11 @@ function optsPanel(c, d, sel){
     const mine = plan.visited[t] === d.id;
     h += '<label class="opt visit"><input type="checkbox" data-act="visit" data-tag="'+t+'" data-day="'+d.id+'"'+(mine?' checked':'')+(plan.visited[t] && !mine?' disabled':'')+'><span>已逛过：'+esc(TAGS[t].label)+'<small>'+(plan.visited[t] && !mine ? '已在 '+((dayById(plan.visited[t]) || {}).date || '别的日子')+' 标记' : '只是记录，不影响预约和待办')+'</small></span></label>';
   });
-  return h+'</div></details>';
+  return h+'</details>';
 }
-let optsOpen = false;   // the day page's 支线 summary: folded by default, kept as the reader left it while the page is open
+// the day page's 支线 summary: folded whenever a day page is entered, kept open across re-renders of
+// that same page (ticking a branch re-renders it)
+let optsOpen = false;
 function renderDay(n, opts){
   const d = D.days[n-1], prev = D.days[n-2], next = D.days[n], v = view(d), pv = prev && view(prev), nv = next && view(next);
   const li = a => a.map(x => '<li>'+fmt(txt(x))+tagFor(x)+'</li>').join('');
@@ -1302,6 +1304,9 @@ function route(keep){
   if (MOVED[h]) { location.replace('#'+MOVED[h]); return; }
   if ((m = h.match(/^d(\d{1,2})(-swap)?$/)) && +m[1] >= 1 && +m[1] <= D.days.length){
     const swap = !!m[2] && !!D.days[+m[1]-1].slot;
+    // a re-render in place keeps the summary as it is on screen (the toggle event may not have fired yet)
+    const os = $('#v-day .optsum');
+    optsOpen = keep ? !!(os ? os.open : optsOpen) : false;
     renderDay(+m[1], {swap}); show('day'); tab='trip';
     if (swap && !keep) target = $('#swap');
   }
