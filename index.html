@@ -54,6 +54,21 @@ p{margin:0}
 .status{margin-top:14px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
 .status b{font-family:var(--f-ro);font-size:30px;font-weight:700;color:var(--ink);line-height:1;font-variant-numeric:tabular-nums}
 .status a{font-weight:500;color:var(--ink)}
+.next{margin-top:10px;display:flex;gap:10px;align-items:baseline;font-size:14px}
+.next .nl{flex:none;font-size:12.5px;font-weight:700;letter-spacing:.08em;color:var(--muted)}
+.next > div{min-width:0;display:grid;gap:2px}
+.next a{text-decoration:none;color:var(--ink);overflow-wrap:anywhere}
+.next .more{margin-left:6px;font-size:12.5px;color:var(--muted)}
+.next .ar{margin-left:6px;font-family:var(--f-ro);color:var(--muted)}
+.due{font-size:12.5px;font-weight:700;white-space:nowrap}
+.todo .due{margin-left:6px}
+.due-next{color:var(--ink)}
+.due-over{color:var(--check)}
+.due-later{color:var(--muted);font-weight:500}
+.todo input:checked+span .due{text-decoration:none}
+.inav .chip .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--check);margin-left:2px;align-self:center}
+details.done{margin-top:6px}
+details.done > summary{cursor:pointer;font-size:13px;color:var(--muted);padding:6px 0}
 
 /* route strip: the whole trip as one line */
 .route{margin-top:18px;display:grid;grid-template-columns:52px 5fr 2.6fr 5fr 44px;align-items:start;gap:0}
@@ -483,6 +498,7 @@ textarea.io{display:block;width:100%;margin-top:8px;font:13px/1.5 ui-monospace,M
     <div class="eyebrow">Japan 2027 · Family Field Guide</div>
     <h1 lang="ja">東京 → 三島 → 大阪<small>两大两小 · 2027/3/13–3/27 · 15 天</small></h1>
     <div class="status" id="status"></div>
+    <div class="next" id="next" hidden></div>
     <div class="route" aria-label="全程路线">
       <div class="seg c-dep"><span class="nm">ORD</span><span class="nt">3/13</span></div>
       <div class="seg c-tokyo"><span class="nm" lang="ja">東京</span><span class="nt">5 泊 · 3/14</span></div>

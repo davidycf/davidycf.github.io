@@ -3,12 +3,15 @@
   {
    "id": "osaka-luggage-receive",
    "text": "大阪行李代收：官网确认可提前收件，运单写订房人姓名",
-   "ref": "info-ship-osaka"
+   "ref": "info-ship-osaka",
+   "due": "2027-03-05"
   },
   {
    "id": "nintendo-museum-lottery",
    "text": "Nintendo Museum 抽签（2026 年 12 月）",
-   "ref": "info-museum-lottery"
+   "ref": "info-museum-lottery",
+   "due": "2026-12",
+   "from": "2026-11-20"
   },
   {
    "id": "teamlab-slot",
@@ -25,32 +28,54 @@
   {
    "id": "sakuraya-check",
    "text": "出发前一周：确认樱家 3/19 照常营业（周三休，每月还有一次周二周三连休）",
-   "ref": "info-mishima"
+   "ref": "info-mishima",
+   "due": "2027-03-12",
+   "from": "2027-03-08",
+   "short": "确认樱家 3/19 照常营业"
   },
   {
    "id": "ginyu-withdraw",
    "text": "向 Ryokan Collection 撤回吟游订房申请",
-   "ref": "info-mishima"
+   "ref": "info-mishima",
+   "due": "2026-10-15"
   },
   {
    "id": "tokyo-mishima-shinkansen",
    "text": "3/19 东京 9:03 光号 705 → 三岛：芝加哥 2/18（周四）晚上 7:00 开售就订（日本时间 2/19 10:00）；JR 3 月中旬改点后先重查车次",
-   "ref": "info-shinkansen"
+   "ref": "info-shinkansen",
+   "due": "2027-02-18",
+   "from": "2027-02-10",
+   "short": "3/19 东京 → 三岛 光号开售"
   },
   {
    "id": "mishima-osaka-shinkansen",
    "text": "3/21 三岛 11:46 光号 709 → 新大阪：芝加哥 2/20（周六）晚上 7:00 开售就订（日本时间 2/21 10:00），大人 2 张 + 儿童 1 张；JR 3 月中旬改点后先重查车次",
-   "ref": "info-shinkansen"
+   "ref": "info-shinkansen",
+   "due": "2027-02-20",
+   "from": "2027-02-10",
+   "short": "3/21 三岛 → 新大阪 光号开售"
+  },
+  {
+   "id": "jr-timetable-2027",
+   "text": "JR 公布 2027 年 3 月改点后，重查 3/19、3/21 两段光号的车次和时刻",
+   "ref": "info-intercity",
+   "due": "2026-12",
+   "from": "2026-12-01",
+   "short": "JR 改点后重查两段光号"
   },
   {
    "id": "shinkansen-seats",
    "text": "新干线车次与座位（大箱子都寄送；随身包与推车按规则核对）",
-   "ref": "info-shinkansen"
+   "ref": "info-shinkansen",
+   "due": "2027-02-18",
+   "from": "2027-02-10"
   },
   {
    "id": "tax-refund",
    "text": "离境退税流程",
-   "ref": "info-tax-free"
+   "ref": "info-tax-free",
+   "due": "2027-03-25",
+   "from": "2027-03-21"
   },
   {
    "id": "water-bus",
@@ -62,22 +87,29 @@
   {
    "id": "evisa",
    "text": "夫妻 eVISA（2027 年 1 月上旬）",
-   "ref": "info-E"
+   "ref": "info-E",
+   "due": "2027-01-10",
+   "from": "2026-12-20"
   },
   {
    "id": "osaka-haneda-shipping",
    "text": "大阪→羽田寄箱（3/24 或 3/25 上午）",
-   "ref": "info-ship-haneda"
+   "ref": "info-ship-haneda",
+   "due": "2027-03-23",
+   "from": "2027-03-21"
   },
   {
    "id": "tokyo-arrival-note",
    "text": "东京酒店：用官网联系表单改到达时间为 17:30–18:00（成田进）",
-   "ref": "base-T"
+   "ref": "base-T",
+   "due": "2026-10-31",
+   "short": "东京酒店改到达时间"
   },
   {
    "id": "skyliner",
    "text": "Skyliner 成田→京成上野车票",
-   "ref": "info-intercity"
+   "ref": "info-intercity",
+   "due": "2027-03-10"
   },
   {
    "id": "hanayashiki-calendar",
