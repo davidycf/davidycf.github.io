@@ -121,10 +121,28 @@
      "h": "3/12 出发前夜：开车到 ORD，住机场旁",
      "p": [
       "前一天下午从家开单程租的车到 O'Hare，在机场还车，住机场旁的酒店。第二天不用凌晨出门，也不用在早高峰开两个小时的车。",
-      "还车：O'Hare 的租车都在 Multi-Modal Facility，还车后坐机场捷运 ATS 到航站楼或酒店。【核：ATS 运行时间与班次】",
-      "酒店：Hilton Chicago O'Hare Airport 在航站楼旁，走地下通道到 T1–T3；JL55 的值机在哪个航站楼出发前再确认，需要换航站楼就坐 ATS。【核：JAL 在 ORD 的航站楼；酒店到该航站楼的走法】",
-      "3/13 早上：JL55 10:25 起飞，国际航班按起飞前 3 小时到柜台倒推，7:15 前后从酒店出发。前一晚把四个人的护照、随身包和孩子的过夜用品放在门口。【核：JAL 在 ORD 的值机截止时间】",
+      "还车：O'Hare 的租车都在 Multi-Modal Facility（MMF）还，照租车公司的指示开进去。还车后坐免费的机场捷运 ATS 到航站楼，再走室内通道到酒店。ATS 24 小时运行，高峰每 3–5 分钟一班，连接 MMF 和 T1、T2、T3、T5。",
+      "酒店：Hilton Chicago O'Hare Airport 在航站楼中间，有室内通道走到 T1–T3。JL55 在 T3 出发（出发层 A 柜台），从酒店直接走过去。",
+      "3/13 早上：JL55 10:25 起飞。JAL 的柜台起飞前 3 小时开、1 小时前截止：7:15 前后从酒店出发，7:25 前后到 T3 柜台，最晚 9:25 前办完值机和托运（还在排队不算）。航班时刻变了就照新时刻重算。前一晚把四个人的护照、随身包和孩子的过夜用品放在门口。",
       "前一晚吃饭就在酒店或航站楼附近简单吃，不再安排别的事。"
+     ],
+     "links": [
+      {
+       "label": "JAL 芝加哥机场指南",
+       "url": "https://www.jal.co.jp/jp/en/inter/airport/ord/info/index.html"
+      },
+      {
+       "label": "O'Hare 租车（MMF）",
+       "url": "https://www.flychicago.com/ohare/tofrom/rentalcar/Pages/default.aspx"
+      },
+      {
+       "label": "O'Hare ATS",
+       "url": "https://www.flychicago.com/ohare/ServicesAmenities/services/Pages/transitupdate.aspx"
+      },
+      {
+       "label": "Hilton Chicago O'Hare Airport",
+       "url": "https://www.hilton.com/en/hotels/chiohhh-hilton-chicago-ohare-airport/"
+      }
      ]
     },
     {
@@ -133,8 +151,9 @@
      "h": "落地第一天：上网、交通卡、现金",
      "p": [
       "上网：日本 eSIM 在家装好、先不开；落地后再打开数据漫游。到酒店前要能用地图和这本攻略（离线版本出发前打开一次就会存好）。",
-      "交通：大人用手机钱包里的 Suica 或 ICOCA，充值用信用卡。两个孩子都没上小学，坐 JR 和地铁跟着大人免费（每个大人最多带两个）；要单独占指定席时才买儿童票，例如 3/21 给哥哥的新干线座位、Skyliner 想让孩子单独坐时。【核：iPhone 钱包对美国发行信用卡的支持；未就学儿童免费的规则与 Skyliner 儿童票】",
-      "现金：多数地方能刷卡或用交通 IC 卡付款，但有些店只收现金，例如樱家（或 PayPay）、神田まつや。落地后在 7-Eleven 的 ATM 取一次，身上常备一些。【核：海外卡在 7-Eleven ATM 的手续费】"
+      "交通卡：大人在 iPhone 钱包里加 Suica 或 ICOCA，出发前用要带的信用卡试充一小笔。能不能充看具体的卡，一张不行就换另一张；在日本也能在对应的售票机和 ATM 用现金充值。",
+      "孩子的票：两个孩子都不满 6 岁，坐 JR、东京 Metro、大阪 Metro 跟着大人免费（每个大人最多带两个），坐在大人腿上或和大人挤一个座位。要给孩子单独一个指定席时才买儿童票（儿童车票加儿童特急券或指定席券），例如 3/21 给哥哥的新干线座位；Skyliner 想让孩子单独坐也一样。空着的指定席也要买了票才能坐。",
+      "现金：多数地方能刷卡或用交通 IC 卡，有些店只收现金：樱家收现金或 PayPay，神田まつや只收现金。落地后在 7-Eleven 的 ATM 取一次，身上常备一些。ATM 手续费按卡的品牌不同，确认前看屏幕上显示的金额，银行可能另收；币种选日元（JPY），换汇交给发卡银行。"
      ],
      "checklist": [
       {
@@ -143,7 +162,7 @@
       },
       {
        "id": "land-ic",
-       "text": "两个大人的手机钱包里有 Suica／ICOCA，已充值"
+       "text": "两个大人的手机钱包里有 Suica／ICOCA，出发前试充过"
       },
       {
        "id": "land-cash",
@@ -156,6 +175,24 @@
       {
        "id": "land-offline",
        "text": "这本攻略在飞机起飞前用主屏幕图标打开过一次"
+      }
+     ],
+     "links": [
+      {
+       "label": "Apple：添加日本交通卡",
+       "url": "https://support.apple.com/en-us/108772"
+      },
+      {
+       "label": "JR 西日本：Apple Pay 的 ICOCA",
+       "url": "https://www.westjr.co.jp/global/en/howto/icoca/applepay/"
+      },
+      {
+       "label": "JR 东日本：儿童票价",
+       "url": "https://www.jreast.co.jp/kippu/06.html"
+      },
+      {
+       "label": "Seven Bank：海外发行的卡",
+       "url": "https://www.sevenbank.co.jp/intlcard/card.html"
       }
      ]
     },
@@ -479,14 +516,51 @@
      "short": "紧急与求助",
      "h": "紧急与求助：电话、酒店地址、东西丢了",
      "p": [
-      "**电话**：报警 110；火警、救护车 119（打通后先说「救急です」）。不确定要不要叫救护车：东京、大阪拨 #7119 咨询。【核：静冈县（三岛）有没有 #7119 或对应号码】",
-      "**中文求助**：JNTO 访日外国人热线 050-3816-2787，24 小时，可以说中文。【核】",
-      "**给司机看的酒店地址**：\n東京：MONday Apart 上野新御徒町（【核：日文地址照官网】）\n三島：富士山三島東急ホテル（【核】）\n大阪：Premium MONday 心斎橋（【核】）\n羽田：ヴィラフォンテーヌグランド羽田空港（【核】）",
-      "**东西丢了**：先问刚离开的店或车站的工作人员；在电车或新干线上丢的，到最近的车站说车次和车厢，JR 和地铁都有遗失物中心。要报保险就去附近的交番开遗失证明（遺失届）。【核：JR 东日本／JR 东海／东京 Metro／大阪 Metro 遗失物查询的官方页面】",
-      "**护照丢了**：先去警察署开证明，再联系美国驻日使馆或领事馆补办临时证件。【核：美国驻东京大使馆、驻大阪领事馆的联系页面】",
+      "**电话**：报警 110；火警、救护车 119（打通后先说「救急です」）。拿不准要不要叫救护车：东京、三岛、大阪都能拨 #7119 咨询，24 小时；#7119 打不通时，东京 23 区拨 03-3212-2323，三岛（静冈县）054-204-7119，大阪 06-6582-7119。真的紧急就直接打 119。",
+      "**中文求助**：JNTO 访日外国人热线 050-3816-2787（日本以外拨 +81-50-3816-2787），24 小时，可以说中文、英文、韩文；生病、事故、灾害时都能帮忙，叫救护车还是打 119。",
+      "**给司机看的酒店地址**：\n東京：MONday Apart 上野新御徒町\n〒110-0015 東京都台東区東上野1-27-11\n三島：富士山三島東急ホテル\n〒411-0036 静岡県三島市一番町17-1\n大阪：Premium MONday 大阪心斎橋\n〒542-0083 大阪府大阪市中央区東心斎橋1-17-31\n羽田：ヴィラフォンテーヌ グランド 羽田空港\n〒144-0041 東京都大田区羽田空港2丁目7-1",
+      "**东西丢了**：先问刚离开的店或车站的工作人员；在电车或新干线上丢的，到最近的车站说车次和车厢，也可以查下面各家铁路的遗失物页面。东海道新干线上丢的，不管从东京还是大阪上车，都找 JR 东海。要报保险就去附近的交番开遗失证明（遺失届）。",
+      "**护照丢了**：先去警察署开证明，再找发护照的国家补办。孩子的美国护照：美国驻东京大使馆 +81-3-3224-5000（下班时间的紧急情况也打这个），驻大阪神户总领事馆 +81-6-6315-5900。大人的中国护照找中国驻日本的使领馆。",
       "证件号码、保险单号、信用卡挂失电话不写在这里，存在手机备忘录里。"
      ],
-     "links": []
+     "links": [
+      {
+       "label": "JNTO 访日外国人热线",
+       "url": "https://www.japan.travel/en/plan/hotline/"
+      },
+      {
+       "label": "东京 #7119",
+       "url": "https://www.tfd.metro.tokyo.lg.jp/ts/ems/page03.html"
+      },
+      {
+       "label": "静冈县 #7119",
+       "url": "https://www.pref.shizuoka.jp/bosaikinkyu/shobo/1064942"
+      },
+      {
+       "label": "大阪市 #7119",
+       "url": "https://www.city.osaka.lg.jp/shobo/page/0000052526.html"
+      },
+      {
+       "label": "JR 东日本 遗失物",
+       "url": "https://www.jreast.co.jp/info/lost.html/"
+      },
+      {
+       "label": "JR 东海 遗失物",
+       "url": "https://railway.jr-central.co.jp/left/"
+      },
+      {
+       "label": "东京 Metro 遗失物",
+       "url": "https://www.tokyometro.jp/en/faq_lost/index.html"
+      },
+      {
+       "label": "大阪 Metro 遗失物",
+       "url": "https://subway.osakametro.co.jp/lostfounditems_tel.php"
+      },
+      {
+       "label": "美国驻日使领馆",
+       "url": "https://jp.usembassy.gov/contact/"
+      }
+     ]
     }
    ],
    "links": [

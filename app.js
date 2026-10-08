@@ -518,7 +518,7 @@ function renderDay(n, opts){
 
 /* ----- activity cards: library + one page per card ----- */
 const cfilter = {q:'', st:'all', k:'all', city:'all'};
-function cardText(c){ return [c.name, c.ja, c.ro, c.area, c.title, c.summary, c.family, c.booking, ...c.route.map(x => x.text), ...c.opts.map(o => o.label),
+function cardText(c){ return [c.id, c.name, c.ja, c.ro, c.area, c.title, c.summary, c.family, c.booking, ...c.route.map(x => x.text), ...c.opts.map(o => o.label),
   ...['eat','shop','see'].flatMap(k => c[k].map(x => x.text))].join(' ').toLowerCase(); }
 function cardItem(c){
   const at = placedOn(c.id);
