@@ -81,7 +81,7 @@ const todayN = (T >= START && T <= END) ? Math.round((T-START)/864e5)+1 : null;
 (function status(){
   const el = $('#status');
   if (todayN) el.innerHTML = '日本今天是 <b>DAY '+pad(todayN)+'</b><a href="#d'+todayN+'">打开今天 →</a>';
-  else if (T < START) el.innerHTML = '距出发还有 <b>'+Math.round((START-T)/864e5)+'</b> 天 · 内容核对于 2026/10/4';
+  else if (T < START) el.innerHTML = '距出发还有 <b>'+Math.round((START-T)/864e5)+'</b> 天';
   else el.innerHTML = '旅程已结束 · 欢迎回家';
 })();
 // weekday from the real date, so a card's closures follow it to whichever day it lands on
@@ -1417,9 +1417,48 @@ function boot(){
   });
   route();
 }
-const get = f => fetch('data/'+f+'.json', {cache:'no-cache'}).then(r => { if (!r.ok) throw new Error(f+'.json '+r.status); return r.json(); });
+/* ----- offline copy (sw.js) ----- */
+// sw.js marks what it served from its saved copy (x-jp27-from-cache) and when that copy was saved
+// (x-jp27-saved); the page goes by those headers, never by navigator.onLine
+const src = [];
+const stamp = t => { const d = new Date(t); return (d.getMonth()+1)+'/'+d.getDate()+' '+pad(d.getHours())+':'+pad(d.getMinutes()); };
+function offlineBanner(){
+  const cached = src.filter(x => x.cache);
+  if (!cached.length) return;
+  const times = cached.map(x => Date.parse(x.saved)).filter(n => !isNaN(n));
+  const at = times.length ? stamp(Math.min(...times)) : '之前';
+  const el = $('#offline');
+  el.textContent = cached.length === src.length
+    ? '离线版本 · 保存于 '+at+'。地图和官方链接要有网络才能打开。'
+    : '网络不稳，部分资料来自 '+at+' 保存的版本。有网时刷新一次。';
+  el.hidden = false;
+}
+// 可离线 once every file sw.js lists is saved; 正在保存 until then (first visit)
+async function offlineMark(){
+  let all = false;
+  try {
+    const list = await caches.match('jp27-core.json');
+    if (list) all = (await Promise.all((await list.json()).map(u => caches.match(u, {ignoreSearch:true})))).every(Boolean);
+  } catch(e){ return; }
+  const el = $('#status');
+  el.querySelector('.off')?.remove();
+  el.insertAdjacentHTML('beforeend', '<span class="off">'+(all ? '可离线' : '正在保存离线版本')+'</span>');
+}
+if ('serviceWorker' in navigator && 'caches' in window) addEventListener('load', () => {
+  navigator.serviceWorker.register('sw.js').then(() => {
+    offlineMark();
+    navigator.serviceWorker.addEventListener('controllerchange', offlineMark);
+  }).catch(() => {});
+});
+
+const get = f => fetch('data/'+f+'.json', {cache:'no-cache'}).then(r => {
+  if (!r.ok) throw new Error(f+'.json '+r.status);
+  src.push({cache: r.headers.get('x-jp27-from-cache') === '1', saved: r.headers.get('x-jp27-saved')});
+  return r.json();
+});
 Promise.all(['days','cards','books','base','info'].map(get)).then(([days, cards, books, base, info]) => {
   D = {days, cards, books, base, todo:info.todo, apx:info.apx, ref:info.ref, apxAliases:dict(info.aliases)};
+  offlineBanner();
   try { boot(); }
   catch(err){
     // a render bug or an unexpected saved plan: say so, and offer the way back to the recommended plan
@@ -1428,6 +1467,6 @@ Promise.all(['days','cards','books','base','info'].map(get)).then(([days, cards,
     $('#plan-clear').addEventListener('click', () => { try { localStorage.removeItem(PLAN_KEY); } catch(e){} location.reload(); });
   }
 }).catch(err => {
-  $('#v-trip').innerHTML = '<p class="empty">行程资料没有载入（'+esc(err.message)+'）。检查网络后刷新一次。</p>';
+  $('#v-trip').innerHTML = '<p class="empty">行程资料没有载入（'+esc(err.message)+'）。这台设备还没保存离线版本：连上网络打开一次就会保存。</p>';
 });
 })();
