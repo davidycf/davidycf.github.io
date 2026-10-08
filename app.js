@@ -365,9 +365,10 @@ function planBanner(){
   return h;
 }
 // ref: where the details live (an appendix card or a 宿 entry), shown as a 详情 link next to the box
-function checkbox(id, key, text, ref){
+// t: the to-do itself, for its due mark (to-dos with a `due` only)
+function checkbox(id, key, text, ref, t){
   const rl = ref && refLabel(ref), to = rl && (refApx(ref) ? 'info-'+refApx(ref) : ref);
-  return '<li><label><input type="checkbox" id="'+esc(id)+'" data-check-key="'+esc(key)+'"'+(done[key]?' checked':'')+'><span>'+fmt(text)+'</span></label>'
+  return '<li><label><input type="checkbox" id="'+esc(id)+'" data-check-key="'+esc(key)+'"'+(done[key]?' checked':'')+'><span>'+fmt(text)+(t ? dueMark(t) : '')+'</span></label>'
     + (rl ? '<a class="tref" href="#'+esc(to)+'" aria-label="详情：'+esc(rl)+'">详情</a>' : '')+'</li>';
 }
 const allChecks = () => D.apx.flatMap(a => a.parts.flatMap(p => p.checklist || []));
@@ -388,9 +389,49 @@ function prepList(c, sel, extra, fold){
   const ts = prepTodos(c, sel, extra);
   const cs = ((c && c.checks) || []).map(id => allChecks().find(x => x.id === id)).filter(Boolean);
   if (!ts.length && !cs.length) return '';
-  const rows = [...ts.map(t => ({key:'todo:'+t.id, html:checkbox('p-todo-'+t.id, 'todo:'+t.id, t.text, t.ref)})),
+  const rows = [...ts.map(t => ({key:'todo:'+t.id, html:checkbox('p-todo-'+t.id, 'todo:'+t.id, t.text, t.ref, t)})),
     ...cs.map(x => ({key:x.id, html:checkbox('p-'+x.id, x.id, x.text)}))];
   return fold ? foldDone(rows) : '<ul class="todo">'+rows.map(r => r.html).join('')+'</ul>';
+}
+
+/* ----- to-do timing ----- */
+// t.due "YYYY-MM-DD" (that day, or done by then), "YYYY-MM-DD HH:MM" (from that time, e.g. a 19:00 ticket
+// sale: shown with the time, past due only once the day is over) or "YYYY-MM" (by the end of that month);
+// t.from is when it starts to count as coming up (default: 30 days before due; for a month, 30 days
+// before its 1st). Dates are the device's own: Chicago while planning, Japan once there.
+const isoDay = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+function dueOf(t){
+  const [day, time = ''] = t.due.split(' '), [y, m, dd] = day.split('-').map(Number);
+  return {due: isoDay(dd ? new Date(y, m-1, dd) : new Date(y, m, 0)), time, from: t.from || isoDay(new Date(y, m-1, (dd || 1) - 30)), y, m, dd};
+}
+// over (past due), next (in its window), later; null for ticked to-dos and those without a date
+function dueState(t){
+  if (!t.due || done['todo:'+t.id]) return null;
+  const today = isoDay(new Date()), {due, from} = dueOf(t);
+  return today > due ? 'over' : today >= from ? 'next' : 'later';
+}
+function dueLabel(t){
+  const {y, m, dd, time} = dueOf(t);
+  return !dd ? m+' 月' : (y === new Date().getFullYear() ? '' : y+'/')+m+'/'+dd+(time ? ' '+time : '');
+}
+const dueMark = t => { const st = dueState(t); return st ? ' <span class="due due-'+st+'">'+(st === 'over' ? '已过期 · ' : '')+dueLabel(t)+'</span>' : ''; };
+const dueKey = t => dueOf(t).due+' '+dueOf(t).time;
+const byDue = (a, b) => dueKey(a) < dueKey(b) ? -1 : dueKey(a) > dueKey(b) ? 1 : 0;
+// what to do now: open, dated to-dos in their window or past it (past due first), soonest first
+const upcoming = () => D.todo.filter(t => todoActive(t) && ['over','next'].includes(dueState(t)))
+  .sort((a, b) => (dueState(b) === 'over') - (dueState(a) === 'over') || byDue(a, b));
+// a to-do's first clause for one line on the home page; `short` overrides
+function clause(t){
+  if (t.short) return t.short;
+  const c = [...t.text.split(/[：（；，]/)[0].trim()];
+  return c.length > 24 ? c.slice(0, 24).join('')+'…' : c.join('');
+}
+// the 接下来 lines under the countdown (trip home only), at most two
+function renderNext(){
+  const el = $('#next'), up = upcoming();
+  el.hidden = !up.length;
+  el.innerHTML = up.length ? '<span class="nl">接下来</span><div>'+up.slice(0, 2).map((t, i) => '<a href="#info-todo">'+dueMark(t)+' · <span class="tx">'+esc(clause(t))+'</span>'
+    + (i === 1 && up.length > 2 ? '<span class="more">等 '+(up.length-2)+' 项</span>' : '')+'<span class="ar" aria-hidden="true">→</span></a>').join('')+'</div>' : '';
 }
 
 /* ----- itinerary ----- */
@@ -416,6 +457,7 @@ function renderTrip(){
   h += '<div class="pbar"><span>'+(planEdited() ? '有你自己的选择（只存在这台设备）。' : '现在是推荐方案。')+' <a class="ax" href="#plan">导出／导入我的方案</a></span>'
     + (planEdited() ? '<button type="button" class="btn sm" data-act="reset">恢复推荐方案</button>' : '')+'</div>';
   $('#v-trip').innerHTML = h;
+  renderNext();
 }
 
 /* ----- day ----- */
@@ -1218,12 +1260,16 @@ function renderInfo(){
   let h = '<div class="vhead"><h2><span class="k" lang="ja">要</span>附录 · 执行细节</h2><p>'+D.apx.map(secName).join('、')+'。每一节分成几张卡，点开一张只看这一件事；各卡标注核对时间，出发前再开官方入口复核。各城市的备选活动在「行程 · 活动卡片」，Museum 抽签结果在「Museum 换日」。</p></div>';
   // quick nav: one short chip per section (title before "｜"), scrolls sideways, follows the reading position
   const nav = [['todo', '', '待办 '+live.length], ...D.apx.map(a => [a.id, a.id, secName(a)]), ['ref', '', '怎么用']];
+  const due = upcoming().length ? '<i class="dot" title="有到期或快到期的待办"></i>' : '';
   h += '<nav class="tools inav" aria-label="附录各节"><div class="chips">'
-    + nav.map(([id, k, t]) => '<a class="chip" href="#info-'+id+'" data-sec="info-'+id+'">'+(k ? '<b class="ro">'+k+'</b>' : '')+esc(t)+'</a>').join('')
+    + nav.map(([id, k, t]) => '<a class="chip" href="#info-'+id+'" data-sec="info-'+id+'">'+(k ? '<b class="ro">'+k+'</b>' : '')+esc(t)+(id === 'todo' ? due : '')+'</a>').join('')
     + '</div></nav>';
-  h += '<div class="apx c-osaka" id="info-todo"><div class="id">TO DO</div><h3>尚待确认</h3><div class="lk"><a href="#info-E">日本 eVISA 材料与办理</a></div><ul class="todo">'
-    + live.map(t => checkbox('todo-'+t.id, 'todo:'+t.id, t.text, t.ref)).join('')
-    + '</ul>' + (parked.length ? '<p class="small">另有 '+parked.length+' 项只属于没排进行程的活动，收在卡片里：'
+  // due or coming up first, then later dates, then undated in data order; ticked ones folded at the end
+  const rank = t => ({over:0, next:0, later:1})[dueState(t)] ?? 2;
+  const sorted = live.map((t, i) => [t, i]).sort(([a, i], [b, j]) => rank(a) - rank(b) || (rank(a) < 2 ? byDue(a, b) : 0) || i - j).map(([t]) => t);
+  h += '<div class="apx c-osaka" id="info-todo"><div class="id">TO DO</div><h3>尚待确认</h3><div class="lk"><a href="#info-E">日本 eVISA 材料与办理</a></div>'
+    + foldDone(sorted.map(t => ({key:'todo:'+t.id, html:checkbox('todo-'+t.id, 'todo:'+t.id, t.text, t.ref, t)})))
+    + (parked.length ? '<p class="small">另有 '+parked.length+' 项只属于没排进行程的活动，收在卡片里：'
         + [...new Set(parked.map(t => t.card))].map(id => '<a class="ax" href="#card-'+id+'">'+esc(CARDS[id].name)+'</a>').join('、')+'。</p>' : '')
     + (legacyTodo() ? '<div class="legacy" role="note"><p>旧版本按列表位置记录过这里的勾选；列表顺序后来变过，无法可靠对应到现在的任务，所以没有沿用。请把上面的待办重新核对一遍。附录里的打包和 eVISA 勾选不受影响。</p><button type="button" class="legacy-ok">知道了</button></div>' : '')
     + '<p class="small">勾选只保存在这台设备的浏览器里。</p></div>';
@@ -1255,7 +1301,7 @@ function renderApx(id){
     + off.map(t => '<p class="small">'+esc(CARDS[t.card].name)+' 不在当前行程，相关一项收在<a class="ax" href="#card-'+t.card+'">卡片</a>里。</p>').join('')
     + (p.links && p.links.length ? '<div class="lk">'+extLinks(p.links)+'</div>' : '')+'</article>';
   if (ts.length || parked.length) h += '<div class="blk"><div class="lbl">相关待办 <span class="en">TO DO</span></div>'
-    + (ts.length ? '<ul class="todo">'+ts.map(t => checkbox('a-todo-'+t.id, 'todo:'+t.id, t.text)).join('')+'</ul><p class="small">和「附录 · 尚待确认」是同一份勾选。</p>' : '')
+    + (ts.length ? '<ul class="todo">'+ts.map(t => checkbox('a-todo-'+t.id, 'todo:'+t.id, t.text, null, t)).join('')+'</ul><p class="small">和「附录 · 尚待确认」是同一份勾选。</p>' : '')
     + (parked.length ? '<p class="small">另有 '+parked.length+' 项只属于没排进行程的活动，收在卡片里：'
         + [...new Set(parked.map(t => t.card))].map(c => '<a class="ax" href="#card-'+c+'">'+esc(CARDS[c].name)+'</a>').join('、')+'。</p>' : '')+'</div>';
   if (used.length) h += '<div class="blk"><div class="lbl">哪天会用到 <span class="en">DAYS</span></div>'+dayChips(used)+'</div>';
