@@ -3,12 +3,17 @@
   {
    "id": "osaka-luggage-receive",
    "text": "大阪行李代收：官网确认可提前收件，运单写订房人姓名",
-   "ref": "info-ship-osaka"
+   "ref": "info-ship-osaka",
+   "due": "2027-03-05",
+   "from": "2027-02-03"
   },
   {
    "id": "nintendo-museum-lottery",
-   "text": "Nintendo Museum 抽签（2026 年 12 月）",
-   "ref": "info-museum-lottery"
+   "text": "Nintendo Museum 抽签：12/1–12/31 申请，截止芝加哥 12/31 早上 8:59（日本 23:59）；3 月场次的公告出来后再核对一次",
+   "ref": "info-museum-lottery",
+   "due": "2026-12",
+   "from": "2026-11-20",
+   "short": "Nintendo Museum 抽签 · 截止 12/31 8:59"
   },
   {
    "id": "teamlab-slot",
@@ -25,32 +30,57 @@
   {
    "id": "sakuraya-check",
    "text": "出发前一周：确认樱家 3/19 照常营业（周三休，每月还有一次周二周三连休）",
-   "ref": "info-mishima"
+   "ref": "info-mishima",
+   "due": "2027-03-12",
+   "from": "2027-03-08",
+   "short": "确认樱家 3/19 照常营业"
   },
   {
    "id": "ginyu-withdraw",
    "text": "向 Ryokan Collection 撤回吟游订房申请",
-   "ref": "info-mishima"
+   "ref": "info-mishima",
+   "due": "2026-10-15",
+   "from": "2026-09-15"
   },
   {
    "id": "tokyo-mishima-shinkansen",
    "text": "3/19 东京 9:03 光号 705 → 三岛：芝加哥 2/18（周四）晚上 7:00 开售就订（日本时间 2/19 10:00）；JR 3 月中旬改点后先重查车次",
-   "ref": "info-shinkansen"
+   "ref": "info-shinkansen",
+   "due": "2027-02-18 19:00",
+   "from": "2027-02-10",
+   "short": "3/19 东京 → 三岛 光号开售"
   },
   {
    "id": "mishima-osaka-shinkansen",
    "text": "3/21 三岛 11:46 光号 709 → 新大阪：芝加哥 2/20（周六）晚上 7:00 开售就订（日本时间 2/21 10:00），大人 2 张 + 儿童 1 张；JR 3 月中旬改点后先重查车次",
-   "ref": "info-shinkansen"
+   "ref": "info-shinkansen",
+   "due": "2027-02-20 19:00",
+   "from": "2027-02-10",
+   "short": "3/21 三岛 → 新大阪 光号开售"
+  },
+  {
+   "id": "jr-timetable-2027",
+   "text": "JR 公布 2027 年 3 月改点后，重查 3/19、3/21 两段光号的车次和时刻",
+   "ref": "info-intercity",
+   "due": "2026-12",
+   "from": "2026-12-01",
+   "short": "JR 改点后重查两段光号"
   },
   {
    "id": "shinkansen-seats",
-   "text": "新干线车次与座位（大箱子都寄送；随身包与推车按规则核对）",
-   "ref": "info-shinkansen"
+   "text": "三段新干线的车次与座位最后核对：3/19、3/21，加 3/26 新大阪→品川（芝加哥 2/25 晚上 7:00 开售，日本时间 2/26 10:00）；大箱子都寄送，随身包与推车按规则核对",
+   "ref": "info-shinkansen",
+   "due": "2027-02-25 19:00",
+   "from": "2027-02-10",
+   "short": "新干线三段车次与座位（含 3/26）"
   },
   {
    "id": "tax-refund",
-   "text": "离境退税流程",
-   "ref": "info-tax-free"
+   "text": "出发前弄清离境退税的新流程（2026/11/1 起先付含税价，离境时海关确认，再由商家或受托机构退款）：整趟的购物和凭证都按它来",
+   "ref": "info-tax-free",
+   "due": "2027-03-10",
+   "from": "2027-02-20",
+   "short": "弄清离境退税新流程"
   },
   {
    "id": "water-bus",
@@ -61,23 +91,33 @@
   },
   {
    "id": "evisa",
-   "text": "夫妻 eVISA（2027 年 1 月上旬）",
-   "ref": "info-E"
+   "text": "夫妻 eVISA：2027/1/4–1/8 提交",
+   "ref": "info-E",
+   "due": "2027-01-08",
+   "from": "2026-12-20"
   },
   {
    "id": "osaka-haneda-shipping",
-   "text": "大阪→羽田寄箱（3/24 或 3/25 上午）",
-   "ref": "info-ship-haneda"
+   "text": "确认大阪→羽田寄箱的收件地、交箱日期和截止时间（3/24 或 3/25 上午交箱，以承运商确认为准）",
+   "ref": "info-ship-haneda",
+   "due": "2027-03-23",
+   "from": "2027-03-21",
+   "short": "确认大阪→羽田寄箱"
   },
   {
    "id": "tokyo-arrival-note",
    "text": "东京酒店：用官网联系表单改到达时间为 17:30–18:00（成田进）",
-   "ref": "base-T"
+   "ref": "base-T",
+   "due": "2026-10-31",
+   "short": "东京酒店改到达时间",
+   "from": "2026-10-01"
   },
   {
    "id": "skyliner",
-   "text": "Skyliner 成田→京成上野车票",
-   "ref": "info-intercity"
+   "text": "Skyliner 成田→京成上野车票（官网电子票提前 30 天、2/12 起可买）",
+   "ref": "info-intercity",
+   "due": "2027-03-10",
+   "from": "2027-02-08"
   },
   {
    "id": "hanayashiki-calendar",
@@ -97,12 +137,14 @@
   {
    "id": "ord-rental",
    "text": "单程租车：家 → O'Hare 还车（3/12 下午取、当天还）",
-   "ref": "info-ord-eve"
+   "ref": "info-ord-eve",
+   "due": "2027-01-31"
   },
   {
    "id": "ord-hotel",
    "text": "3/12 O'Hare 机场旁酒店",
-   "ref": "info-ord-eve"
+   "ref": "info-ord-eve",
+   "due": "2027-01-31"
   }
  ],
  "aliases": {
@@ -791,8 +833,34 @@
    "p": "大阪 Nintendo 在 LUCUA SOUTH 13F，@cosme 在 LUCUA IRE 3F；梅田 ロフト 在阪神 6F。まんだらけ グランドカオス 现址日本桥，駿河屋秋叶原游戏馆 2026/9/25 迁址。一兰道顿堀选别馆。"
   },
   {
+   "h": "离线与这台手机",
+   "p": "联网打开一次后，没网也能看全部页面，顶部会写明是哪天保存的版本；地图和官方链接要有网络。换的活动和勾选只存在这台手机：旅行时固定从主屏幕图标打开，不和 Safari 混用（两边存储是分开的），也不要清除网站数据。"
+  },
+  {
    "h": "地图与引用",
    "p": "每条的官方入口就是出处；“地图”只是按店名搜索，路线自己再看。"
+  }
+ ],
+ "hotels": [
+  {
+   "city": "tokyo",
+   "name": "MONday Apart 上野新御徒町",
+   "q": "東京都台東区東上野1-27-11"
+  },
+  {
+   "city": "mishima",
+   "name": "富士山三島東急ホテル",
+   "q": "静岡県三島市一番町17-1"
+  },
+  {
+   "city": "osaka",
+   "name": "Premium MONday 大阪心斎橋",
+   "q": "大阪府大阪市中央区東心斎橋1-17-31"
+  },
+  {
+   "city": "ret",
+   "name": "ヴィラフォンテーヌ グランド 羽田空港",
+   "q": "東京都大田区羽田空港2丁目7-1"
   }
  ]
 }

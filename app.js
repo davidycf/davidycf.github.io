@@ -81,7 +81,7 @@ const todayN = (T >= START && T <= END) ? Math.round((T-START)/864e5)+1 : null;
 (function status(){
   const el = $('#status');
   if (todayN) el.innerHTML = '日本今天是 <b>DAY '+pad(todayN)+'</b><a href="#d'+todayN+'">打开今天 →</a>';
-  else if (T < START) el.innerHTML = '距出发还有 <b>'+Math.round((START-T)/864e5)+'</b> 天 · 内容核对于 2026/10/4';
+  else if (T < START) el.innerHTML = '距出发还有 <b>'+Math.round((START-T)/864e5)+'</b> 天';
   else el.innerHTML = '旅程已结束 · 欢迎回家';
 })();
 // weekday from the real date, so a card's closures follow it to whichever day it lands on
@@ -369,9 +369,10 @@ function planBanner(){
   return h;
 }
 // ref: where the details live (an appendix card or a 宿 entry), shown as a 详情 link next to the box
-function checkbox(id, key, text, ref){
+// t: the to-do itself, for its due mark (to-dos with a `due` only)
+function checkbox(id, key, text, ref, t){
   const rl = ref && refLabel(ref), to = rl && (refApx(ref) ? 'info-'+refApx(ref) : ref);
-  return '<li><label><input type="checkbox" id="'+esc(id)+'" data-check-key="'+esc(key)+'"'+(done[key]?' checked':'')+'><span>'+fmt(text)+'</span></label>'
+  return '<li><label><input type="checkbox" id="'+esc(id)+'" data-check-key="'+esc(key)+'"'+(done[key]?' checked':'')+'><span>'+fmt(text)+(t ? dueMark(t) : '')+'</span></label>'
     + (rl ? '<a class="tref" href="#'+esc(to)+'" aria-label="详情：'+esc(rl)+'">详情</a>' : '')+'</li>';
 }
 const allChecks = () => D.apx.flatMap(a => a.parts.flatMap(p => p.checklist || []));
@@ -380,11 +381,61 @@ function prepTodos(c, sel, extra){
   const fromCard = c ? c.todos.map(r => r.split('@')).filter(([, o]) => !sel || !o || sel.includes(o)).map(([id]) => id) : [];
   return [...new Set([...(extra || []), ...fromCard])].map(id => D.todo.find(t => t.id === id)).filter(Boolean);
 }
-function prepList(c, sel, extra){
+// rows [{key, html}]: open ones as a list, ticked ones folded under 已完成 N 项. Ticking doesn't
+// re-render, so a row stays put until the next render files it away.
+function foldDone(rows){
+  const open = rows.filter(r => !done[r.key]), shut = rows.filter(r => done[r.key]);
+  return (open.length ? '<ul class="todo">'+open.map(r => r.html).join('')+'</ul>' : '')
+    + (shut.length ? '<details class="done"><summary>已完成 '+shut.length+' 项</summary><ul class="todo">'+shut.map(r => r.html).join('')+'</ul></details>' : '');
+}
+// fold: the day page files ticked items away; card and appendix pages list everything
+function prepList(c, sel, extra, fold){
   const ts = prepTodos(c, sel, extra);
   const cs = ((c && c.checks) || []).map(id => allChecks().find(x => x.id === id)).filter(Boolean);
   if (!ts.length && !cs.length) return '';
-  return '<ul class="todo">'+ts.map(t => checkbox('p-todo-'+t.id, 'todo:'+t.id, t.text, t.ref)).join('')+cs.map(x => checkbox('p-'+x.id, x.id, x.text)).join('')+'</ul>';
+  const rows = [...ts.map(t => ({key:'todo:'+t.id, html:checkbox('p-todo-'+t.id, 'todo:'+t.id, t.text, t.ref, t)})),
+    ...cs.map(x => ({key:x.id, html:checkbox('p-'+x.id, x.id, x.text)}))];
+  return fold ? foldDone(rows) : '<ul class="todo">'+rows.map(r => r.html).join('')+'</ul>';
+}
+
+/* ----- to-do timing ----- */
+// t.due "YYYY-MM-DD" (that day, or done by then), "YYYY-MM-DD HH:MM" (from that time, e.g. a 19:00 ticket
+// sale: shown with the time, past due only once the day is over) or "YYYY-MM" (by the end of that month);
+// t.from is when it starts to count as coming up (default: 30 days before due; for a month, 30 days
+// before its 1st). Dates are the device's own: Chicago while planning, Japan once there.
+const isoDay = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+function dueOf(t){
+  const [day, time = ''] = t.due.split(' '), [y, m, dd] = day.split('-').map(Number);
+  return {due: isoDay(dd ? new Date(y, m-1, dd) : new Date(y, m, 0)), time, from: t.from || isoDay(new Date(y, m-1, (dd || 1) - 30)), y, m, dd};
+}
+// over (past due), next (in its window), later; null for ticked to-dos and those without a date
+function dueState(t){
+  if (!t.due || done['todo:'+t.id]) return null;
+  const today = isoDay(new Date()), {due, from} = dueOf(t);
+  return today > due ? 'over' : today >= from ? 'next' : 'later';
+}
+function dueLabel(t){
+  const {y, m, dd, time} = dueOf(t);
+  return !dd ? m+' 月' : (y === new Date().getFullYear() ? '' : y+'/')+m+'/'+dd+(time ? ' '+time : '');
+}
+const dueMark = t => { const st = dueState(t); return st ? ' <span class="due due-'+st+'">'+(st === 'over' ? '已过期 · ' : '')+dueLabel(t)+'</span>' : ''; };
+const dueKey = t => dueOf(t).due+' '+dueOf(t).time;
+const byDue = (a, b) => dueKey(a) < dueKey(b) ? -1 : dueKey(a) > dueKey(b) ? 1 : 0;
+// what to do now: open, dated to-dos in their window or past it (past due first), soonest first
+const upcoming = () => D.todo.filter(t => todoActive(t) && ['over','next'].includes(dueState(t)))
+  .sort((a, b) => (dueState(b) === 'over') - (dueState(a) === 'over') || byDue(a, b));
+// a to-do's first clause for one line on the home page; `short` overrides
+function clause(t){
+  if (t.short) return t.short;
+  const c = [...t.text.split(/[：（；，]/)[0].trim()];
+  return c.length > 24 ? c.slice(0, 24).join('')+'…' : c.join('');
+}
+// the 接下来 lines under the countdown (trip home only), at most two
+function renderNext(){
+  const el = $('#next'), up = upcoming();
+  el.hidden = !up.length;
+  el.innerHTML = up.length ? '<span class="nl">接下来</span><div>'+up.slice(0, 2).map((t, i) => '<a href="#info-todo">'+dueMark(t)+' · <span class="tx">'+esc(clause(t))+'</span>'
+    + (i === 1 && up.length > 2 ? '<span class="more">等 '+(up.length-2)+' 项</span>' : '')+'<span class="ar" aria-hidden="true">→</span></a>').join('')+'</div>' : '';
 }
 
 /* ----- itinerary ----- */
@@ -410,6 +461,7 @@ function renderTrip(){
   h += '<div class="pbar"><span>'+(planEdited() ? '有你自己的选择（只存在这台设备）。' : '现在是推荐方案。')+' <a class="ax" href="#plan">导出／导入我的方案</a></span>'
     + (planEdited() ? '<button type="button" class="btn sm" data-act="reset">恢复推荐方案</button>' : '')+'</div>';
   $('#v-trip').innerHTML = h;
+  renderNext();
 }
 
 /* ----- day ----- */
@@ -423,7 +475,40 @@ function relCard(r){
   if (!s) return '';
   return '<a class="c-'+s.city+'" href="#'+b+'-'+s.code+'"><span class="bk" lang="ja">'+BOOK[b][1]+'</span><span class="tx"><b'+langAttr(s.area)+'>'+BOOK[b][0]+' · '+esc(s.area)+'</b><span>'+esc(s.head)+'</span></span><span class="n">'+entCount(s)+' →</span></a>';
 }
-const tagFor = x => (x.fixed ? '<span class="fxt">固定</span>' : '') + (x.who ? '<span class="fxt who">'+WHO[x.who]+'</span>' : '');
+// a step that only shows with an add-on branch: it can be dropped. Steps of a pick-one group
+// (e.g. 3/16's morning) always happen in one form, so they read as the main route.
+const addOn = (c, x) => !!(c && x.opt && !(c.opts.find(o => o.id === x.opt) || {}).group);
+const tagFor = (x, c) => (x.fixed ? '<span class="fxt">固定</span>' : addOn(c, x) ? '<span class="fxt">支线</span>' : '') + (x.who ? '<span class="fxt who">'+WHO[x.who]+'</span>' : '');
+// Route steps of card c (null on plain days). seg: a time-of-day heading wherever the part of the day
+// changes (activity days and card pages; plain days have no `at`). An add-on step gets a hollow circle.
+// A step may run to several lines: the first is what to do, the rest (fallbacks, details) in small print.
+const SEG = {early:'上午', am:'上午', noon:'中午', pm:'下午', eve:'晚上'};
+function stepsHTML(a, c, tags, seg){
+  let last = null;
+  return '<ol class="steps">'+a.map(x => {
+    const s = seg && x.at ? SEG[x.at] : null, head = s && s !== last ? '<li class="seg">'+s+'</li>' : '';
+    if (s) last = s;
+    const [p0, ...rest] = txt(x).split('\n');
+    return head+'<li'+(addOn(c, x) ? ' class="op"' : '')+'>'+fmt(p0)+tags(x, c)+rest.map(p => '<p class="sub">'+fmt(p)+'</p>').join('')+'</li>';
+  }).join('')+'</ol>';
+}
+// links from a day's eat/shop/see rows straight to the stations it passes (the same refs as 这一带还能)
+function trioGo(rel, f){
+  const go = rel.map(r => {
+    const [b, c] = r.split(':');
+    if (b === 'base'){ if (f !== 'eat') return '';
+      const s = D.base.find(x => x.code === c); return s ? '<a href="#base-'+s.code+'~eat"><span lang="ja">宿 · '+esc(s.sign)+'</span> 吃 →</a>' : ''; }
+    if (b !== f) return '';
+    const s = D.books[b].sections.find(x => x.code === c);
+    return s ? '<a href="#'+b+'-'+s.code+'">'+BOOK[b][0]+' · <span'+langAttr(s.area)+'>'+esc(s.area)+'</span> →</a>' : '';
+  }).join('');
+  return go ? '<div class="go">'+go+'</div>' : '';
+}
+// the night's hotel, for a 回酒店 route in Google Maps (not on the last day: no hotel that night)
+function homeLink(d){
+  const ht = d.n < D.days.length && D.hotels.find(x => x.city === d.city);
+  return ht ? '<div class="lk"><a class="map" href="https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(ht.q)+'&travelmode=transit" target="_blank" rel="noopener">回酒店 <span class="ar">↗</span></a></div>' : '';
+}
 function cardMeta(c){
   return '<span>'+SIZE[c.size]+'</span><span>'+LOAD[c.load]+'</span>'+(/须|网购|网票/.test(c.booking) ? '<span>要订票</span>' : '')+(c.closed ? '<span>'+esc(c.closed.text)+'</span>' : '');
 }
@@ -459,7 +544,9 @@ function optsPanel(c, d, sel){
   if (!c.opts.length) return '';
   const groups = {};
   c.opts.forEach(o => { (groups[o.group || ''] ||= []).push(o); });
-  let h = '<div class="blk"><div class="lbl">支线 <span class="en">OPTIONS</span></div><div class="opts">';
+  const picked = c.opts.filter(o => sel.includes(o.id)).map(o => o.label), free = c.opts.filter(o => !optClosed(o, d)).length;
+  let h = '<details class="blk optsum"'+(optsOpen ? ' open' : '')+'><summary class="lbl"><span>支线 · '
+    + (picked.length ? '已选：'+esc(picked.join('、')) : '都没选（'+free+' 项可加）')+'</span></summary><div class="opts">';
   Object.entries(groups).forEach(([g, os]) => {
     os.forEach(o => {
       const closed = optClosed(o, d), on = sel.includes(o.id);
@@ -474,8 +561,11 @@ function optsPanel(c, d, sel){
     const mine = plan.visited[t] === d.id;
     h += '<label class="opt visit"><input type="checkbox" data-act="visit" data-tag="'+t+'" data-day="'+d.id+'"'+(mine?' checked':'')+(plan.visited[t] && !mine?' disabled':'')+'><span>已逛过：'+esc(TAGS[t].label)+'<small>'+(plan.visited[t] && !mine ? '已在 '+((dayById(plan.visited[t]) || {}).date || '别的日子')+' 标记' : '只是记录，不影响预约和待办')+'</small></span></label>';
   });
-  return h+'</div>';
+  return h+'</details>';
 }
+// the day page's 支线 summary: folded whenever a day page is entered, kept open across re-renders of
+// that same page (ticking a branch re-renders it)
+let optsOpen = false;
 function renderDay(n, opts){
   const d = D.days[n-1], prev = D.days[n-2], next = D.days[n], v = view(d), pv = prev && view(prev), nv = next && view(next);
   const li = a => a.map(x => '<li>'+fmt(txt(x))+tagFor(x)+'</li>').join('');
@@ -483,7 +573,7 @@ function renderDay(n, opts){
     + '<div class="sign"><div class="top"><div class="big" lang="ja">'+esc(v.ja)+'</div><div class="rom">'+esc(v.ro)+'</div></div>'
     + '<div class="band">'
     + (prev ? '<a href="#d'+prev.n+'" aria-label="前一天"><small>◀ '+pad(prev.n)+'</small><b lang="ja">'+esc(pv.ja)+'</b></a>' : '<span class="nil"></span>')
-    + '<span class="mid">DAY '+pad(d.n)+'</span>'
+    + '<span class="mid">DAY '+pad(d.n)+(d.n === todayN ? ' <span class="tag-today">TODAY</span>' : '')+'</span>'
     + (next ? '<a href="#d'+next.n+'" aria-label="后一天"><b lang="ja">'+esc(nv.ja)+'</b><small>'+pad(next.n)+' ▶</small></a>' : '<span class="nil"></span>')
     + '</div><div class="under"><span>2027 · '+d.date+' <span class="zh">'+esc(d.dow)+'</span></span><span class="zh"'+langAttr(v.area)+'>'+esc(v.area)+'</span></div></div>'
     + '<div class="dtitle"><h2>'+esc(v.title)+'</h2><p>'+fmt(v.sub)+'</p>'+(v.ctx ? '<p class="ctx">'+fmt(v.ctx)+'</p>' : '')+(v.judge?'<span class="judge">'+esc(v.judge)+'</span>':'');
@@ -496,16 +586,18 @@ function renderDay(n, opts){
       + '<button type="button" class="btn sm" data-act="toggle-swap" aria-expanded="'+(opts && opts.swap ? 'true' : 'false')+'" aria-controls="swap">换活动</button></div>'
       + '</div>' + swapPanel(d, opts && opts.swap) + warnHTML(dayWarnings(d), d) + optsPanel(c, d, v.sel) + ticketPanel(c, d);
   } else h += '</div>';
-  h += '<div class="blk"><div class="lbl">今日路线 <span class="en">ROUTE</span></div><ol class="steps">'+li(v.plan)+'</ol></div>'
-    + '<div class="blk"><div class="lbl">住 · 今晚落点 <span class="en">STAY</span></div><div class="stay">'+v.stay.map((x,i)=>'<p class="'+(i===0?'l0':'')+'">'+fmt(x)+'</p>').join('')+'</div></div>'
-    + '<div class="blk"><div class="lbl">吃 · 买 · 看 <span class="en">EAT · SHOP · SEE</span></div><div class="trio">'
-    + [['食','eat'],['买','shop'],['观','see']].filter(([,f]) => v[f].length).map(([k,f]) => '<section><span class="mk" lang="ja">'+k+'</span><ul>'+li(v[f])+'</ul></section>').join('')
-    + '</div></div>';
+  // the field order: route first, then where to eat, then the way home; planning bits below
+  const trio = [['食','eat'],['买','shop'],['观','see']].map(([k,f]) => [k, f, trioGo(v.rel, f)]).filter(([,f,go]) => v[f].length || go);
+  h += '<div class="blk"><div class="lbl">今日路线 <span class="en">ROUTE</span></div>'+stepsHTML(v.plan, v.card, tagFor, !!d.slot)+'</div>'
+    + (trio.length ? '<div class="blk"><div class="lbl">吃 · 买 · 看 <span class="en">EAT · SHOP · SEE</span></div><div class="trio">'
+      + trio.map(([k,f,go]) => '<section><span class="mk" lang="ja">'+k+'</span><div>'+(v[f].length ? '<ul>'+li(v[f])+'</ul>' : '')+go+'</div></section>').join('')
+      + '</div></div>' : '')
+    + '<div class="blk"><div class="lbl">住 · 今晚落点 <span class="en">STAY</span></div><div class="stay">'+v.stay.map((x,i)=>'<p class="'+(i===0?'l0':'')+'">'+fmt(x)+'</p>').join('')+homeLink(d)+'</div></div>';
+  // date-owned to-dos (bookings for fixed dinners, travel tickets, shipping…) plus the current card's
+  const prep = prepList(d.slot ? v.card : null, d.slot ? v.sel : null, d.todos, true);
+  if (prep) h += '<div class="blk"><div class="lbl">这一天的准备 <span class="en">PREP</span></div>'+prep+'<p class="small">和「附录 · 尚待确认」是同一份勾选。</p></div>';
   const notes = [v.note, v.cnote].filter(Boolean);
   if (notes.length) h += '<div class="note"><span class="stamp">待确认</span><p>'+notes.map(t => fmt(t)).join(' ')+'</p></div>';
-  // date-owned to-dos (bookings for fixed dinners, travel tickets, shipping…) plus the current card's
-  const prep = prepList(d.slot ? v.card : null, d.slot ? v.sel : null, d.todos);
-  if (prep) h += '<div class="blk"><div class="lbl">这一天的准备 <span class="en">PREP</span></div>'+prep+'<p class="small">和「附录 · 尚待确认」是同一份勾选。</p></div>';
   if (v.rel.length){
     h += '<div class="blk"><div class="lbl">这一带还能… <span class="en">NEARBY</span></div><div class="rel">' + v.rel.map(relCard).join('') + '</div></div>';
   }
@@ -514,6 +606,7 @@ function renderDay(n, opts){
     + (next ? '<a class="nx" href="#d'+next.n+'">DAY '+pad(next.n)+' →<b>'+esc(nv.title.split('｜')[0])+'</b></a>' : '<span></span>')
     + '</div></div>';
   $('#v-day').innerHTML = h;
+  const os = $('#v-day .optsum'); if (os) os.addEventListener('toggle', () => { optsOpen = os.open; });
 }
 
 /* ----- activity cards: library + one page per card ----- */
@@ -572,7 +665,8 @@ function renderCard(id){
   const all = c.opts.map(o => o.id);
   const optName = x => x.opt ? c.opts.find(o => o.id === x.opt).label : x.unless ? '不选「'+c.opts.find(o => o.id === x.unless).label+'」时' : '';
   const cond = x => [optName(x) && '支线 · '+optName(x), x.dinner && '当天有固定晚饭时不显示', x.withFixedDinner && '只在当天有固定晚饭时', x.closed && x.closed.text+'时改走：'+(x.alt || '跳过')].filter(Boolean);
-  const li = a => a.map(x => '<li>'+fmt(x.text)+cond(x).map(t => '<span class="fxt">'+esc(t)+'</span>').join('')+(x.who ? '<span class="fxt who">'+WHO[x.who]+'</span>' : '')+'</li>').join('');
+  const tags = x => cond(x).map(t => '<span class="fxt">'+esc(t)+'</span>').join('')+(x.who ? '<span class="fxt who">'+WHO[x.who]+'</span>' : '');
+  const li = a => a.map(x => '<li>'+fmt(x.text)+tags(x)+'</li>').join('');
   const fact = (k, val) => val ? '<div><dt>'+k+'</dt><dd>'+fmt(val)+'</dd></div>' : '';
   let h = '<div class="c-'+c.city+'"><a class="back" href="#cards">← 全部活动卡片</a>'
     + '<div class="sign"><div class="top"><div class="big" lang="ja">'+esc(c.ja)+'</div><div class="rom">'+esc(c.ro)+'</div></div>'
@@ -592,7 +686,7 @@ function renderCard(id){
           + '</li>'; }).join('')
     + '</ul></div>'
     + (c.opts.length ? '<div class="blk"><div class="lbl">支线 <span class="en">OPTIONS</span></div><ul class="olist">'+c.opts.map(o => '<li><b>'+esc(o.label)+'</b>'+(o.group ? '<span class="fxt">'+c.opts.filter(x => x.group === o.group).length+' 选 1'+(o.on?' · 默认':'')+'</span>' : o.on ? '<span class="fxt">默认选上</span>' : '')+(o.who ? '<span class="fxt who">'+WHO[o.who]+'</span>' : '')+(o.closed ? '<small>'+esc(o.closed.text)+'</small>' : '')+'</li>').join('')+'</ul><p class="small">支线在安排到的那一天页面上勾选。</p></div>' : '')
-    + '<div class="blk"><div class="lbl">推荐顺序 <span class="en">ROUTE</span></div><ol class="steps">'+li(c.route)+'</ol></div>'
+    + '<div class="blk"><div class="lbl">推荐顺序 <span class="en">ROUTE</span></div>'+stepsHTML(c.route, c, tags, true)+'</div>'
     + '<div class="blk"><div class="lbl">吃 · 买 · 看 <span class="en">EAT · SHOP · SEE</span></div><div class="trio">'
     + [['食','eat'],['买','shop'],['观','see']].filter(([,f]) => c[f].length).map(([k,f]) => '<section><span class="mk" lang="ja">'+k+'</span><ul>'+li(c[f])+'</ul></section>').join('')+'</div></div>'
     + (c.note ? '<div class="note"><span class="stamp">待确认</span><p>'+fmt(c.note)+'</p></div>' : '');
@@ -1177,12 +1271,16 @@ function renderInfo(){
   let h = '<div class="vhead"><h2><span class="k" lang="ja">要</span>附录 · 执行细节</h2><p>'+D.apx.map(secName).join('、')+'。每一节分成几张卡，点开一张只看这一件事；各卡标注核对时间，出发前再开官方入口复核。各城市的备选活动在「行程 · 活动卡片」，Museum 抽签结果在「Museum 换日」。</p></div>';
   // quick nav: one short chip per section (title before "｜"), scrolls sideways, follows the reading position
   const nav = [['todo', '', '待办 '+live.length], ...D.apx.map(a => [a.id, a.id, secName(a)]), ['ref', '', '怎么用']];
+  const due = upcoming().length ? '<i class="dot" title="有到期或快到期的待办"></i>' : '';
   h += '<nav class="tools inav" aria-label="附录各节"><div class="chips">'
-    + nav.map(([id, k, t]) => '<a class="chip" href="#info-'+id+'" data-sec="info-'+id+'">'+(k ? '<b class="ro">'+k+'</b>' : '')+esc(t)+'</a>').join('')
+    + nav.map(([id, k, t]) => '<a class="chip" href="#info-'+id+'" data-sec="info-'+id+'">'+(k ? '<b class="ro">'+k+'</b>' : '')+esc(t)+(id === 'todo' ? due : '')+'</a>').join('')
     + '</div></nav>';
-  h += '<div class="apx c-osaka" id="info-todo"><div class="id">TO DO</div><h3>尚待确认</h3><div class="lk"><a href="#info-E">日本 eVISA 材料与办理</a></div><ul class="todo">'
-    + live.map(t => checkbox('todo-'+t.id, 'todo:'+t.id, t.text, t.ref)).join('')
-    + '</ul>' + (parked.length ? '<p class="small">另有 '+parked.length+' 项只属于没排进行程的活动，收在卡片里：'
+  // due or coming up first, then later dates, then undated in data order; ticked ones folded at the end
+  const rank = t => ({over:0, next:0, later:1})[dueState(t)] ?? 2;
+  const sorted = live.map((t, i) => [t, i]).sort(([a, i], [b, j]) => rank(a) - rank(b) || (rank(a) < 2 ? byDue(a, b) : 0) || i - j).map(([t]) => t);
+  h += '<div class="apx c-osaka" id="info-todo"><div class="id">TO DO</div><h3>尚待确认</h3><div class="lk"><a href="#info-E">日本 eVISA 材料与办理</a></div>'
+    + foldDone(sorted.map(t => ({key:'todo:'+t.id, html:checkbox('todo-'+t.id, 'todo:'+t.id, t.text, t.ref, t)})))
+    + (parked.length ? '<p class="small">另有 '+parked.length+' 项只属于没排进行程的活动，收在卡片里：'
         + [...new Set(parked.map(t => t.card))].map(id => '<a class="ax" href="#card-'+id+'">'+esc(CARDS[id].name)+'</a>').join('、')+'。</p>' : '')
     + (legacyTodo() ? '<div class="legacy" role="note"><p>旧版本按列表位置记录过这里的勾选；列表顺序后来变过，无法可靠对应到现在的任务，所以没有沿用。请把上面的待办重新核对一遍。附录里的打包和 eVISA 勾选不受影响。</p><button type="button" class="legacy-ok">知道了</button></div>' : '')
     + '<p class="small">勾选只保存在这台设备的浏览器里。</p></div>';
@@ -1214,7 +1312,7 @@ function renderApx(id){
     + off.map(t => '<p class="small">'+esc(CARDS[t.card].name)+' 不在当前行程，相关一项收在<a class="ax" href="#card-'+t.card+'">卡片</a>里。</p>').join('')
     + (p.links && p.links.length ? '<div class="lk">'+extLinks(p.links)+'</div>' : '')+'</article>';
   if (ts.length || parked.length) h += '<div class="blk"><div class="lbl">相关待办 <span class="en">TO DO</span></div>'
-    + (ts.length ? '<ul class="todo">'+ts.map(t => checkbox('a-todo-'+t.id, 'todo:'+t.id, t.text)).join('')+'</ul><p class="small">和「附录 · 尚待确认」是同一份勾选。</p>' : '')
+    + (ts.length ? '<ul class="todo">'+ts.map(t => checkbox('a-todo-'+t.id, 'todo:'+t.id, t.text, null, t)).join('')+'</ul><p class="small">和「附录 · 尚待确认」是同一份勾选。</p>' : '')
     + (parked.length ? '<p class="small">另有 '+parked.length+' 项只属于没排进行程的活动，收在卡片里：'
         + [...new Set(parked.map(t => t.card))].map(c => '<a class="ax" href="#card-'+c+'">'+esc(CARDS[c].name)+'</a>').join('、')+'。</p>' : '')+'</div>';
   if (used.length) h += '<div class="blk"><div class="lbl">哪天会用到 <span class="en">DAYS</span></div>'+dayChips(used)+'</div>';
@@ -1263,6 +1361,9 @@ function route(keep){
   if (MOVED[h]) { location.replace('#'+MOVED[h]); return; }
   if ((m = h.match(/^d(\d{1,2})(-swap)?$/)) && +m[1] >= 1 && +m[1] <= D.days.length){
     const swap = !!m[2] && !!D.days[+m[1]-1].slot;
+    // a re-render in place keeps the summary as it is on screen (the toggle event may not have fired yet)
+    const os = $('#v-day .optsum');
+    optsOpen = keep ? !!(os ? os.open : optsOpen) : false;
     renderDay(+m[1], {swap}); show('day'); tab='trip';
     if (swap && !keep) target = $('#swap');
   }
@@ -1428,10 +1529,69 @@ function boot(){
   });
   route();
 }
-const get = f => fetch('data/'+f+'.json', {cache:'no-cache'}).then(r => { if (!r.ok) throw new Error(f+'.json '+r.status); return r.json(); });
-Promise.all(['days','cards','books','base','info'].map(get)).then(([days, cards, books, base, info]) => {
-  D = {days, cards, books, base, todo:info.todo, apx:info.apx, ref:info.ref, apxAliases:dict(info.aliases)};
-  try { boot(); }
+/* ----- offline copy (sw.js) ----- */
+// sw.js marks what it served from its saved copy (x-jp27-from-cache) and when that copy was saved
+// (x-jp27-saved); the page goes by those headers, never by navigator.onLine
+let src = [], flaky = false;
+const DATA = ['days','cards','books','base','info'];
+const coreCache = async () => { const n = (await caches.keys()).filter(k => k.startsWith('jp27-core-')).pop(); return n && caches.open(n); };
+const stamp = t => { const d = new Date(t); return (d.getMonth()+1)+'/'+d.getDate()+' '+pad(d.getHours())+':'+pad(d.getMinutes()); };
+function offlineBanner(){
+  const cached = src.filter(x => x.cache);
+  if (!cached.length) return;
+  const times = cached.map(x => Date.parse(x.saved)).filter(n => !isNaN(n));
+  const at = times.length ? stamp(Math.min(...times)) : '之前';
+  const el = $('#offline');
+  el.textContent = flaky ? '网络不稳，这次显示的是 '+at+' 保存的版本。有网时刷新一次。'
+    : cached.length === src.length ? '离线版本 · 保存于 '+at+'。地图和官方链接要有网络才能打开。'
+    : '网络不稳，部分资料来自 '+at+' 保存的版本。有网时刷新一次。';
+  el.hidden = false;
+}
+// 可离线 once every file sw.js lists is saved; 正在保存 until then (first visit)
+async function offlineMark(){
+  let all = false;
+  try {
+    const c = await coreCache(), list = c && await c.match('jp27-core.json');
+    if (list) all = (await Promise.all((await list.json()).map(u => c.match(u, {ignoreSearch:true})))).every(Boolean);
+  } catch(e){ return; }
+  const el = $('#status');
+  el.querySelector('.off')?.remove();
+  el.insertAdjacentHTML('beforeend', '<span class="off">'+(all ? '可离线' : '正在保存离线版本')+'</span>');
+}
+if ('serviceWorker' in navigator && 'caches' in window) addEventListener('load', () => {
+  navigator.serviceWorker.register('sw.js').then(() => {
+    offlineMark();
+    navigator.serviceWorker.addEventListener('controllerchange', offlineMark);
+  }).catch(() => {});
+});
+
+const meta = r => ({cache: r.headers.get('x-jp27-from-cache') === '1', saved: r.headers.get('x-jp27-saved')});
+const get = f => fetch('data/'+f+'.json', {cache:'no-cache'}).then(r => {
+  if (!r.ok) throw new Error(f+'.json '+r.status);
+  return r.json().then(j => [j, meta(r)]);
+});
+// Some files fresh, some from the saved copy: the two may come from different releases (fresh days.json
+// naming a card the old cards.json lacks). Use the saved copy for all five, which were saved together.
+async function oneRelease(got){
+  if (!got.some(([, m]) => m.cache) || got.every(([, m]) => m.cache) || !('caches' in window)) return got;
+  try {
+    const c = await coreCache(), rs = c && await Promise.all(DATA.map(f => c.match(new URL('data/'+f+'.json', location.href).href)));
+    if (!rs || !rs.every(Boolean)) return got;
+    flaky = true;
+    return Promise.all(rs.map(r => r.json().then(j => [j, {...meta(r), cache:true}])));
+  } catch(e){ return got; }
+}
+Promise.all(DATA.map(get)).then(oneRelease).then(got => {
+  src = got.map(([, m]) => m);
+  const [days, cards, books, base, info] = got.map(([j]) => j);
+  D = {days, cards, books, base, todo:info.todo, apx:info.apx, ref:info.ref, apxAliases:dict(info.aliases), hotels:info.hotels || []};
+  offlineBanner();
+  try {
+    boot();
+    // started cleanly on fresh data: this release becomes the saved offline copy
+    if (!src.some(x => x.cache) && navigator.serviceWorker && navigator.serviceWorker.controller)
+      navigator.serviceWorker.controller.postMessage({type:'jp27-commit'});
+  }
   catch(err){
     // a render bug or an unexpected saved plan: say so, and offer the way back to the recommended plan
     show('trip');
@@ -1439,6 +1599,6 @@ Promise.all(['days','cards','books','base','info'].map(get)).then(([days, cards,
     $('#plan-clear').addEventListener('click', () => { try { localStorage.removeItem(PLAN_KEY); } catch(e){} location.reload(); });
   }
 }).catch(err => {
-  $('#v-trip').innerHTML = '<p class="empty">行程资料没有载入（'+esc(err.message)+'）。检查网络后刷新一次。</p>';
+  $('#v-trip').innerHTML = '<p class="empty">行程资料没有载入（'+esc(err.message)+'）。这台设备还没保存离线版本：连上网络打开一次就会保存。</p>';
 });
 })();
