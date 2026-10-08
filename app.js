@@ -985,8 +985,10 @@ function entsHTML(s, ents, q, b){
     + (f.length ? '<div class="fbh"><div class="lbl">兜底 <span class="en">FALLBACK</span></div><ul class="ents fbs">'+f.map(e => fbHTML(e, q)).join('')+'</ul></div>' : '');
 }
 function fbHTML(e, q){
-  // opened in search when the hit is inside, so it can be seen
-  const hid = q && ![e.name, e.tag].join(' ').toLowerCase().includes(q.toLowerCase());
+  // opened in search only when the hit is in the folded part, so it can be seen; a row listed because
+  // its station matched stays one line
+  const has = xs => !!q && xs.join(' ').toLowerCase().includes(q.toLowerCase());
+  const hid = !has([e.name, e.tag]) && has([e.body, e.fam, ...mealText(e), ...e.links.map(l => l.label)]);
   return '<li class="ent fb"'+(e.id ? ' id="ee-'+e.id+'"' : '')+'><details'+(hid ? ' open' : '')+'><summary><h4'+langAttr(e.name)+'>'+fmt(e.name,q)+'</h4><span class="tg">'+fmt(e.tag,q)+'</span></summary>'
     + mealHTML(e, q) + paras(e.body, q)
     + (e.fam ? '<p class="fm"><b>一家四口</b>　'+fmt(e.fam,q)+'</p>' : '')
