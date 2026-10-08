@@ -392,13 +392,14 @@ function prepList(c, sel, extra){
 }
 
 /* ----- to-do timing ----- */
-// t.due "YYYY-MM-DD" (that day, or done by then) or "YYYY-MM" (by the end of that month); t.from is when
-// it starts to count as coming up (default: 30 days before due; for a month, 30 days before its 1st).
-// Dates are the device's own: Chicago while planning, Japan once there.
+// t.due "YYYY-MM-DD" (that day, or done by then), "YYYY-MM-DD HH:MM" (from that time, e.g. a 19:00 ticket
+// sale: shown with the time, past due only once the day is over) or "YYYY-MM" (by the end of that month);
+// t.from is when it starts to count as coming up (default: 30 days before due; for a month, 30 days
+// before its 1st). Dates are the device's own: Chicago while planning, Japan once there.
 const isoDay = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 function dueOf(t){
-  const [y, m, dd] = t.due.split('-').map(Number);
-  return {due: isoDay(dd ? new Date(y, m-1, dd) : new Date(y, m, 0)), from: t.from || isoDay(new Date(y, m-1, (dd || 1) - 30)), y, m, dd};
+  const [day, time = ''] = t.due.split(' '), [y, m, dd] = day.split('-').map(Number);
+  return {due: isoDay(dd ? new Date(y, m-1, dd) : new Date(y, m, 0)), time, from: t.from || isoDay(new Date(y, m-1, (dd || 1) - 30)), y, m, dd};
 }
 // over (past due), next (in its window), later; null for ticked to-dos and those without a date
 function dueState(t){
@@ -407,11 +408,12 @@ function dueState(t){
   return today > due ? 'over' : today >= from ? 'next' : 'later';
 }
 function dueLabel(t){
-  const {y, m, dd} = dueOf(t);
-  return !dd ? m+' 月' : (y === new Date().getFullYear() ? '' : y+'/')+m+'/'+dd;
+  const {y, m, dd, time} = dueOf(t);
+  return !dd ? m+' 月' : (y === new Date().getFullYear() ? '' : y+'/')+m+'/'+dd+(time ? ' '+time : '');
 }
 const dueMark = t => { const st = dueState(t); return st ? ' <span class="due due-'+st+'">'+(st === 'over' ? '已过期 · ' : '')+dueLabel(t)+'</span>' : ''; };
-const byDue = (a, b) => dueOf(a).due < dueOf(b).due ? -1 : dueOf(a).due > dueOf(b).due ? 1 : 0;
+const dueKey = t => dueOf(t).due+' '+dueOf(t).time;
+const byDue = (a, b) => dueKey(a) < dueKey(b) ? -1 : dueKey(a) > dueKey(b) ? 1 : 0;
 // what to do now: open, dated to-dos in their window or past it (past due first), soonest first
 const upcoming = () => D.todo.filter(t => todoActive(t) && ['over','next'].includes(dueState(t)))
   .sort((a, b) => (dueState(b) === 'over') - (dueState(a) === 'over') || byDue(a, b));

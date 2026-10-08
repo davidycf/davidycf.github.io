@@ -538,6 +538,9 @@
   "note": "大箱子从大阪提前寄羽田（空港宅急便须出发前 2 天寄出）；需退税查验的商品随身带。寄箱见附录#ship-haneda，新退税制度见附录#tax-free。",
   "rel": [
    "shop:A2"
+  ],
+  "todos": [
+   "shinkansen-seats"
   ]
  },
  {
