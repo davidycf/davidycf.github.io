@@ -55,10 +55,10 @@ dialog{border:0;border-radius:20px;padding:0;width:min(510px,calc(100vw - 24px))
 </div>
 <div class="checkline"><label><input type="checkbox" id="spicy" checked> 包含辣菜</label><label><input type="checkbox" id="withExtra" checked> 顺带安排早餐及甜点</label></div>
 <button id="generate" class="btn primary" style="width:100%;font-size:16px">🎲 随机生成菜单</button>
-<div class="stats"><div class="stat"><b id="recipeCount">13</b><small>道已收录菜谱</small></div><div class="stat"><b id="mealCount">0</b><small>餐已安排</small></div></div>
+<div class="stats"><div class="stat"><b id="recipeCount">18</b><small>道已收录菜谱</small></div><div class="stat"><b id="mealCount">0</b><small>餐已安排</small></div></div>
 <div class="sidebar-note">小提醒：目前肉菜较多，蔬菜、鱼虾的选择还不多。菜谱增加后，随机搭配会更丰富。</div>
 </section>
-<section class="section panel catalog-section"><div class="panel-head"><h2>我的菜谱库</h2><button id="addRecipe" class="btn tiny">＋ 添加菜</button></div><p class="section-sub">收录你们真正想吃的菜。添加或删除会保存在当前设备。</p><div id="catalog" class="catalog"></div><div style="margin-top:14px;display:flex;justify-content:space-between;gap:8px;align-items:center"><small style="color:var(--muted)">长按也没用，直接点「×」删除即可</small><button id="resetRecipes" class="btn tiny danger">恢复初始13道</button></div></section>
+<section class="section panel catalog-section"><div class="panel-head"><h2>我的菜谱库</h2><button id="addRecipe" class="btn tiny">＋ 添加菜</button></div><p class="section-sub">收录你们真正想吃的菜。添加或删除会保存在当前设备。</p><div id="catalog" class="catalog"></div><div style="margin-top:14px;display:flex;justify-content:space-between;gap:8px;align-items:center"><small style="color:var(--muted)">长按也没用，直接点「×」删除即可</small><button id="resetRecipes" class="btn tiny danger">恢复初始18道</button></div></section>
 </aside></div>
 <footer class="foot">家里的饭 · 每个浏览器各自保存菜谱和菜单。通过「分享」发送的是一份可打开的菜单副本，不是实时同步编辑。<br>本网页完全在浏览器中运行，不需要账号或服务器数据库。</footer>
 </div>
@@ -88,7 +88,12 @@ var defaults=[
 {id:"r10",name:"北方油茶",type:"breakfast",spicy:false,ingredients:[I("面粉",300,"g","米面干货"),I("芝麻",50,"g","坚果"),I("花生",80,"g","坚果"),I("食用油",60,"ml","调味品")]},
 {id:"r11",name:"西红柿鸡蛋炒面",type:"noodle",spicy:false,ingredients:[I("鲜面条",500,"g","米面干货"),I("西红柿",3,"个","蔬菜"),I("鸡蛋",4,"个","蛋奶"),I("小葱",1,"根","蔬菜")]},
 {id:"r12",name:"西红柿炒鸡蛋",type:"veg",spicy:false,ingredients:[I("西红柿",3,"个","蔬菜"),I("鸡蛋",4,"个","蛋奶"),I("小葱",1,"根","蔬菜")]},
-{id:"r13",name:"辣子鸡",type:"chicken",spicy:true,ingredients:[I("鸡腿肉",600,"g","禽类"),I("干辣椒",20,"根","调味品"),I("花椒",2,"茶匙","调味品"),I("姜",1,"块","蔬菜"),I("大葱",2,"根","蔬菜")]}
+{id:"r13",name:"辣子鸡",type:"chicken",spicy:true,ingredients:[I("鸡腿肉",600,"g","禽类"),I("干辣椒",20,"根","调味品"),I("花椒",2,"茶匙","调味品"),I("姜",1,"块","蔬菜"),I("大葱",2,"根","蔬菜")]},
+{"id":"r14","name":"包菜炒粉条","type":"veg","spicy":false,"ingredients":[{"name":"包菜","qty":1,"unit":"个","group":"蔬菜"},{"name":"粉条","qty":180,"unit":"g","group":"米面干货"},{"name":"蒜","qty":4,"unit":"瓣","group":"蔬菜"},{"name":"生抽","qty":2,"unit":"汤匙","group":"调味品"}]},
+{"id":"r15","name":"白菜豆腐煲","type":"veg","spicy":false,"ingredients":[{"name":"白菜","qty":600,"unit":"g","group":"蔬菜"},{"name":"老豆腐","qty":400,"unit":"g","group":"米面干货"},{"name":"香菇","qty":150,"unit":"g","group":"蔬菜"},{"name":"蒜","qty":3,"unit":"瓣","group":"蔬菜"}]},
+{"id":"r16","name":"干锅花菜","type":"veg","spicy":true,"ingredients":[{"name":"花菜","qty":1,"unit":"个","group":"蔬菜"},{"name":"五花肉","qty":200,"unit":"g","group":"肉类"},{"name":"青椒","qty":2,"unit":"个","group":"蔬菜"},{"name":"干辣椒","qty":5,"unit":"根","group":"调味品"},{"name":"蒜","qty":4,"unit":"瓣","group":"蔬菜"}]},
+{"id":"r17","name":"糖醋排骨","type":"pork","spicy":false,"ingredients":[{"name":"排骨","qty":800,"unit":"g","group":"肉类"},{"name":"冰糖","qty":35,"unit":"g","group":"调味品"},{"name":"香醋","qty":3,"unit":"汤匙","group":"调味品"},{"name":"姜","qty":1,"unit":"块","group":"蔬菜"},{"name":"大葱","qty":1,"unit":"根","group":"蔬菜"}]},
+{"id":"r18","name":"烂糊白菜","type":"veg","spicy":false,"ingredients":[{"name":"白菜","qty":700,"unit":"g","group":"蔬菜"},{"name":"鸡蛋","qty":2,"unit":"个","group":"蛋奶"},{"name":"面粉","qty":40,"unit":"g","group":"米面干货"},{"name":"姜","qty":1,"unit":"块","group":"蔬菜"}]}
 ];
 function clone(v){return JSON.parse(JSON.stringify(v));}
 function $(id){return document.getElementById(id);}
@@ -112,6 +117,9 @@ if(persisted&&Array.isArray(persisted.recipes)){
  state.have=persisted.have&&typeof persisted.have==="object"?persisted.have:{};
  state.settings=Object.assign(state.settings,persisted.settings||{});
 }
+if(persisted&&Number(persisted.version||1)<2){defaults.filter(function(r){return Number(r.id.slice(1))>=14;}).forEach(function(r){if(!state.recipes.some(function(x){return x.id===r.id||x.name===r.name;}))state.recipes.push(clone(r));});}
+state.version=2;
+putLocal(state);
 var hash=location.hash;
 if(hash.indexOf("#share=")===0){
  try{var share=decode(hash.slice(7));if(Array.isArray(share.recipes)&&share.recipes.every(validRecipe)){
@@ -170,7 +178,7 @@ $("recipeForm").addEventListener("submit",function(e){e.preventDefault();var nam
 var type=$("recipeType").value,spicy=$("recipeSpicy").value==="true";state.recipes.push({id:"custom-"+Date.now()+"-"+Math.random().toString(36).slice(2,6),name:name,type:type,spicy:spicy,ingredients:parseIngredients($("recipeIngredients").value)});
 $("recipeDialog").close();save();render();toast("「"+name+"」已加入菜谱库");});
 $("catalog").addEventListener("click",function(e){var b=e.target.closest(".remove");if(!b)return;var r=recipeById(b.dataset.id);if(!r)return;if(!confirm("删除「"+r.name+"」？已安排的同名菜也会从菜单中移除。"))return;state.recipes=state.recipes.filter(function(x){return x.id!==r.id;});state.plan=state.plan.filter(function(x){return x.id!==r.id;});state.extras=state.extras.filter(function(id){return id!==r.id;});state.have={};save();render();toast("已删除 "+r.name);});
-$("resetRecipes").addEventListener("click",function(){if(!confirm("恢复最初的13道菜？后来添加的菜会被移除，现有菜单也会清空。"))return;state.recipes=clone(defaults);state.plan=[];state.extras=[];state.have={};save();render();toast("菜谱库已恢复");});
+$("resetRecipes").addEventListener("click",function(){if(!confirm("恢复最初的18道菜？后来添加的菜会被移除，现有菜单也会清空。"))return;state.recipes=clone(defaults);state.plan=[];state.extras=[];state.have={};save();render();toast("菜谱库已恢复");});
 ["start","days","mode","people","spicy","withExtra"].forEach(function(id){$(id).addEventListener("change",function(){gatherSettings();save();if(state.plan.length)toast("设置已保存。点击「随机生成」让新设置应用到菜单。");});});
 render();
 })();
