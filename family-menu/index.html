@@ -53,7 +53,7 @@ dialog{border:0;border-radius:20px;padding:0;width:min(510px,calc(100vw - 24px))
 <div class="field"><label for="mode">安排哪些餐</label><select id="mode"><option value="dinner">只安排晚餐</option><option value="both">午餐 + 晚餐</option></select></div>
 <div class="field"><label for="people">用餐人数</label><select id="people"><option value="2">2 人</option><option value="3">3 人</option><option value="4" selected>4 人</option><option value="5">5 人</option><option value="6">6 人</option><option value="7">7 人</option><option value="8">8 人</option></select></div>
 </div>
-<div class="checkline"><label><input type="checkbox" id="spicy" checked> 包含辣菜</label><label><input type="checkbox" id="withExtra" checked> 安排一次早餐 / 甜点</label></div>
+<div class="checkline"><label><input type="checkbox" id="spicy" checked> 包含辣菜</label><label><input type="checkbox" id="withExtra" checked> 顺带安排早餐及甜点</label></div>
 <button id="generate" class="btn primary" style="width:100%;font-size:16px">🎲 随机生成菜单</button>
 <div class="stats"><div class="stat"><b id="recipeCount">13</b><small>道已收录菜谱</small></div><div class="stat"><b id="mealCount">0</b><small>餐已安排</small></div></div>
 <div class="sidebar-note">小提醒：目前肉菜较多，蔬菜、鱼虾的选择还不多。菜谱增加后，随机搭配会更丰富。</div>
@@ -115,7 +115,7 @@ if(persisted&&Array.isArray(persisted.recipes)){
 var hash=location.hash;
 if(hash.indexOf("#share=")===0){
  try{var share=decode(hash.slice(7));if(Array.isArray(share.recipes)&&share.recipes.every(validRecipe)){
-  state.recipes=share.recipes.slice(0,250);state.plan=Array.isArray(share.plan)?share.plan.slice(0,35):[];state.extras=Array.isArray(share.extras)?share.extras.slice(0,5):[];state.settings=Object.assign(state.settings,share.settings||{});state.have={};$("shareBanner").hidden=false;
+  state.recipes=share.recipes.slice(0,250);state.plan=Array.isArray(share.plan)?share.plan.slice(0,35):[];state.extras=Array.isArray(share.extras)?share.extras.slice(0,5):[];state.settings=Object.assign(state.settings,share.settings||{});state.have={};$("shareBanner").hidden=false;putLocal(state);if(history.replaceState)history.replaceState(null,"",location.pathname+location.search);
  }}catch(e){setTimeout(function(){toast("分享链接无法识别，已使用本机菜单。");},200);}
 }
 function save(){putLocal(state);}
