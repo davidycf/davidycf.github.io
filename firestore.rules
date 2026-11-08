@@ -1,0 +1,21 @@
+rules_version = '2';
+// Firestore 的访问规则。这里改了不会自动生效：复制全文贴到 Firebase 控制台 Firestore → 规则，再点「发布」。
+// 家里人 = members 里有一份以他 Google 账号 uid 为编号的文档（只能在控制台里加，网页上加不了）。
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function member() { return signedIn() && exists(/databases/$(database)/documents/members/$(request.auth.uid)); }
+
+    // 登录的人只能看自己在不在名单里，看不到别人，也不能自己加进去
+    match /members/{uid} {
+      allow get: if signedIn() && request.auth.uid == uid;
+    }
+
+    // 家里的饭：只有这四份文档，只有家里人能读写
+    match /menu/{part} {
+      allow read, write: if member() && part in ['settings', 'plan', 'recipes', 'have'];
+    }
+
+    // 其他一律不行
+  }
+}
