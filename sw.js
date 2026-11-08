@@ -3,9 +3,10 @@
 // staging cache and replace the saved copy only when that tab reports it started up on all-fresh data
 // (message jp27-commit), so a half-arrived update never mixes into the saved copy.
 // Content updates need no change here. Rename CORE only when this file's caching logic changes,
-// or when a file joins FILES.
+// or when a file joins FILES. A renamed CORE fills up next to the old one; the old copy is kept (and
+// answers offline requests) until the new one has every file.
 'use strict';
-const CORE = 'jp27-core-v2', FONTS = 'jp27-fonts', STAGE = 'jp27-next-', TIMEOUT = 4000, FONT_MAX = 300;
+const CORE = 'jp27-core-v3', FONTS = 'jp27-fonts', STAGE = 'jp27-next-', TIMEOUT = 4000, FONT_MAX = 300;
 const FILES = ['./', './app.js',
   './data/days.json', './data/cards.json', './data/books.json', './data/base.json', './data/info.json',
   './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './favicon-32.png'];
@@ -23,6 +24,17 @@ async function tagged(res, extra){
   return new Response(await res.blob(), {status:res.status, statusText:res.statusText, headers:h});
 }
 const save = async (key, res, cache = CORE) => (await caches.open(cache)).put(key, await tagged(res, {'x-jp27-saved': new Date().toISOString()}));
+const KEPT = n => n.startsWith('jp27-core-') && n !== CORE;
+const complete = async c => (await Promise.all(FILES.map(f => c.match(abs(f))))).every(Boolean);
+// the saved copies of earlier versions, newest first
+const older = async () => (await caches.keys()).filter(KEPT).reverse();
+// once this version's copy has every file, the earlier ones go
+async function dropOlder(){
+  if (!(await complete(await caches.open(CORE)))) return;
+  await Promise.all((await older()).map(n => caches.delete(n)));
+}
+// staged saves still being written, per tab: a commit waits for them
+const staging = new Map();
 
 // save every listed file the cache doesn't have yet. A file that fails now (a dropped request on the
 // first visit) is tried again after the next page load that reaches the network.
@@ -33,6 +45,7 @@ async function fill(){
     const res = await fetch(abs(f), {cache:'no-cache'});
     if (res.ok) await save(abs(f), res);
   }));
+  await dropOlder();
 }
 
 self.addEventListener('install', e => {
@@ -46,21 +59,30 @@ self.addEventListener('install', e => {
 
 self.addEventListener('activate', e => {
   e.waitUntil((async () => {
+    // staging and other leftovers go; an earlier saved copy stays until this one is complete
     const names = await caches.keys();
-    await Promise.all(names.filter(n => n.startsWith('jp27-') && n !== CORE && n !== FONTS).map(n => caches.delete(n)));
+    await Promise.all(names.filter(n => n.startsWith('jp27-') && n !== CORE && n !== FONTS && !KEPT(n)).map(n => caches.delete(n)));
+    await dropOlder();
     await self.clients.claim();
   })());
 });
 
-// a tab reports a clean start on fresh data: its staged files become the saved copy.
+// a tab reports a clean start on fresh data: its staged files become the saved copy, once every one of
+// them is written and the whole release is there (a slow or failed file keeps the previous copy as it is).
 // Staging left by tabs that are gone is dropped.
 self.addEventListener('message', e => {
   if (!e.data || e.data.type !== 'jp27-commit' || !e.source) return;
   e.waitUntil((async () => {
     const name = STAGE+e.source.id;
+    await Promise.allSettled(staging.get(e.source.id) || []);
+    staging.delete(e.source.id);
     if (await caches.has(name)){
       const st = await caches.open(name), core = await caches.open(CORE);
-      await Promise.all((await st.keys()).map(async k => core.put(k, await st.match(k))));
+      const got = await Promise.all([...RELEASE].map(k => st.match(k)));
+      if (got.every(Boolean)){
+        await Promise.all([...RELEASE].map((k, i) => core.put(k, got[i])));
+        await dropOlder();
+      }
     }
     const live = new Set((await self.clients.matchAll()).map(c => STAGE+c.id));
     await Promise.all((await caches.keys()).filter(n => n.startsWith(STAGE) && (n === name || !live.has(n))).map(n => caches.delete(n)));
@@ -79,11 +101,20 @@ function networkFirst(e, key){
   // release files wait in this tab's staging cache; manifest and icons are saved straight away.
   // The page itself loaded from the network: also top up anything still missing.
   const tab = e.request.mode === 'navigate' ? e.resultingClientId : e.clientId;
-  const keep = res => !RELEASE.has(key) ? save(key, res) : tab ? save(key, res, STAGE+tab) : null;
+  const keep = res => {
+    if (!RELEASE.has(key)) return save(key, res);
+    if (!tab) return null;
+    const p = save(key, res, STAGE+tab);
+    if (!staging.has(tab)) staging.set(tab, []);
+    staging.get(tab).push(p);
+    return p;
+  };
   const net = fetch(e.request).then(res => { if (res.ok) saving = Promise.all([keep(res.clone()), key === ROOT && fill()]); return res; });
   e.waitUntil(net.then(() => saving, () => {}));
+  // this version's saved copy, or while it is still filling up, the newest earlier one that has the file
   const cached = async () => {
-    const r = await (await caches.open(CORE)).match(key);
+    let r = await (await caches.open(CORE)).match(key);
+    for (const n of r ? [] : await older()){ r = await (await caches.open(n)).match(key); if (r) break; }
     return r && tagged(r, {'x-jp27-from-cache': '1'});
   };
   return new Promise((resolve, reject) => {
