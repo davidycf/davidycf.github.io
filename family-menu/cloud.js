@@ -30,58 +30,66 @@ export async function connect({defaults, localData, onStatus, onStore}){
 
   function subscribe(user){
     const parts = {}, pending = {}, seen = new Set();
-    let data = null, ready = false;
+    let data = null;
     const store = {
       kind: 'cloud', user,
       get data(){ return data; },
       apply(ch){ commit(ch).catch(e => say({...status, error: '没存上（'+(e.code || e.message)+'），刷新一下再试'})); }
     };
     // 每一项改动只写它碰到的那几个字段，两个人同时改不同的菜、勾不同的东西不会互相盖掉
+    // 合并写入里的空 map 会把整个字段换成空的（Firestore 的规矩），所以空的改动一律不写
     function commit(ch){
-      const b = F.writeBatch(db), del = F.deleteField(), merge = {merge: true};
-      if (ch.settings) b.set(ref.settings, applyTo(data, {settings: ch.settings}).settings, merge);
-      if (ch.plan) b.set(ref.plan, {slots: ch.plan.slots, extras: ch.plan.extras || []});
-      if (ch.slots || ch.extras){
-        const o = {};
-        if (ch.slots) o.slots = Object.fromEntries(Object.entries(ch.slots).map(([k, v]) => [k, v ? {id: v.id, locked: !!v.locked} : del]));
-        if (ch.extras) o.extras = ch.extras;
-        b.set(ref.plan, o, merge);
+      const b = F.writeBatch(db), del = F.deleteField(), merge = {merge: true}, has = o => o && Object.keys(o).length > 0;
+      let n = 0;
+      const set = (r, d, o) => { b.set(r, d, o); n++; };
+      if (has(ch.settings)){
+        // 只写这次改的那几项（先按规则整理好），别人同时改的其他设置不受影响
+        const all = applyTo(data, {settings: ch.settings}).settings;
+        set(ref.settings, Object.fromEntries(Object.keys(ch.settings).filter(k => k in all).map(k => [k, all[k]])), merge);
       }
-      if (ch.recipesAll) b.set(ref.recipes, {items: ch.recipesAll});
-      if (ch.recipes) b.set(ref.recipes, {items: Object.fromEntries(Object.entries(ch.recipes).map(([id, r]) => [id, r ? cleanRecipe(r) : del]))}, merge);
-      if (ch.haveAll) b.set(ref.have, {items: ch.haveAll});
-      if (ch.have) b.set(ref.have, {items: Object.fromEntries(Object.entries(ch.have).map(([k, v]) => [k, v ? true : del]))}, merge);
-      return b.commit();
+      if (ch.plan) set(ref.plan, {slots: ch.plan.slots || {}, extras: ch.plan.extras || []});
+      const o = {};
+      if (has(ch.slots)) o.slots = Object.fromEntries(Object.entries(ch.slots).map(([k, v]) => [k, v ? {id: v.id, locked: !!v.locked} : del]));
+      if (ch.extras) o.extras = ch.extras;
+      if (has(o)) set(ref.plan, o, merge);
+      if (ch.recipesAll) set(ref.recipes, {items: ch.recipesAll});
+      if (has(ch.recipes)) set(ref.recipes, {items: Object.fromEntries(Object.entries(ch.recipes).map(([id, r]) => [id, r ? cleanRecipe(r) : del]))}, merge);
+      if (ch.haveAll) set(ref.have, {items: ch.haveAll});
+      if (has(ch.have)) set(ref.have, {items: Object.fromEntries(Object.entries(ch.have).map(([k, v]) => [k, v === true || (typeof v === 'number' && v > 0) ? v : del]))}, merge);
+      return n ? b.commit() : Promise.resolve();
     }
+    // 先换上共用的 store，再说“连上了”：等着“连上了”的事（比如旧分享链接）要写进共用的那份
     function emit(){
       data = normalize({settings: parts.settings, plan: parts.plan, recipes: parts.recipes, have: parts.have}, defaults);
-      say({state: 'member', user, pending: PARTS.some(p => pending[p])});
       onStore(store);
+      say({state: 'member', user, pending: PARTS.some(p => pending[p])});
     }
-    // 第一次有人登录：把这台设备上的菜谱、菜单、勾选整份放上去。
-    // 之后每台设备第一次登录：只把这台设备上自己加的、共用菜谱里没有的菜加进去。
-    function firstLoad(){
+    // 第一次有人登录：把这台设备上的菜谱、菜单、勾选整份放上去。是不是“第一次”在服务端事务里判断，
+    // 两台手机同时第一次连上也只有一台能放；另一台走下面的分支。
+    // 之后每台设备第一次连上：只把这台设备上自己加的、共用菜谱里没有的菜加进去，写成功了才记下已合并。
+    async function init(){
       const local = localData();
-      if (!parts.recipes){
-        const b = F.writeBatch(db);
-        b.set(ref.settings, local.settings); b.set(ref.plan, local.plan); b.set(ref.recipes, local.recipes); b.set(ref.have, local.have);
-        b.commit().catch(e => say({...status, error: '没存上（'+(e.code || e.message)+'）'}));
-        try { localStorage.setItem(MERGED, user.uid); } catch(e){}
-        return;
-      }
+      const first = await F.runTransaction(db, async tx => {
+        const r = await tx.get(ref.recipes);
+        if (r.exists()) return {seeded: false, items: (r.data() || {}).items || {}};
+        tx.set(ref.settings, local.settings); tx.set(ref.plan, local.plan); tx.set(ref.recipes, local.recipes); tx.set(ref.have, local.have);
+        return {seeded: true};
+      });
       let done = null; try { done = localStorage.getItem(MERGED); } catch(e){}
-      if (done === user.uid) return;
-      const names = new Set(Object.values((parts.recipes && parts.recipes.items) || {}).map(r => r.name));
-      const add = Object.values(local.recipes.items).filter(r => !/^r\d+$/.test(r.id) && !names.has(r.name));
-      if (add.length) commit({recipes: Object.fromEntries(add.map(r => [r.id, r]))}).catch(() => {});
+      if (!first.seeded && done !== user.uid){
+        const names = new Set(Object.values(first.items).map(r => r.name));
+        const add = Object.values(local.recipes.items).filter(r => !/^r\d+$/.test(r.id) && !names.has(r.name) && !first.items[r.id]);
+        if (add.length) await commit({recipes: Object.fromEntries(add.map(r => [r.id, r]))});
+      }
       try { localStorage.setItem(MERGED, user.uid); } catch(e){}
     }
+    init().catch(e => { if (!parts.recipes) say({state: 'error', user, error: '第一次连上家里的菜单要有网（'+(e.code || e.message)+'）'}); });
     PARTS.forEach(p => unsubs.push(F.onSnapshot(ref[p], {includeMetadataChanges: true}, snap => {
       parts[p] = snap.exists() ? snap.data() : undefined;
       pending[p] = snap.metadata.hasPendingWrites;
       seen.add(p);
-      if (seen.size < PARTS.length) return;
-      if (!ready){ ready = true; firstLoad(); }
+      // 共用的菜谱还不存在（还没人放上去）时先不换，等上面的事务放好
+      if (seen.size < PARTS.length || !parts.recipes) return;
       emit();
     }, e => say({state: 'error', user, error: e.code === 'permission-denied' ? '没有权限读家里的菜单' : '连不上（'+(e.code || e.message)+'）'}))));
   }

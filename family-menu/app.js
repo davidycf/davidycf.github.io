@@ -49,7 +49,17 @@ function pick(pool, uses, prevType, dayIds){
   }
   return best;
 }
-function undoable(msg, before){ toast(msg, () => { store.apply(before); toast('已撤销'); }); }
+// 撤销只认产生它的那份菜单（本机或共用）：换了一份就不能撤。
+// before 可以是一份改动，也可以是函数：到撤销那一刻再算（共用时只退回自己写的、别人没再改过的）。
+function undoable(msg, before){
+  const s = store;
+  toast(msg, () => {
+    if (store !== s){ toast('已经换了一份菜单，这一步撤销不了'); return; }
+    s.apply(typeof before === 'function' ? before() : before); toast('已撤销');
+  });
+}
+function dropUndo(){ const t = $('toast'), b = t.querySelector('button'); b.onclick = null; b.hidden = true; t.classList.remove('show', 'act'); }
+const sameSlot = (a, b) => (!a && !b) || (!!a && !!b && a.id === b.id && !!a.locked === !!b.locked);
 
 // fillOnly：只补空着的顿，已经排上的都不动
 function draw(fillOnly){
@@ -71,12 +81,25 @@ function draw(fillOnly){
     extras = [];
     if (D().settings.withExtra) ['breakfast','snack'].forEach(t => { const o = recipes().filter(r => r.type === t); if (o.length) extras.push(o[Math.floor(Math.random()*o.length)].id); });
   }
-  const before = {plan: clone(D().plan), haveAll: clone(D().have.items)};
-  const kept = all.length - changed.length, wasEmpty = !Object.keys(before.plan.slots).length;
+  const prevSlots = clone(D().plan.slots), prevExtras = clone(D().plan.extras), prevHave = clone(D().have.items);
+  const kept = all.length - changed.length, wasEmpty = !Object.keys(prevSlots).length;
+  // 这次写了什么：补菜只写空着的顿；整周重抽换掉整份（没了的顿记成 null）
+  const wrote = fillOnly ? Object.fromEntries(changed.map(k => [k, next[k]]))
+    : Object.fromEntries([...new Set([...Object.keys(prevSlots), ...Object.keys(next)])].map(k => [k, next[k] || null]));
   swingKeys = changed;
-  store.apply(fillOnly ? {slots: Object.fromEntries(changed.map(k => [k, next[k]]))} : {plan: {slots: next, extras}, haveAll: {}});
+  store.apply(fillOnly ? {slots: wrote} : {plan: {slots: next, extras}, haveAll: {}});
+  // 撤销时只退回自己写的、之后没人再改过的顿；勾选只补回被这次清掉、现在还空着的
+  const undo = () => {
+    const cur = D().plan.slots, ch = {slots: {}};
+    for (const [k, v] of Object.entries(wrote)) if (sameSlot(cur[k], v) && !sameSlot(prevSlots[k], v)) ch.slots[k] = prevSlots[k] || null;
+    if (!fillOnly){
+      if (JSON.stringify(D().plan.extras) === JSON.stringify(extras)) ch.extras = prevExtras;
+      ch.have = Object.fromEntries(Object.entries(prevHave).filter(([k]) => !(k in D().have.items)));
+    }
+    return ch;
+  };
   if (wasEmpty) toast('这一周排好了');
-  else undoable(fillOnly ? '补上了 '+changed.length+' 顿' : kept ? '换了 '+changed.length+' 顿，定好的没动' : '整周重抽了', before);
+  else undoable(fillOnly ? '补上了 '+changed.length+' 顿' : kept ? '换了 '+changed.length+' 顿，定好的没动' : '整周重抽了', undo);
 }
 function reroll(key){
   const cur = dishAt(key), pool = mains().filter(r => !cur || r.id !== cur.id);
@@ -450,15 +473,17 @@ if (!local.canSave) notice = '这个浏览器不能保存，关掉页面后排�
 if (location.hash.startsWith('#share=')){ shareRaw = location.hash.slice(7); history.replaceState(null, '', location.pathname + location.search); }
 
 function onStore(s){
+  const was = store;
   if (s){ store = s; ls.set(MODE, 'cloud'); ls.set(CACHE, JSON.stringify(s.data)); }
   else if (store.kind === 'cloud') store = local;
+  if (store !== was) dropUndo();
   render();
 }
 function onStatus(st){
   const prevErr = acct.error;
   acct = st;
   // 退出登录或不是家里人：这台设备上不留家里菜单的副本
-  if (st.state === 'out' || st.state === 'guest'){ ls.del(MODE); ls.del(CACHE); if (store.kind === 'cache') store = local; }
+  if (st.state === 'out' || st.state === 'guest'){ ls.del(MODE); ls.del(CACHE); if (store.kind === 'cache'){ store = local; dropUndo(); } }
   if (st.error && st.error !== prevErr) toast(st.error);
   if (!settled && st.state !== 'checking' && st.state !== 'loading'){
     settled = true;
