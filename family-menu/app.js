@@ -191,8 +191,7 @@ function renderMenu(){
   h += '<h2>自己挑<small>点一下就换上，并定下来</small></h2><div class="pick">'
     + mains().map(x => '<button data-act="set" data-id="'+esc(x.id)+'" data-f="pick:'+esc(x.id)+'"'+(r && x.id === r.id ? ' aria-current="true"' : '')+'><i style="background:var('+KIND_COLOR[kind(x.type)]+')"></i>'+esc(short(x.name))+(x.spicy ? '<em>辣</em>' : '')+'</button>').join('')
     + '</div>';
-  const ex = D().plan.extras.map(byId).filter(Boolean);
-  if (ex.length) h += '<h2>这周顺便做</h2><div class="extras">'+ex.map(x => '<div class="extra"><span>'+(x.type === 'breakfast' ? '早饭' : '甜点')+'</span><b>'+esc(x.name)+'</b></div>').join('')+'</div>';
+  h += renderExtras();
   h += '<div class="tools"><button class="btn plain" data-act="copyWeek" data-f="copyWeek">复制这周的菜</button><button class="btn plain" data-act="print" data-f="print">打印菜单和清单</button></div>' + syncHint();
   root.innerHTML = h;
 }
@@ -201,6 +200,24 @@ function renderMenu(){
 function syncHint(){
   if (acct.state !== 'out') return '';
   return '<p class="sync-hint">现在只存在这台设备上。<button class="link" data-act="openSet" data-f="hintSet">登录后和家里人共用一份</button></p>';
+}
+
+// 这周顺便做：早饭、甜点各一样，可以自己挑、换或者这周不做。设置里关了“顺便排”时，只留已经挑了的
+const EXTRA_TYPES = [['breakfast', '早饭'], ['snack', '甜点']];
+const extraOf = t => D().plan.extras.map(byId).find(r => r && r.type === t);
+function renderExtras(){
+  const rows = EXTRA_TYPES.map(([t, label]) => {
+    const opts = recipes().filter(r => r.type === t), cur = extraOf(t);
+    if (!cur && (!opts.length || !D().settings.withExtra)) return '';
+    return '<div class="extra" data-extra="'+t+'"><span>'+label+'</span>'+(cur ? '<b>'+esc(cur.name)+'</b>' : '<b class="none">这周不做</b>')
+      + '<div class="pick">'+opts.map(r => '<button data-act="setExtra" data-type="'+t+'" data-id="'+esc(r.id)+'" data-f="extra:'+esc(r.id)+'"'+(cur && cur.id === r.id ? ' aria-current="true"' : '')+'><i style="background:var(--zhu)"></i>'+esc(short(r.name))+'</button>').join('')
+      + '<button data-act="setExtra" data-type="'+t+'" data-id="" data-f="extra:none:'+t+'"'+(cur ? '' : ' aria-current="true"')+'>这周不做</button></div></div>';
+  }).join('');
+  return rows ? '<h2>这周顺便做<small>点一下就换</small></h2><div class="extras">'+rows+'</div>' : '';
+}
+function setExtra(type, id){
+  const extras = EXTRA_TYPES.map(([t]) => t === type ? id : (extraOf(t) || {}).id).filter(Boolean);
+  store.apply({extras});
 }
 
 // ---------- 买菜 ----------
@@ -403,7 +420,7 @@ function render(){
 }
 
 // 连上共用的菜单之前，显示的是上次留在这台设备上的副本：只能看，改了也存不上
-const EDITS = new Set(['draw', 'fill', 'one', 'lock', 'set', 'addRec', 'editRec', 'delRec', 'resetRec']);
+const EDITS = new Set(['draw', 'fill', 'one', 'lock', 'set', 'setExtra', 'addRec', 'editRec', 'delRec', 'resetRec']);
 function writable(){ if (store.kind !== 'cache') return true; toast('正在连上家里的菜单，稍等一下再改'); return false; }
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
@@ -415,6 +432,7 @@ document.addEventListener('click', e => {
   else if (a === 'one') reroll(sel);
   else if (a === 'lock') toggleLock(sel);
   else if (a === 'set') setDish(sel, b.dataset.id);
+  else if (a === 'setExtra') setExtra(b.dataset.type, b.dataset.id);
   else if (a === 'copyWeek') copy(weekLines().join('\n'), '这周的菜复制好了');
   else if (a === 'copyShop'){ if (!shopData().items.some(x => !covered(x))) toast('都勾掉了，没有要买的'); else copy(shopLines().join('\n'), '清单复制好了'); }
   else if (a === 'print'){ buildPrintout(); print(); }
