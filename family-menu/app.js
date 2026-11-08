@@ -1,5 +1,5 @@
 import { DEFAULTS } from './defaults.js';
-import { createLocalStore, normalize, cleanRecipe, validRecipe, MEALS, iso } from './store.js';
+import { createLocalStore, normalize, cleanRecipe, validRecipe, MEALS, iso, extrasMap } from './store.js';
 
 // ---------- 分类 ----------
 const TYPES = [['pork','猪肉'],['chicken','鸡肉'],['beef','牛肉'],['seafood','鱼虾'],['veg','蔬菜和蛋'],['noodle','面食和主食'],['other','其他'],['breakfast','早饭'],['snack','甜点和小吃']];
@@ -78,8 +78,8 @@ function draw(fillOnly){
   }
   let extras = D().plan.extras;
   if (!fillOnly){
-    extras = [];
-    if (D().settings.withExtra) ['breakfast','snack'].forEach(t => { const o = recipes().filter(r => r.type === t); if (o.length) extras.push(o[Math.floor(Math.random()*o.length)].id); });
+    extras = {};
+    if (D().settings.withExtra) ['breakfast','snack'].forEach(t => { const o = recipes().filter(r => r.type === t); if (o.length) extras[t] = o[Math.floor(Math.random()*o.length)].id; });
   }
   const prevSlots = clone(D().plan.slots), prevExtras = clone(D().plan.extras), prevHave = clone(D().have.items);
   const kept = all.length - changed.length, wasEmpty = !Object.keys(prevSlots).length;
@@ -173,7 +173,7 @@ function renderMenu(){
   const root = $('p-menu'), all = slots();
   if (!all.some(x => dishAt(x.key))){
     root.innerHTML = (notice ? '<p class="when" style="margin-bottom:12px">'+notice+'</p>' : '')
-      + '<p class="when">还没排菜。点上面的「抽一周」，从 '+mains().length+' 道菜里随机排'+(D().settings.mode === 'both' ? '午饭和晚饭' : '晚饭')+'。</p>' + syncHint();
+      + '<p class="when">还没排菜。点上面的「抽一周」，从 '+mains().length+' 道菜里随机排'+(D().settings.mode === 'both' ? '午饭和晚饭' : '晚饭')+'。</p>' + renderExtras() + syncHint();
     return;
   }
   const s = slotOf(sel) || all[0]; sel = s.key;
@@ -204,7 +204,8 @@ function syncHint(){
 
 // 这周顺便做：早饭、甜点各一样，可以自己挑、换或者这周不做。设置里关了“顺便排”时，只留已经挑了的
 const EXTRA_TYPES = [['breakfast', '早饭'], ['snack', '甜点']];
-const extraOf = t => D().plan.extras.map(byId).find(r => r && r.type === t);
+// 那一格里挑的菜，不管它后来改成了什么类别，都显示出来、能取消
+const extraOf = t => byId(D().plan.extras[t]);
 function renderExtras(){
   const rows = EXTRA_TYPES.map(([t, label]) => {
     const opts = recipes().filter(r => r.type === t), cur = extraOf(t);
@@ -215,14 +216,11 @@ function renderExtras(){
   }).join('');
   return rows ? '<h2>这周顺便做<small>点一下就换</small></h2><div class="extras">'+rows+'</div>' : '';
 }
-function setExtra(type, id){
-  const extras = EXTRA_TYPES.map(([t]) => t === type ? id : (extraOf(t) || {}).id).filter(Boolean);
-  store.apply({extras});
-}
+function setExtra(type, id){ store.apply({extra: {[type]: id || null}}); }
 
 // ---------- 买菜 ----------
 function shopData(){
-  const all = {}, pantry = {}, ids = slots().map(s => dishAt(s.key)).filter(Boolean).map(o => o.id).concat(D().plan.extras);
+  const all = {}, pantry = {}, ids = slots().map(s => dishAt(s.key)).filter(Boolean).map(o => o.id).concat(Object.values(D().plan.extras));
   ids.forEach(id => { const r = byId(id); if (!r) return; r.ingredients.forEach(g => {
     if (g.group === '调味品'){ (pantry[g.name] ||= new Set()).add(short(r.name)); return; }
     const k = g.name+'|'+g.unit;
@@ -312,15 +310,16 @@ function saveEditor(e){
 function deleteRecipe(id){
   const r = byId(id); if (!r) return;
   const hit = Object.entries(D().plan.slots).filter(([, v]) => v.id === id).map(([k]) => k);
-  const before = {recipes: {[id]: clone(r)}, slots: Object.fromEntries(hit.map(k => [k, clone(D().plan.slots[k])])), extras: clone(D().plan.extras)};
-  store.apply({recipes: {[id]: null}, slots: Object.fromEntries(hit.map(k => [k, null])), extras: D().plan.extras.filter(x => x !== id)});
+  const exHit = Object.keys(D().plan.extras).filter(k => D().plan.extras[k] === id);
+  const before = {recipes: {[id]: clone(r)}, slots: Object.fromEntries(hit.map(k => [k, clone(D().plan.slots[k])])), extra: Object.fromEntries(exHit.map(k => [k, id]))};
+  store.apply({recipes: {[id]: null}, slots: Object.fromEntries(hit.map(k => [k, null])), extra: Object.fromEntries(exHit.map(k => [k, null]))});
   undoable('删掉了「'+short(r.name)+'」'+(hit.length ? '，菜单里空出 '+hit.length+' 顿' : ''), before);
 }
 function resetRecipes(){
   const custom = recipes().filter(r => !/^r\d+$/.test(r.id)).length;
   if (!confirm('恢复最初的 '+DEFAULTS.length+' 道菜？'+(custom ? '后来加的 '+custom+' 道会删掉，' : '')+'改过的菜会改回去，这周的菜单清空。')) return;
   const before = {recipesAll: clone(D().recipes.items), plan: clone(D().plan), haveAll: clone(D().have.items)};
-  store.apply({recipesAll: Object.fromEntries(DEFAULTS.map(r => [r.id, clone(r)])), plan: {slots: {}, extras: []}, haveAll: {}});
+  store.apply({recipesAll: Object.fromEntries(DEFAULTS.map(r => [r.id, clone(r)])), plan: {slots: {}, extras: {}}, haveAll: {}});
   undoable('菜谱恢复了', before);
 }
 
@@ -328,8 +327,8 @@ function resetRecipes(){
 function weekLines(){
   const all = slots(), lines = ['这周的菜（'+$('range').textContent+'）'];
   all.forEach(s => { const o = dishAt(s.key), d = fromIso(s.date); lines.push('周'+WD[d.getDay()]+' '+(d.getMonth()+1)+'/'+d.getDate()+' '+s.meal+'：'+(o ? byId(o.id).name : '还没排')); });
-  const ex = D().plan.extras.map(byId).filter(Boolean);
-  if (ex.length) lines.push('顺便做：'+ex.map(x => (x.type === 'breakfast' ? '早饭 ' : '甜点 ')+x.name).join('，'));
+  const ex = EXTRA_TYPES.filter(([t]) => extraOf(t));
+  if (ex.length) lines.push('顺便做：'+ex.map(([t, l]) => l+' '+extraOf(t).name).join('，'));
   return lines;
 }
 function shopLines(){
@@ -347,7 +346,7 @@ function buildPrintout(){
   let h = '<h1>家里的饭</h1><p>'+esc($('range').textContent)+'，'+D().settings.people+' 人份</p><table>';
   slots().forEach(s => { const o = dishAt(s.key), dt = fromIso(s.date); h += '<tr><td>周'+WD[dt.getDay()]+' '+(dt.getMonth()+1)+'/'+dt.getDate()+'</td><td>'+s.meal+'</td><td>'+(o ? esc(byId(o.id).name) : '')+'</td></tr>'; });
   h += '</table>';
-  const ex = D().plan.extras.map(byId).filter(Boolean);
+  const ex = EXTRA_TYPES.map(([t]) => extraOf(t)).filter(Boolean);
   if (ex.length) h += '<p>顺便做：'+ex.map(x => esc(x.name)).join('，')+'</p>';
   h += '<h2>买菜</h2><div class="pcols">';
   SHOP.forEach(g => { const xs = d.items.filter(x => x.group === g && !covered(x)); if (xs.length) h += '<div><b>'+g+'</b>'+xs.map(x => '<p>□ '+esc(x.name)+' '+amount(x.qty, x.unit)+'</p>').join('')+'</div>'; });
@@ -384,7 +383,7 @@ function importLegacyShare(raw){
   const ss = sh.settings || {};
   const before = {settings: clone(D().settings), plan: clone(D().plan), recipes: Object.fromEntries(Object.keys(add).map(id => [id, null])), haveAll: clone(D().have.items)};
   store.apply({recipes: add, settings: {start: dates[0], days: [3, 5, 7].includes(dates.length) ? dates.length : 7, mode: sh.plan.some(p => p && /午/.test(p.meal)) ? 'both' : 'dinner', ...(ss.people ? {people: ss.people} : {})},
-    plan: {slots: slotsMap, extras: (sh.extras || []).map(x => idMap[x]).filter(Boolean)}, haveAll: {}});
+    plan: {slots: slotsMap, extras: extrasMap((sh.extras || []).map(x => idMap[x]).filter(Boolean), {...D().recipes.items, ...add})}, haveAll: {}});
   undoable('换上了分享的菜单', before);
 }
 

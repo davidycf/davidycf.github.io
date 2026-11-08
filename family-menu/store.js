@@ -3,12 +3,12 @@
 //
 // data = {
 //   settings: {start, days, mode, people, spicy, withExtra},
-//   plan:     {slots: {'2026-11-09|晚饭': {id, locked}}, extras: [菜 id]},
+//   plan:     {slots: {'2026-11-09|晚饭': {id, locked}}, extras: {breakfast: 菜 id, snack: 菜 id}},   顺便做，按早饭／甜点分开存
 //   recipes:  {items: {菜 id: 菜}},
 //   have:     {items: {'鸡蛋|个': true}}      买菜清单里勾掉的
 // }
 // change 可以同时带几项，一次存好：
-//   settings 部分设置 · plan 整个替换 · slots {key: 值或 null} · extras 数组
+//   settings 部分设置 · plan 整个替换 · slots {key: 值或 null} · extras 整个替换 · extra {breakfast/snack: id 或 null}
 //   recipes {id: 菜或 null} · recipesAll 整个菜谱 · have {key: 数量或 false} · haveAll 整个替换
 
 export const KEY = 'family-menu-v2', OLD_KEY = 'family-menu-v1';
@@ -42,6 +42,17 @@ function cleanSettings(s){
     withExtra: o.withExtra === undefined ? d.withExtra : !!o.withExtra
   };
 }
+export const EXTRA_KINDS = ['breakfast', 'snack'];
+// 顺便做：旧的存法是数组，按菜的类别分到早饭、甜点；类别对不上的放进还空着的那一格
+export function extrasMap(v, items){
+  const out = {};
+  if (Array.isArray(v)){
+    const ids = v.filter(x => typeof x === 'string'), rest = [];
+    ids.forEach(id => { const t = items[id] && items[id].type; if (EXTRA_KINDS.includes(t) && !out[t]) out[t] = id; else rest.push(id); });
+    rest.forEach(id => { const t = EXTRA_KINDS.find(k => !out[k]); if (t) out[t] = id; });
+  } else if (isObj(v)) EXTRA_KINDS.forEach(k => { if (typeof v[k] === 'string' && v[k]) out[k] = v[k]; });
+  return out;
+}
 function cleanSlots(s){
   const out = {};
   if (isObj(s)) for (const [k, v] of Object.entries(s)) if (/^\d{4}-\d{2}-\d{2}\|/.test(k) && isObj(v) && typeof v.id === 'string') out[k] = {id: v.id, locked: !!v.locked};
@@ -59,7 +70,7 @@ export function normalize(raw, defaults){
   if (isObj(o.have) && isObj(o.have.items)) for (const [k, v] of Object.entries(o.have.items)) if (v === true || (typeof v === 'number' && v > 0)) have[k] = v;
   return {
     settings: cleanSettings(o.settings),
-    plan: {slots: cleanSlots(isObj(o.plan) && o.plan.slots), extras: (isObj(o.plan) && Array.isArray(o.plan.extras) ? o.plan.extras : []).filter(x => typeof x === 'string').slice(0, 5)},
+    plan: {slots: cleanSlots(isObj(o.plan) && o.plan.slots), extras: extrasMap(isObj(o.plan) && o.plan.extras, items)},
     recipes: {items},
     have: {items: have}
   };
@@ -90,9 +101,10 @@ export function fromV1(old, defaults){
 export function applyTo(data, ch){
   const d = clone(data);
   if (ch.settings) d.settings = cleanSettings({...d.settings, ...ch.settings});
-  if (ch.plan) d.plan = {slots: cleanSlots(ch.plan.slots), extras: (ch.plan.extras || []).slice(0, 5)};
+  if (ch.plan) d.plan = {slots: cleanSlots(ch.plan.slots), extras: extrasMap(ch.plan.extras, d.recipes.items)};
   if (ch.slots) for (const [k, v] of Object.entries(ch.slots)) { if (v) d.plan.slots[k] = {id: v.id, locked: !!v.locked}; else delete d.plan.slots[k]; }
-  if (ch.extras) d.plan.extras = ch.extras.slice(0, 5);
+  if (ch.extras) d.plan.extras = extrasMap(ch.extras, d.recipes.items);
+  if (ch.extra) for (const [k, v] of Object.entries(ch.extra)) if (EXTRA_KINDS.includes(k)){ if (v) d.plan.extras[k] = v; else delete d.plan.extras[k]; }
   if (ch.recipesAll) d.recipes.items = clone(ch.recipesAll);
   if (ch.recipes) for (const [id, r] of Object.entries(ch.recipes)) { if (r) d.recipes.items[id] = cleanRecipe(r); else delete d.recipes.items[id]; }
   if (ch.haveAll) d.have.items = clone(ch.haveAll);

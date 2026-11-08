@@ -1,7 +1,7 @@
 // 和家里人共用一份菜单：Google 登录 + Firestore。
 // 页面是公开的；数据只有 members/{uid} 里有名字的人能读写（规则在仓库根目录 firestore.rules）。
 // 这份配置本来就是公开的，不是密码。
-import { normalize, applyTo, cleanRecipe } from './store.js';
+import { normalize, applyTo, cleanRecipe, extrasMap, EXTRA_KINDS } from './store.js';
 
 const V = '13.1.0', SDK = 'https://www.gstatic.com/firebasejs/'+V+'/';
 const CONFIG = {
@@ -47,10 +47,15 @@ export async function connect({defaults, localData, onStatus, onStore}){
         const all = applyTo(data, {settings: ch.settings}).settings;
         set(ref.settings, Object.fromEntries(Object.keys(ch.settings).filter(k => k in all).map(k => [k, all[k]])), merge);
       }
-      if (ch.plan) set(ref.plan, {slots: ch.plan.slots || {}, extras: ch.plan.extras || []});
+      if (ch.plan) set(ref.plan, {slots: ch.plan.slots || {}, extras: extrasMap(ch.plan.extras, data.recipes.items)});
       const o = {};
       if (has(ch.slots)) o.slots = Object.fromEntries(Object.entries(ch.slots).map(([k, v]) => [k, v ? {id: v.id, locked: !!v.locked} : del]));
-      if (ch.extras) o.extras = ch.extras;
+      // 顺便做只写改的那一格（早饭或甜点）；整个替换时两格都写。共用的还是旧的数组时整份换成按格存的
+      if (ch.extras || has(ch.extra)){
+        const after = applyTo(data, {extras: ch.extras, extra: ch.extra}).plan.extras;
+        if (Array.isArray(parts.plan && parts.plan.extras)){ b.update(ref.plan, {extras: after}); n++; }
+        else o.extras = Object.fromEntries(EXTRA_KINDS.filter(k => ch.extras || (ch.extra && k in ch.extra)).map(k => [k, after[k] || del]));
+      }
       if (has(o)) set(ref.plan, o, merge);
       if (ch.recipesAll) set(ref.recipes, {items: ch.recipesAll});
       if (has(ch.recipes)) set(ref.recipes, {items: Object.fromEntries(Object.entries(ch.recipes).map(([id, r]) => [id, r ? cleanRecipe(r) : del]))}, merge);
@@ -74,6 +79,12 @@ export async function connect({defaults, localData, onStatus, onStore}){
         if (r.exists()) return {seeded: false, items: (r.data() || {}).items || {}};
         tx.set(ref.settings, local.settings); tx.set(ref.plan, local.plan); tx.set(ref.recipes, local.recipes); tx.set(ref.have, local.have);
         return {seeded: true};
+      });
+      // 共用的顺便做还是旧的数组：换成按早饭、甜点分开存，之后两台手机各改各的格
+      await F.runTransaction(db, async tx => {
+        const pl = await tx.get(ref.plan), rs = await tx.get(ref.recipes);
+        const ex = pl.exists() && (pl.data() || {}).extras;
+        if (Array.isArray(ex)) tx.update(ref.plan, {extras: extrasMap(ex, (rs.exists() && (rs.data() || {}).items) || {})});
       });
       let done = null; try { done = localStorage.getItem(MERGED); } catch(e){}
       if (!first.seeded && done !== user.uid){
