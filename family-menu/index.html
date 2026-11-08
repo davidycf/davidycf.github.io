@@ -177,6 +177,19 @@ dialog::backdrop{background:#1d242080}
 .sheet-acts{display:flex;gap:10px;margin-top:16px}
 .sheet-acts .btn{flex:1}
 
+.acct{background:var(--soft);border-radius:12px;padding:12px 14px;margin:0 0 18px;font-size:14px}
+.acct p{margin:0 0 10px}
+.acct p:last-child{margin-bottom:0}
+.acct .btn{width:100%;margin:0}
+.acct .sheet-acts{margin-top:0}
+.acct .uid code{display:block;font-size:13px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 10px;overflow-wrap:anywhere;user-select:all}
+.warn{color:#8a4b0f}
+.icon{position:relative}
+.icon[data-sync]::after{content:"";position:absolute;top:-4px;right:-4px;width:10px;height:10px;border-radius:50%;border:2px solid var(--tile);background:#b9c4bd}
+.icon[data-sync="on"]::after{background:var(--su)}
+.icon[data-sync="pending"]::after,.icon[data-sync="warn"]::after{background:var(--zhu)}
+.sync-hint{font-size:13px;color:var(--muted);margin:16px 0 0}
+.link{border:0;background:none;padding:0;color:var(--su);text-decoration:underline;text-underline-offset:3px;font-size:inherit;min-height:24px}
 #toast{position:fixed;left:50%;bottom:calc(76px + env(safe-area-inset-bottom));transform:translate(-50%,10px);background:var(--ink);color:#fff;border-radius:10px;padding:8px 8px 8px 16px;font-size:14px;opacity:0;pointer-events:none;transition:.2s;z-index:9;max-width:calc(100vw - 32px);display:flex;align-items:center;gap:12px}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 #toast.act{pointer-events:auto}
@@ -230,6 +243,7 @@ dialog::backdrop{background:#1d242080}
 </div></nav>
 
 <dialog id="setSheet" aria-labelledby="setTitle"><div class="sheet">
+  <section class="acct" id="acct" aria-label="和家里人共用" aria-live="polite"></section>
   <h2 id="setTitle">这一周怎么排</h2>
   <div class="set"><label for="sStart">从哪天开始</label><input type="date" id="sStart"></div>
   <div class="set"><span id="lDays">排几天</span><div class="seg" role="group" aria-labelledby="lDays" data-key="days"><button data-v="3">3</button><button data-v="5">5</button><button data-v="7">7</button></div></div>

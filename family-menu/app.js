@@ -150,7 +150,7 @@ function renderMenu(){
   const root = $('p-menu'), all = slots();
   if (!all.some(x => dishAt(x.key))){
     root.innerHTML = (notice ? '<p class="when" style="margin-bottom:12px">'+notice+'</p>' : '')
-      + '<p class="when">还没排菜。点上面的「抽一周」，从 '+mains().length+' 道菜里随机排'+(D().settings.mode === 'both' ? '午饭和晚饭' : '晚饭')+'。</p>';
+      + '<p class="when">还没排菜。点上面的「抽一周」，从 '+mains().length+' 道菜里随机排'+(D().settings.mode === 'both' ? '午饭和晚饭' : '晚饭')+'。</p>' + syncHint();
     return;
   }
   const s = slotOf(sel) || all[0]; sel = s.key;
@@ -170,8 +170,14 @@ function renderMenu(){
     + '</div>';
   const ex = D().plan.extras.map(byId).filter(Boolean);
   if (ex.length) h += '<h2>这周顺便做</h2><div class="extras">'+ex.map(x => '<div class="extra"><span>'+(x.type === 'breakfast' ? '早饭' : '甜点')+'</span><b>'+esc(x.name)+'</b></div>').join('')+'</div>';
-  h += '<div class="tools"><button class="btn plain" data-act="copyWeek" data-f="copyWeek">复制这周的菜</button><button class="btn plain" data-act="print" data-f="print">打印菜单和清单</button></div>';
+  h += '<div class="tools"><button class="btn plain" data-act="copyWeek" data-f="copyWeek">复制这周的菜</button><button class="btn plain" data-act="print" data-f="print">打印菜单和清单</button></div>' + syncHint();
   root.innerHTML = h;
+}
+
+// 没登录时提醒一句：现在只存在这台设备上
+function syncHint(){
+  if (acct.state !== 'out') return '';
+  return '<p class="sync-hint">现在只存在这台设备上。<button class="link" data-act="openSet" data-f="hintSet">登录后和家里人共用一份</button></p>';
 }
 
 // ---------- 买菜 ----------
@@ -311,10 +317,7 @@ function decodeShare(s){
   const bin = atob(s), arr = Uint8Array.from(bin, c => c.charCodeAt(0));
   return JSON.parse(new TextDecoder().decode(arr));
 }
-function importLegacyShare(){
-  if (!location.hash.startsWith('#share=')) return;
-  const raw = location.hash.slice(7);
-  history.replaceState(null, '', location.pathname + location.search);
+function importLegacyShare(raw){
   let sh;
   try { sh = decodeShare(raw); if (!Array.isArray(sh.recipes) || !Array.isArray(sh.plan)) throw 0; }
   catch(e){ notice = '这个分享链接打不开，下面是这台设备上的菜单。'; return; }
@@ -328,7 +331,8 @@ function importLegacyShare(){
   const dates = [...new Set(sh.plan.map(p => p && p.date).filter(Boolean))].sort();
   if (!dates.length){ notice = '这个分享链接里没有菜单。'; return; }
   const n = Object.keys(add).length;
-  if (!confirm('打开的是家里人分享的菜单（'+md(fromIso(dates[0]))+'起 '+dates.length+' 天）。\n用它换掉这台设备上这周的菜单吗？'+(n ? '\n菜谱里没有的 '+n+' 道菜会加进来，' : '\n')+'你自己的菜谱不会少。')) return;
+  const where = store.kind === 'cloud' ? '家里这周的菜单（家里人都会看到）' : '这台设备上这周的菜单';
+  if (!confirm('打开的是家里人分享的菜单（'+md(fromIso(dates[0]))+'起 '+dates.length+' 天）。\n用它换掉'+where+'吗？'+(n ? '\n菜谱里没有的 '+n+' 道菜会加进来，' : '\n')+'现有的菜谱不会少。')) return;
   const ss = sh.settings || {};
   const before = {settings: clone(D().settings), plan: clone(D().plan), recipes: Object.fromEntries(Object.keys(add).map(id => [id, null])), haveAll: clone(D().have.items)};
   store.apply({recipes: add, settings: {start: dates[0], days: [3, 5, 7].includes(dates.length) ? dates.length : 7, mode: sh.plan.some(p => p && /午/.test(p.meal)) ? 'both' : 'dinner', ...(ss.people ? {people: ss.people} : {})},
@@ -363,13 +367,17 @@ function render(){
   const f = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.f : null;
   const all = slots();
   if (!sel || !all.some(s => s.key === sel)){ const today = iso(new Date()); sel = (all.find(s => s.date === today && s.meal === '晚饭') || all[0]).key; }
-  renderBoard(); renderMenu(); renderShop(); renderBook(); syncSheet();
+  renderBoard(); renderMenu(); renderShop(); renderBook(); syncSheet(); renderAccount();
   if (f){ const el = document.querySelector('[data-f="'+CSS.escape(f)+'"]'); if (el) el.focus({preventScroll: true}); }
 }
 
+// 连上共用的菜单之前，显示的是上次留在这台设备上的副本：只能看，改了也存不上
+const EDITS = new Set(['draw', 'fill', 'one', 'lock', 'set', 'addRec', 'editRec', 'delRec', 'resetRec']);
+function writable(){ if (store.kind !== 'cache') return true; toast('正在连上家里的菜单，稍等一下再改'); return false; }
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
   const a = b.dataset.act;
+  if (EDITS.has(a) && !writable()) return;
   if (a === 'sel'){ sel = b.dataset.key; render(); }
   else if (a === 'draw') draw(false);
   else if (a === 'fill') draw(true);
@@ -384,7 +392,7 @@ document.addEventListener('click', e => {
   else if (a === 'delRec') deleteRecipe(b.dataset.id);
   else if (a === 'resetRec') resetRecipes();
 });
-document.addEventListener('change', e => { const k = e.target.dataset && e.target.dataset.act === 'have' && e.target.dataset.k; if (k) store.apply({have: {[k]: e.target.checked}}); });
+document.addEventListener('change', e => { const k = e.target.dataset && e.target.dataset.act === 'have' && e.target.dataset.k; if (!k) return; if (!writable()){ e.target.checked = !e.target.checked; return; } store.apply({have: {[k]: e.target.checked}}); });
 addEventListener('beforeprint', buildPrintout);
 
 const tabsEl = document.querySelector('[role=tablist]');
@@ -400,19 +408,84 @@ for (const d of [$('setSheet'), $('recSheet')]) d.addEventListener('click', e =>
 document.querySelectorAll('#setSheet .seg').forEach(g => g.addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   const k = g.dataset.key, v = k === 'days' ? Number(b.dataset.v) : b.dataset.v;
-  if (D().settings[k] !== v) changeLayout({[k]: v});
+  if (D().settings[k] !== v && writable()) changeLayout({[k]: v});
 }));
-document.querySelectorAll('#setSheet .switch').forEach(b => b.addEventListener('click', () => store.apply({settings: {[b.dataset.key]: !D().settings[b.dataset.key]}})));
-document.querySelector('#setSheet .step').addEventListener('click', e => { const b = e.target.closest('button'); if (b) store.apply({settings: {people: D().settings.people + Number(b.dataset.d)}}); });
-$('sStart').addEventListener('change', e => { if (e.target.value && e.target.value !== D().settings.start) changeLayout({start: e.target.value}); });
+document.querySelectorAll('#setSheet .switch').forEach(b => b.addEventListener('click', () => { if (writable()) store.apply({settings: {[b.dataset.key]: !D().settings[b.dataset.key]}}); }));
+document.querySelector('#setSheet .step').addEventListener('click', e => { const b = e.target.closest('button'); if (b && writable()) store.apply({settings: {people: D().settings.people + Number(b.dataset.d)}}); });
+$('sStart').addEventListener('change', e => { if (!e.target.value || e.target.value === D().settings.start) return; if (writable()) changeLayout({start: e.target.value}); else syncSheet(); });
 $('rSpicy').addEventListener('click', e => e.currentTarget.setAttribute('aria-checked', String(e.currentTarget.getAttribute('aria-checked') !== 'true')));
-$('recForm').addEventListener('submit', saveEditor);
+$('recForm').addEventListener('submit', e => { if (writable()) saveEditor(e); else e.preventDefault(); });
 $('rCancel').addEventListener('click', () => $('recSheet').close());
 
-store = createLocalStore({defaults: DEFAULTS, onChange: render});
-if (!store.canSave) notice = '这个浏览器不能保存，关掉页面后排好的菜会丢。';
-importLegacyShare();
+// ---------- 本机还是和家里人共用 ----------
+// 先用本机的（或者上次共用时留在这台设备上的副本，只能看）马上画出来，连上以后换成共用的那份。
+const MODE = 'family-menu-mode', CACHE = 'family-menu-cloud-cache';
+const ls = {get: k => { try { return localStorage.getItem(k); } catch(e){ return null; } },
+  set: (k, v) => { try { localStorage.setItem(k, v); } catch(e){} }, del: k => { try { localStorage.removeItem(k); } catch(e){} }};
+const local = createLocalStore({defaults: DEFAULTS, onChange: () => { if (store === local) render(); }});
+let acct = {state: 'loading'}, cloud = null, shareRaw = null, settled = false;
+store = local;
+if (ls.get(MODE) === 'cloud'){
+  try { const c = normalize(JSON.parse(ls.get(CACHE)), DEFAULTS);
+    store = {kind: 'cache', data: c, apply(){ toast('正在连上家里的菜单，稍等一下再改'); }}; acct = {state: 'checking'}; } catch(e){}
+}
+if (!local.canSave) notice = '这个浏览器不能保存，关掉页面后排好的菜会丢。';
+if (location.hash.startsWith('#share=')){ shareRaw = location.hash.slice(7); history.replaceState(null, '', location.pathname + location.search); }
+
+function onStore(s){
+  if (s){ store = s; ls.set(MODE, 'cloud'); ls.set(CACHE, JSON.stringify(s.data)); }
+  else if (store.kind === 'cloud') store = local;
+  render();
+}
+function onStatus(st){
+  const prevErr = acct.error;
+  acct = st;
+  // 退出登录或不是家里人：这台设备上不留家里菜单的副本
+  if (st.state === 'out' || st.state === 'guest'){ ls.del(MODE); ls.del(CACHE); if (store.kind === 'cache') store = local; }
+  if (st.error && st.error !== prevErr) toast(st.error);
+  if (!settled && st.state !== 'checking' && st.state !== 'loading'){
+    settled = true;
+    if (shareRaw && store.kind !== 'cache'){ const raw = shareRaw; shareRaw = null; importLegacyShare(raw); }
+  }
+  render();
+}
+function renderAccount(){
+  const st = acct.state, u = acct.user, who = u ? esc(u.email || u.name) : '';
+  const btn = $('openSet');
+  btn.dataset.sync = st === 'member' ? (acct.pending ? 'pending' : 'on') : st === 'error' || store.kind === 'cache' ? 'warn' : 'off';
+  btn.setAttribute('aria-label', '设置，'+(st === 'member' ? (acct.pending ? '有改动还没存上' : '和家里人共用中') : store.kind === 'cache' ? '现在只能看' : '只存在这台设备上'));
+  let h;
+  if (st === 'loading' || st === 'checking') h = '<p>正在连上家里的菜单……</p>';
+  else if (st === 'unavailable') h = store.kind === 'cache' ? '<p>现在连不上，下面是上次的家里菜单，只能看。连上网刷新一下就能改。</p>' : '<p>现在连不上共用的菜单，先存在这台设备上。</p>';
+  else if (st === 'out') h = '<p>现在只存在这台设备上。用 Google 登录后，家里人看到的、改的是同一份。</p><button class="btn main" data-act="signIn" data-f="signIn">用 Google 登录</button>';
+  else if (st === 'guest') h = '<p>已登录 '+who+'，还没加进家里。把这串编号发给管这个页面的人：</p><p class="uid"><code>'+esc(u.uid)+'</code></p>'
+    + '<div class="sheet-acts"><button class="btn plain" data-act="copyUid" data-f="copyUid">复制编号</button><button class="btn plain" data-act="signOut" data-f="signOut">退出登录</button></div>';
+  else if (st === 'member') h = '<p>已登录 '+who+'。家里人改了，这里马上跟着变。</p>'+(acct.pending ? '<p class="warn">有改动还没存上，连上网会自动存。</p>' : '')
+    + '<button class="btn plain" data-act="signOut" data-f="signOut">退出登录</button>';
+  else h = '<p class="warn">'+esc(acct.error || '出了点问题')+'</p>'+(store.kind === 'cache' ? '<p>下面是上次的家里菜单，只能看。</p>' : '')+(u ? '<button class="btn plain" data-act="signOut" data-f="signOut">退出登录</button>' : '');
+  $('acct').innerHTML = h;
+}
+function signInError(e){
+  const c = e && e.code;
+  if (c === 'auth/popup-closed-by-user' || c === 'auth/cancelled-popup-request') return;
+  toast(c === 'auth/popup-blocked' ? '浏览器拦住了登录窗口，允许弹出窗口后再点一次'
+    : c === 'auth/unauthorized-domain' ? '这个网址还没加进 Firebase 的授权网域'
+    : c === 'auth/network-request-failed' ? '连不上网，等会儿再登录' : '没登上（'+(c || e)+'）');
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const a = b.dataset.act;
+  if (a === 'signIn'){ if (cloud) cloud.signIn().catch(signInError); else toast('还在连，稍等一下'); }
+  else if (a === 'signOut' && cloud) cloud.signOut();
+  else if (a === 'copyUid' && acct.user) copy(acct.user.uid, '编号复制好了');
+  else if (a === 'openSet'){ syncSheet(); $('setSheet').showModal(); }
+});
+
 render();
+import('./cloud.js')
+  .then(m => m.connect({defaults: DEFAULTS, localData: () => local.data, onStatus, onStore}))
+  .then(api => { cloud = api; })
+  .catch(() => onStatus({state: 'unavailable'}));
 
 // 测试和调试用
 window.__menu = {store: () => store, normalize: raw => normalize(raw, DEFAULTS), parseIngredients};
