@@ -1804,7 +1804,7 @@ let cloudSt = null;
 const goCloud = () => useStore(cloudSt ||= cloudStore());
 const goLocal = () => { sync.why = ''; if (store !== local) useStore(local); };
 function onAuth(a){
-  sync.auth = a.state; sync.user = a.user || null; sync.loadErr = a.error || null;
+  sync.auth = a.state; sync.user = a.user || null; sync.loadErr = a.error || null; sync.offlineMember = !!a.offline;
   if (['out','guest','denied'].includes(a.state)){ writeJSON(MIRROR_KEY, null); sync.data = null; sync.phase = 'wait'; goLocal(); }
   else if (a.state === 'checking' || a.state === 'unreachable'){
     const m = readMirror();
@@ -1822,9 +1822,11 @@ function onData(d){
   const before = shared() && !sync.mirror ? {S: stateOf(plan), T: {...done}} : null;
   sync.data = d; sync.mirror = false;
   if (!d.fromCache && !d.pending) sync.lastSync = Date.now();
+  // nothing in this phone's copy while offline says nothing about the shared plan: keep what is showing
+  if (!d.plan && d.fromCache){ renderSync(false); return; }
   if (!d.plan){ sync.phase = 'empty'; sync.why = ''; if (store !== local) useStore(local); renderSync(true); return; }
   sync.why = d.plan.v !== FORMAT ? '共用方案是更新的网页存的，刷新网页后才能改' : '';
-  if (!d.pending && !d.fromCache) writeJSON(MIRROR_KEY, {v:FORMAT, uid:sync.user.uid, member:true, plan:d.plan, ticks:d.ticks, at:sync.lastSync});
+  if (!d.pending && !d.fromCache){ writeJSON(MIRROR_KEY, {v:FORMAT, uid:sync.user.uid, member:true, plan:d.plan, ticks:d.ticks, at:sync.lastSync}); if (!sync.ready || sync.ready.length) checkReady(); }
   const uid = sync.user.uid;
   if (!joinedHere(uid)){
     if (!migrateCandidates(d).any){ markJoined(uid); sync.phase = 'live'; } else sync.phase = 'choose';
@@ -1873,6 +1875,20 @@ function renderSync(full){
   offlineBanner();
   if (full) rerender();
 }
+// Offline editing needs: this browser keeps Firestore's copy, the SDK modules are saved, and this account's
+// shared plan was opened here before. Shown on #plan.
+async function checkReady(){
+  const miss = [];
+  if (!sync.cloud || !sync.cloud.persistent) miss.push('这个浏览器不让存离线数据');
+  try { const c = 'caches' in window && await caches.open('jp27-sdk');
+    if (!c || !(await Promise.all((sync.sdk || []).map(u => c.match(u)))).every(Boolean) || !(sync.sdk || []).length) miss.push('登录用的程序还没存好'); }
+  catch(e){ miss.push('登录用的程序还没存好'); }
+  const m = readMirror();
+  if (!m || !sync.user || m.uid !== sync.user.uid) miss.push('这个账号还没在这台设备上打开过家里的方案');
+  const was = canon(sync.ready);
+  sync.ready = miss;
+  if (was !== canon(miss) && location.hash === '#plan') rerender();
+}
 // what this device would bring into the shared plan: its choices as an import, and ticks the family lacks
 const mig = {open:false, inBooked:false, inVisited:false, ticks:{}};
 function migrateCandidates(d){
@@ -1917,6 +1933,8 @@ function shareBlock(){
       + (sync.failed ? '<p class="ck w-block"><b>没存上</b>'+esc(sync.failed)+'：页面已回到家里方案里存好的样子。</p>' : '')
       + (sync.phase === 'choose' ? chooseBlock() : '')
       + (sync.signingOut ? '<div class="cf"><p class="ck w-verify"><b>待同步</b>还有改动没传上去：可以等它同步完再退出；'+(sync.cloud && sync.cloud.persistent ? '现在退出，这些改动等这个账号下次在这台设备登录、有网时再传。' : '这个浏览器不让存离线副本，现在退出这些改动会丢。')+'</p><button type="button" class="btn" data-act="sync-out-wait">等同步完再退出</button><button type="button" class="btn ghost" data-act="sync-out-now">现在退出</button></div>' : '')
+      + (sync.offlineMember ? '<p class="small">现在断网，先按这台设备上次确认的名单用；联网后会再确认一次。</p>' : '')
+      + (sync.ready ? '<p class="small">断网时：'+(sync.ready.length ? '只能看（'+esc(sync.ready.join('；'))+'）' : '也能换卡、交换、勾选和撤销，联网后同步；Museum 换日、导入、恢复推荐要联网')+'。</p>' : '')
       + '<div class="pa">'+out+'</div>'
       + '<p class="small">退出登录后显示这台设备原来的方案；家里的方案在退出后不显示。</p>';
   }
@@ -1984,8 +2002,12 @@ function startCloud(){
     sync.loadErr = '网页版本还没更新完，稍后刷新'; renderSync(true); return null;
   }, e => { sync.loadErr = e.message || '网络'; renderSync(true); return null; });
   cloudReady = mod.then(m => !!m);
-  mod.then(m => m && m.connect({onAuth: a => safely(() => onAuth(a)), onData: d => safely(() => onData(d))}).then(cl => {
-    sync.cloud = cl;
+  mod.then(m => m && m.connect({onAuth: a => safely(() => onAuth(a)), onData: d => safely(() => onData(d)),
+    knownMember: uid => { const mr = readMirror(); return !!(mr && mr.uid === uid && mr.member); }}).then(cl => {
+    sync.cloud = cl; sync.sdk = m.SDK_URLS || [];
+    // have sw.js keep the SDK modules, so the shared plan also opens (and takes changes) offline next time
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage({type:'jp27-sdk', urls: sync.sdk});
+    checkReady();
     if (sync.auth === 'off'){ sync.auth = 'out'; renderSync(true); }
   }, e => { sync.auth = 'off'; sync.loadErr = '登录服务没载入（'+(e.message || '网络')+'）'; renderSync(true); }));
   return cloudReady;

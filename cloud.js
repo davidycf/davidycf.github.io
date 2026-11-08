@@ -4,6 +4,7 @@
 // app.js 只通过 connect() 返回的几个函数用它。两边的调用方式改了就把 CLOUD_API 加 1（app.js 里有同名常量）；
 // 只改这里面的做法不用动。
 export const CLOUD_API = 1;
+// sw.js reads the version from this line (V = 'x.y.z') to keep only the SDK files in use
 const V = '13.1.0', SDK = 'https://www.gstatic.com/firebasejs/'+V+'/';
 export const SDK_URLS = ['app', 'auth', 'firestore'].map(m => SDK+'firebase-'+m+'.js');
 const CONFIG = {
@@ -19,8 +20,10 @@ const own = o => o && typeof o === 'object' && !Array.isArray(o) ? Object.entrie
 const netErr = e => !!e && ['unavailable', 'deadline-exceeded', 'failed-precondition'].includes(e.code);
 
 // h.onAuth({state, user, error})
-//   state: out 没登录 · checking 正在看是不是家里人 · guest 不在名单里 · member 是家里人（随后来数据）
+//   state: out 没登录 · checking 正在看是不是家里人 · guest 不在名单里 · member 是家里人（随后来数据；
+//          offline: true 时是断网、按这台设备上次确认过的名单先用，联网后再问一次）
 //          · unreachable 连不上，查不了名单 · denied 读共用方案被拒（名单里删掉了）
+// h.knownMember(uid): 这台设备以前确认过这个账号在名单里（断网时才用，而且要有离线副本）
 // h.onData({plan, ticks, pending, fromCache}): plan、ticks 是两份文档的原样数据（不存在时为 null）；
 //   两份文档一起变时（一次事务）只来一次
 export async function connect(h){
@@ -58,19 +61,41 @@ export async function connect(h){
     if (!u){ user = null; h.onAuth({state: 'out'}); return; }
     const me = user = {uid: u.uid, email: u.email || '', name: u.displayName || ''};
     h.onAuth({state: 'checking', user: me});
-    let member;
-    // 名单一定问服务端（本机缓存里的“是成员”可能已经过期）
+    let member, offline = false;
+    // 名单一定问服务端（本机缓存里的“是成员”可能已经过期）；只有连不上时才按这台设备上次确认的先用
     try { member = (await F.getDocFromServer(F.doc(db, 'members', u.uid))).exists(); }
     catch(e){
       if (my !== conn) return;
       if (e.code === 'permission-denied') member = false;
+      else if (persistent && h.knownMember && h.knownMember(me.uid)){ member = true; offline = true; }
       else { h.onAuth({state: 'unreachable', user: me, error: e.code || e.message}); return; }
     }
     if (my !== conn) return;
     if (!member){ h.onAuth({state: 'guest', user: me}); return; }
-    h.onAuth({state: 'member', user: me});
+    h.onAuth({state: 'member', user: me, offline});
     subscribe(my);
+    if (offline) recheck(my, me);
   });
+  // 断网时先用的成员身份：一联网就再问一次名单，不在了就停下
+  function recheck(my, me){
+    let timer = null;
+    const again = async () => {
+      if (my !== conn){ removeEventListener('online', again); clearTimeout(timer); return; }
+      try {
+        const ok = (await F.getDocFromServer(F.doc(db, 'members', me.uid))).exists();
+        if (my !== conn) return;
+        removeEventListener('online', again); clearTimeout(timer);
+        if (ok) h.onAuth({state: 'member', user: me});
+        else { stop(); h.onAuth({state: 'guest', user: me}); }
+      } catch(e){
+        if (my !== conn) return;
+        if (e.code === 'permission-denied'){ removeEventListener('online', again); stop(); h.onAuth({state: 'denied', user: me}); }
+        else { clearTimeout(timer); timer = setTimeout(again, 30000); }
+      }
+    };
+    addEventListener('online', again);
+    timer = setTimeout(again, 30000);
+  }
 
   // 一次改动 → 字段级写入：每个日期记录整条替换，其他日期、其他组不动；删除用 deleteField()
   function writes(w, ch){
