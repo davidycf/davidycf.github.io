@@ -103,10 +103,12 @@ h2 small{font-weight:400;font-size:13px;color:var(--muted);margin-left:6px}
 .pick i{width:8px;height:8px;border-radius:2px;flex:none}
 .pick em{font-style:normal;color:var(--rou);font-size:12px}
 .pick button[aria-current="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
-.extras{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.extras{display:grid;gap:18px}
 .extra{border-top:3px solid var(--zhu);padding:10px 0 0;min-width:0}
-.extra span{font-size:12px;color:var(--muted)}
+.extra > span{font-size:12px;color:var(--muted)}
 .extra b{display:block;font-family:var(--f-brush);font-weight:400;font-size:24px;line-height:1.2;overflow-wrap:anywhere}
+.extra b.none{font-family:var(--f-ui);font-size:16px;font-weight:500;color:var(--muted);line-height:1.5}
+.extra .pick{margin-top:8px}
 .tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:28px;padding-top:16px;border-top:1px solid var(--line)}
 .tools .btn{flex:1;min-width:140px}
 
@@ -168,7 +170,7 @@ dialog::backdrop{background:#1d242080}
 .switch{width:46px;height:28px;border-radius:99px;border:0;background:#cfd6d1;position:relative;flex:none}
 .switch::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .15s}
 .switch[aria-checked="true"]{background:var(--su)}.switch[aria-checked="true"]::after{left:21px}
-.sheet .btn.main{width:100%;margin-top:16px}
+#closeSet{width:100%;margin-top:16px}
 .field{display:block;margin:14px 0 0}
 .field > span{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
 .field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:#fff;min-height:44px}
