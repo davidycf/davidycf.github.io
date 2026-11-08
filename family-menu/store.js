@@ -9,7 +9,7 @@
 // }
 // change 可以同时带几项，一次存好：
 //   settings 部分设置 · plan 整个替换 · slots {key: 值或 null} · extras 数组
-//   recipes {id: 菜或 null} · recipesAll 整个菜谱 · have {key: true/false} · haveAll 整个替换
+//   recipes {id: 菜或 null} · recipesAll 整个菜谱 · have {key: 数量或 false} · haveAll 整个替换
 
 export const KEY = 'family-menu-v2', OLD_KEY = 'family-menu-v1';
 export const MEALS = {dinner: ['晚饭'], both: ['午饭', '晚饭']};
@@ -56,7 +56,7 @@ export function normalize(raw, defaults){
   const fresh = !(isObj(o.recipes) && isObj(o.recipes.items));
   if (fresh) for (const r of defaults) items[r.id] = clone(r);
   const have = {};
-  if (isObj(o.have) && isObj(o.have.items)) for (const [k, v] of Object.entries(o.have.items)) if (v === true) have[k] = true;
+  if (isObj(o.have) && isObj(o.have.items)) for (const [k, v] of Object.entries(o.have.items)) if (v === true || (typeof v === 'number' && v > 0)) have[k] = v;
   return {
     settings: cleanSettings(o.settings),
     plan: {slots: cleanSlots(isObj(o.plan) && o.plan.slots), extras: (isObj(o.plan) && Array.isArray(o.plan.extras) ? o.plan.extras : []).filter(x => typeof x === 'string').slice(0, 5)},
@@ -72,11 +72,18 @@ export function fromV1(old, defaults){
   old.recipes.filter(validRecipe).slice(0, 250).forEach(r => { items[r.id] = cleanRecipe(r); });
   const slots = {};
   (Array.isArray(old.plan) ? old.plan : []).forEach(p => {
-    if (!isObj(p) || typeof p.date !== 'string' || typeof p.id !== 'string') return;
+    if (!isObj(p) || !/^\d{4}-\d{2}-\d{2}$/.test(p.date) || typeof p.id !== 'string') return;
     const meal = /午/.test(p.meal) ? '午饭' : '晚饭';
     slots[p.date+'|'+meal] = {id: p.id, locked: false};
   });
-  return normalize({settings: old.settings, plan: {slots, extras: old.extras}, recipes: {items}, have: {items: old.have}}, defaults);
+  // 旧版改了设置但没重抽时，屏幕上还是原来那周：设置跟着那周走，不然排好的菜都落在新的日期范围外面
+  let settings = isObj(old.settings) ? {...old.settings} : {};
+  const dates = [...new Set(Object.keys(slots).map(k => k.split('|')[0]))].sort();
+  if (dates.length){
+    const span = Math.round((new Date(dates[dates.length-1]+'T12:00:00') - new Date(dates[0]+'T12:00:00')) / 864e5) + 1;
+    settings = {...settings, start: dates[0], days: [3, 5, 7].find(n => n >= span) || 7, mode: Object.keys(slots).some(k => k.endsWith('午饭')) ? 'both' : 'dinner'};
+  }
+  return normalize({settings, plan: {slots, extras: old.extras}, recipes: {items}, have: {items: old.have}}, defaults);
 }
 
 // 一次改动套到一份 data 上（本机直接用；共用版拿它先在本地显示）
@@ -89,7 +96,7 @@ export function applyTo(data, ch){
   if (ch.recipesAll) d.recipes.items = clone(ch.recipesAll);
   if (ch.recipes) for (const [id, r] of Object.entries(ch.recipes)) { if (r) d.recipes.items[id] = cleanRecipe(r); else delete d.recipes.items[id]; }
   if (ch.haveAll) d.have.items = clone(ch.haveAll);
-  if (ch.have) for (const [k, v] of Object.entries(ch.have)) { if (v) d.have.items[k] = true; else delete d.have.items[k]; }
+  if (ch.have) for (const [k, v] of Object.entries(ch.have)) { if (v === true || (typeof v === 'number' && v > 0)) d.have.items[k] = v; else delete d.have.items[k]; }
   return d;
 }
 

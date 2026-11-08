@@ -185,14 +185,18 @@ function shopData(){
   }); });
   return {items: Object.values(all).sort((a, b) => a.name.localeCompare(b.name, 'zh-CN')), pantry};
 }
+// 勾掉时记下当时要买多少；菜单后来要的更多（换了菜、多了人），这一样又回到要买的里面
+const needOf = x => x.qty * D().settings.people / 4;
+function covered(x){ const v = D().have.items[x.key]; return v === true || (typeof v === 'number' && v >= needOf(x) - 1e-6); }
+function shortBy(x){ const v = D().have.items[x.key]; return typeof v === 'number' && !covered(x) ? amount((needOf(x) - v) * 4 / D().settings.people, x.unit) : ''; }
 function renderShop(){
-  const root = $('p-shop'), d = shopData(), have = D().have.items;
+  const root = $('p-shop'), d = shopData();
   if (!d.items.length && !Object.keys(d.pantry).length){ root.innerHTML = '<p class="when">排好这周的菜，这里会列出要买的东西。</p>'; return; }
-  const need = d.items.filter(x => !have[x.key]).length;
+  const need = d.items.filter(x => !covered(x)).length;
   let h = '<div class="shop-top"><p><b>'+need+'</b>样要买，'+D().settings.people+' 人份</p><button class="btn plain" data-act="copyShop" data-f="copyShop" style="min-height:40px">复制清单</button></div>';
   SHOP.forEach(g => { const xs = d.items.filter(x => x.group === g); if (!xs.length) return;
-    h += '<div class="group"><h3>'+g+'</h3>' + xs.map(x => { const c = !!have[x.key];
-      return '<label class="item'+(c ? ' have' : '')+'"><input type="checkbox" data-act="have" data-k="'+esc(x.key)+'" data-f="have:'+esc(x.key)+'"'+(c ? ' checked' : '')+'><span class="n">'+esc(x.name)+'</span><span class="q">'+amount(x.qty, x.unit)+'</span><span class="src">'+esc([...x.src].join('、'))+'</span></label>'; }).join('') + '</div>'; });
+    h += '<div class="group"><h3>'+g+'</h3>' + xs.map(x => { const c = covered(x), more = shortBy(x);
+      return '<label class="item'+(c ? ' have' : '')+'"><input type="checkbox" data-act="have" data-k="'+esc(x.key)+'" data-f="have:'+esc(x.key)+'"'+(c ? ' checked' : '')+'><span class="n">'+esc(x.name)+'</span><span class="q">'+amount(x.qty, x.unit)+'</span><span class="src">'+esc([...x.src].join('、'))+(more ? '<span class="more">之前勾过，现在还要再买 '+more+'</span>' : '')+'</span></label>'; }).join('') + '</div>'; });
   const pn = Object.keys(d.pantry);
   if (pn.length) h += '<div class="group"><h3>调料：看看家里还够不够</h3><p class="pantry">'+pn.map(n => '<span>'+esc(n)+'</span>').join('')+'</p></div>';
   h += '<p class="when" style="margin-top:16px">家里已经有的勾掉就行。数量按菜谱估算，向上取整。</p>';
@@ -283,8 +287,8 @@ function weekLines(){
   return lines;
 }
 function shopLines(){
-  const d = shopData(), have = D().have.items, lines = ['买菜清单（'+D().settings.people+' 人份）'];
-  SHOP.forEach(g => { const xs = d.items.filter(x => x.group === g && !have[x.key]); if (xs.length){ lines.push('', '【'+g+'】'); xs.forEach(x => lines.push('□ '+x.name+' '+amount(x.qty, x.unit))); } });
+  const d = shopData(), lines = ['买菜清单（'+D().settings.people+' 人份）'];
+  SHOP.forEach(g => { const xs = d.items.filter(x => x.group === g && !covered(x)); if (xs.length){ lines.push('', '【'+g+'】'); xs.forEach(x => lines.push('□ '+x.name+' '+amount(x.qty, x.unit))); } });
   const pn = Object.keys(d.pantry); if (pn.length) lines.push('', '【调料，看看够不够】', pn.join('、'));
   return lines;
 }
@@ -293,14 +297,14 @@ function copy(text, done){
   if (navigator.clipboard && isSecureContext) navigator.clipboard.writeText(text).then(() => toast(done), fallback); else fallback();
 }
 function buildPrintout(){
-  const d = shopData(), have = D().have.items;
+  const d = shopData();
   let h = '<h1>家里的饭</h1><p>'+esc($('range').textContent)+'，'+D().settings.people+' 人份</p><table>';
   slots().forEach(s => { const o = dishAt(s.key), dt = fromIso(s.date); h += '<tr><td>周'+WD[dt.getDay()]+' '+(dt.getMonth()+1)+'/'+dt.getDate()+'</td><td>'+s.meal+'</td><td>'+(o ? esc(byId(o.id).name) : '')+'</td></tr>'; });
   h += '</table>';
   const ex = D().plan.extras.map(byId).filter(Boolean);
   if (ex.length) h += '<p>顺便做：'+ex.map(x => esc(x.name)).join('，')+'</p>';
   h += '<h2>买菜</h2><div class="pcols">';
-  SHOP.forEach(g => { const xs = d.items.filter(x => x.group === g && !have[x.key]); if (xs.length) h += '<div><b>'+g+'</b>'+xs.map(x => '<p>□ '+esc(x.name)+' '+amount(x.qty, x.unit)+'</p>').join('')+'</div>'; });
+  SHOP.forEach(g => { const xs = d.items.filter(x => x.group === g && !covered(x)); if (xs.length) h += '<div><b>'+g+'</b>'+xs.map(x => '<p>□ '+esc(x.name)+' '+amount(x.qty, x.unit)+'</p>').join('')+'</div>'; });
   const pn = Object.keys(d.pantry); if (pn.length) h += '<div><b>调料，看看够不够</b><p>'+pn.map(esc).join('、')+'</p></div>';
   $('printout').innerHTML = h + '</div>';
 }
@@ -321,7 +325,11 @@ function importLegacyShare(){
   const theirs = sh.recipes.filter(validRecipe), mine = D().recipes.items, add = {}, idMap = {};
   theirs.forEach(r => {
     const same = mine[r.id] && mine[r.id].name === r.name ? mine[r.id] : Object.values(mine).find(m => m.name === r.name);
-    if (same) idMap[r.id] = same.id; else { add[r.id] = cleanRecipe(r); idMap[r.id] = r.id; }
+    if (same){ idMap[r.id] = same.id; return; }
+    // 编号被自己改过名的菜占着：换个新编号加进来，不盖掉自己的
+    let id = r.id;
+    while (mine[id] || add[id]) id = 'c'+Date.now().toString(36)+Math.random().toString(36).slice(2, 6);
+    add[id] = cleanRecipe({...r, id}); idMap[r.id] = id;
   });
   const slotsMap = {};
   sh.plan.forEach(p => { if (p && typeof p.date === 'string' && idMap[p.id]) slotsMap[p.date+'|'+(/午/.test(p.meal) ? '午饭' : '晚饭')] = {id: idMap[p.id], locked: false}; });
@@ -377,14 +385,18 @@ document.addEventListener('click', e => {
   else if (a === 'lock') toggleLock(sel);
   else if (a === 'set') setDish(sel, b.dataset.id);
   else if (a === 'copyWeek') copy(weekLines().join('\n'), '这周的菜复制好了');
-  else if (a === 'copyShop'){ if (!shopData().items.some(x => !D().have.items[x.key])) toast('都勾掉了，没有要买的'); else copy(shopLines().join('\n'), '清单复制好了'); }
+  else if (a === 'copyShop'){ if (!shopData().items.some(x => !covered(x))) toast('都勾掉了，没有要买的'); else copy(shopLines().join('\n'), '清单复制好了'); }
   else if (a === 'print'){ buildPrintout(); print(); }
   else if (a === 'addRec') openEditor(null);
   else if (a === 'editRec') openEditor(b.dataset.id);
   else if (a === 'delRec') deleteRecipe(b.dataset.id);
   else if (a === 'resetRec') resetRecipes();
 });
-document.addEventListener('change', e => { const k = e.target.dataset && e.target.dataset.act === 'have' && e.target.dataset.k; if (k) store.apply({have: {[k]: e.target.checked}}); });
+document.addEventListener('change', e => {
+  const k = e.target.dataset && e.target.dataset.act === 'have' && e.target.dataset.k; if (!k) return;
+  const x = shopData().items.find(i => i.key === k);
+  store.apply({have: {[k]: e.target.checked && x ? needOf(x) || true : false}});
+});
 addEventListener('beforeprint', buildPrintout);
 
 const tabsEl = document.querySelector('[role=tablist]');
@@ -411,6 +423,10 @@ $('rCancel').addEventListener('click', () => $('recSheet').close());
 
 store = createLocalStore({defaults: DEFAULTS, onChange: render});
 if (!store.canSave) notice = '这个浏览器不能保存，关掉页面后排好的菜会丢。';
+// 旧版的勾选只记了“有”，接过来时换成当时要买的数量
+{ const old = Object.keys(D().have.items).filter(k => D().have.items[k] === true);
+  if (old.length){ const items = shopData().items;
+    store.apply({have: Object.fromEntries(old.map(k => { const x = items.find(i => i.key === k); return [k, x ? needOf(x) || true : false]; }))}); } }
 importLegacyShare();
 render();
 
