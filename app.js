@@ -110,6 +110,9 @@ const emptyState = () => ({days:{}, opts:{}, groups:{}, booked:{}, visited:{}});
 let plan = emptyView(), store = null, local = null, base = null;
 let canSave = true, planNotes = [], baseNotes = [];
 const isObj = v => !!v && typeof v === 'object' && !Array.isArray(v);
+const shared = () => !!store && store.kind === 'cloud';
+// where the choices live, for the page's wording
+const keptAt = () => shared() ? '家里共用' : '只存在这台设备';
 const own = o => isObj(o) ? Object.entries(o) : [];
 const groupsOf = c => [...new Set(c.opts.filter(o => o.group).map(o => o.group))];
 const aliasCard = id => typeof id !== 'string' ? null : CARDS[id] ? id : (D.cards.aliases[id] && CARDS[D.cards.aliases[id]] ? D.cards.aliases[id] : null);
@@ -254,6 +257,8 @@ function localStore(){
       const why = guardFails(S, o && o.guard);
       if (why) return {conflict: why};
       S = applyState(S, ch); save();
+      own(ch.ticks).forEach(([k, v]) => { if (v) localTodo[k] = true; else delete localTodo[k]; });
+      if (ch.ticks) saveTicks();
       return {ok:true};
     },
     tick(key, on){ if (on) localTodo[key] = true; else delete localTodo[key]; saveTicks(); },
@@ -384,6 +389,9 @@ function check(c, d, opts){
 // Warnings shown on a scheduled day.
 function dayWarnings(d){
   const c = cardOf(d), out = [], sel = selOpts(c, d);
+  // the same card on two days: two phones each placed it at once. Every such day says so and links the others.
+  const dup = c.multi ? [] : placedOn(c.id);
+  if (dup.length > 1) out.push({k:'verify', t:'「'+c.name+'」同时排在 '+dup.map(x => x.date).join('、')+'（两台手机差不多同时安排的）。到其中一天换掉它或改留白就好，其他安排和票都不受影响。', days:dup.filter(x => x !== d)});
   const ck = check(c, d);
   if (ck.block) out.push({k:'block', t:ck.block});
   ck.verify.forEach(t => out.push({k:'verify', t}));
@@ -418,6 +426,7 @@ function dayWarnings(d){
 }
 const WK = {block:'不可行', verify:'待核对', pref:'提示'};
 const warnHTML = (ws, d) => ws.length ? '<ul class="warns">'+ws.map(w => '<li class="w-'+w.k+'"><b>'+WK[w.k]+'</b><span>'+esc(w.t)
+  + (w.days ? ' 查看这些日期：'+w.days.map(x => '<a class="ax" href="#d'+x.n+'">'+x.date+'</a>').join('、') : '')
   + (w.opt && d ? ' <button type="button" class="btn sm" data-act="opt" data-card="'+cardOf(d).id+'" data-opt="'+w.opt+'" data-on="0">取消这一项</button>' : '')
   + '</span></li>').join('')+'</ul>' : '';
 const checkLine = r => r.block ? '<p class="ck w-block"><b>不可行</b>'+esc(r.block)+'</p>'
@@ -433,7 +442,8 @@ const checkLine = r => r.block ? '<p class="ck w-block"><b>不可行</b>'+esc(r.
 // o.cover: records the change was previewed against without changing them (a layout's unchanged days);
 // o.whole: sections that must be exactly as seen (restore and import replace them).
 // Undo restores every record of the last change at once, only while they still hold what it wrote.
-let undoRec = null, toastTimer = null;
+let undoRec = null, toastTimer = null, opSeq = 0;
+// o.ticks: ticks to add with the same write (migration); o.noUndo: no undo step; o.after: run once written
 function commit(fn, msg, o){
   o = o || {};
   const kind = o.kind || 'plain', old = JSON.parse(JSON.stringify(plan)), before = stateOf(old);
@@ -441,13 +451,19 @@ function commit(fn, msg, o){
   const after = stateOf(plan);
   plan = old;
   const ch = diffState(before, after);
+  if (o.ticks && Object.keys(o.ticks).length) ch.ticks = o.ticks;
   const key = focusKey(document.activeElement);
-  if (emptyCh(ch)){ route(true); restoreFocus(key); toast(msg, false); return; }
+  if (emptyCh(ch)){ rerender(key); toast(msg, false); return; }
   const guard = kind === 'plain' ? null : guardFor(before, ch, o);
-  write(ch, {kind, guard}, () => {
-    undoRec = {ch: valuesAt(before, ch), at: valuesAt(after, ch)};
+  const seq = ++opSeq, rec = o.noUndo ? null : {ch: valuesAt(before, ch), at: valuesAt(after, ch)};
+  write(ch, {kind, guard, ticksOff: o.ticks ? Object.keys(o.ticks) : null}, r => {
+    // a plain write still on its way to the shared copy can be undone once it is confirmed
+    const later = shared() && kind === 'plain' && r.pending;
+    undoRec = later ? null : rec;
     if (!base) saveBase(currentBase());
-    toast(msg + (canSave ? '' : '（这台设备的浏览器不能保存，刷新后会丢）'), true);
+    toast(msg + (canSave || shared() ? '' : '（这台设备的浏览器不能保存，刷新后会丢）'), true);
+    if (o.after) o.after();
+    if (later && rec) r.pending.then(() => { if (seq !== opSeq) return; undoRec = rec; if (!$('#toast').hidden) toast(msg, true); }, () => {});
   }, key);
 }
 function guardFor(before, ch, o){
@@ -457,14 +473,21 @@ function guardFor(before, ch, o){
   return {at: valuesAt(before, cover), free: {cards: [...new Set(days.map(id => pl[id]))], skip: days},
     whole: o.whole ? Object.fromEntries(o.whole.map(sec => [sec, before[sec]])) : null};
 }
-// hand a change to the store; then: re-render in place, focus back, and done() (or say why it didn't go)
+// hand a change to the store; then re-render in place, focus back, and done(result), or say why it didn't go
 function write(ch, o, done, key){
+  const no = r => !r ? null : r.conflict ? (o.undo ? '撤销没有完成：' : '没有改：')+r.conflict.join('、')+' 刚改过，页面已更新；请再确认一次。'
+    : r.unknown ? '没有改：'+r.unknown.join('、')+' 里有这个网页版本看不懂的内容，刷新网页后再改。'
+    : r.offline ? '这一步要联网（Museum 换日、导入、恢复推荐、迁移）；换卡、交换、支线和勾选断网也能改，联网后同步。'
+    : r.readonly ? '现在只能看：'+r.readonly+'。' : r.stale ? '' : null;
+  const fail = e => { sync.failed = e && (e.code || e.message) || '出错'; sync.expect = null; refreshPlan(); rerender(); renderSync(false);
+    toast('没存上（'+sync.failed+'），页面已回到存好的样子。', false); };
   const finish = r => {
-    refreshPlan(); route(true); restoreFocus(key);
-    if (r && r.conflict) toast((o.undo ? '撤销没有完成：' : '没有改：')+r.conflict.join('、')+' 刚改过，页面已更新；请再确认一次。', false);
-    else done();
+    refreshPlan(); rerender(key);
+    const why = no(r);
+    if (why !== null){ sync.expect = null; if (why) toast(why, false); return; }
+    done(r || {});
+    if (r && r.pending) r.pending.then(() => { if (sync.failed){ sync.failed = null; renderSync(false); } }, fail);
   };
-  const fail = e => { refreshPlan(); route(true); restoreFocus(key); toast('没存上（'+(e && (e.code || e.message) || '出错')+'），页面已回到存好的样子。', false); };
   let r;
   try { r = store.apply(ch, o); } catch(e){ return fail(e); }
   if (r && typeof r.then === 'function') r.then(finish, fail); else finish(r);
@@ -507,13 +530,17 @@ function ticketNote(card, toDay){
 function placeChoices(cid, dayId, fromDay){
   const c = CARDS[cid], d = dayById(dayId), cur = cardOf(d);
   if (cur.id === cid) return null;
-  const src = c.multi ? null : placedOn(cid).find(x => x.id !== dayId);
+  // every day it is on now (two, if two phones each put it somewhere at the same time)
+  const srcs = c.multi ? [] : placedOn(cid).filter(x => x.id !== dayId);
   const ch = [];
   ch.notes = [ticketNote(c, d), bookedDay(cur) === dayId ? '「'+cur.name+'」登记的票就是 '+d.date+'，换掉后那天不再是它；网页不会改票，实际票务要本人处理，登记会保留。' : null].filter(Boolean);
-  if (src){
-    const back = check(cur, src, {vacate:[dayId]});
-    ch.push({op:'swap', src:src.id, label:'交换：'+d.date+' 换成'+nm(c)+'，'+src.date+' 换成'+nm(cur), dis:back.block});
-    ch.push({op:'move', src:src.id, label:'移过来：'+src.date+' 改成'+nm(restCard(c.city))});
+  if (srcs.length){
+    if (srcs.length > 1) ch.notes.push(nm(c)+'现在同时排在 '+srcs.map(x => x.date).join('、')+'：选一天交换或移过来，另一天之后再换掉。');
+    srcs.forEach(src => {
+      const back = check(cur, src, {vacate:[dayId]});
+      ch.push({op:'swap', src:src.id, label:'交换：'+d.date+' 换成'+nm(c)+'，'+src.date+' 换成'+nm(cur), dis:back.block});
+      ch.push({op:'move', src:src.id, label:'移过来：'+src.date+' 改成'+nm(restCard(c.city))});
+    });
   } else if (!fromDay && !cur.multi){
     ch.push({op:'set', label:'替换：'+d.date+' 的'+nm(cur)+'回到未安排'});
   } else if (ch.notes.length){
@@ -546,6 +573,9 @@ function dayChips(ns){
 const vhead = (title, lead, btn) => '<div class="vhead"><div class="vt"><h2>'+title+'</h2>'+btn+'</div><p>'+lead+'</p></div>';
 function planBanner(){
   let h = '';
+  if (sync.phase === 'empty' && sync.auth === 'member' && location.hash !== '#plan') h += '<p class="pnote">已登录。家里还没有共用的行程，现在显示的是这台设备的方案：<a class="ax" href="#plan">去创建</a>。</p>';
+  if (sync.phase === 'choose' && shared() && location.hash !== '#plan') h += '<p class="pnote">现在显示家里共用的方案。这台设备原来的方案和它有差异：<a class="ax" href="#plan">用家里的，或者迁移本机选择</a>。</p>';
+  if (readOnly() && location.hash !== '#plan') h += '<p class="pnote">共用方案现在只能看：'+esc(sync.why)+'。</p>';
   planNotes.forEach(t => { h += '<p class="pnote">'+esc(t)+'</p>'; });
   if (baseNotes.length) h += '<div class="pnote">'+baseNotes.map(t => '<p>'+esc(t)+'</p>').join('')+'<button type="button" class="btn sm" data-act="base-ack">知道了</button></div>';
   if (!canSave) h += '<p class="pnote">这台设备的浏览器不能保存选择（可能是隐私模式或存储被关）。照常能看推荐方案，换的活动刷新后会丢。</p>';
@@ -641,8 +671,8 @@ function renderTrip(){
     h += '</ol></div>';
   });
   // plan status, export/import and restore sit after the day list; notices (planBanner) stay on top
-  h += '<div class="pbar"><span>'+(planEdited() ? '有你自己的选择（只存在这台设备）。' : '现在是推荐方案。')+' <a class="ax" href="#plan">导出／导入我的方案</a></span>'
-    + (planEdited() ? '<button type="button" class="btn sm" data-act="reset">恢复推荐方案</button>' : '')+'</div>';
+  h += '<div class="pbar"><span>'+(planEdited() ? (shared() ? '有你们自己的选择（家里共用）。' : '有你自己的选择（只存在这台设备）。') : '现在是推荐方案。')+' <a class="ax" href="#plan">和家里人共用 · 导出／导入</a></span>'
+    + (planEdited() && !readOnly() ? '<button type="button" class="btn sm" data-act="reset">恢复推荐方案</button>' : '')+'</div>';
   $('#v-trip').innerHTML = h;
   renderNext();
 }
@@ -718,7 +748,7 @@ function ticketPanel(c, d){
   if (!c.ticket) return '';
   const bd = bookedDay(c), what = c.lottery ? '已中签' : '已订好';
   let h = '<div class="blk"><div class="lbl">票 <span class="en">TICKET</span></div><div class="tk">';
-  if (bd === d.id) h += '<p><b>已登记：票面 '+d.date+'</b>（只存在这台设备；换卡、恢复推荐都不会删掉它）。</p><div class="pa"><button type="button" class="btn sm ghost" data-act="booked-clear" data-card="'+c.id+'">取消登记</button></div>';
+  if (bd === d.id) h += '<p><b>已登记：票面 '+d.date+'</b>（'+keptAt()+'；换卡、恢复推荐都不会删掉它）。</p><div class="pa"><button type="button" class="btn sm ghost" data-act="booked-clear" data-card="'+c.id+'">取消登记</button></div>';
   else if (bd) h += '<p>登记的票面是 <b>'+dayById(bd).date+'</b>，不是这天。</p><div class="pa"><button type="button" class="btn sm" data-act="book" data-card="'+c.id+'" data-day="'+d.id+'">票已改到 '+d.date+'，更新登记</button></div>';
   else h += '<p>'+(c.lottery ? '中签' : '订好票')+'后在这里登记票面日期；之后换卡、恢复推荐或导入方案，都会先提醒实际票务。</p><div class="pa"><button type="button" class="btn sm" data-act="book" data-card="'+c.id+'" data-day="'+d.id+'">'+what+' '+d.date+' 的票</button></div>';
   return h+'</div></div>';
@@ -919,7 +949,7 @@ function renderPreset(pid){
   let h = '<div class="c-osaka"><a class="back" href="#trip">← 全部行程</a>'
     + '<div class="vhead"><h2>Museum 换日</h2><p>'+fmt(ps.lead)+'</p></div>' + planBanner()
     + '<div class="pbar"><span>现在的大阪四天：<b>'+(m ? esc(m.label) : '自定义（和四种安排都不完全一样）')+'</b>。'
-    + (bd ? '已登记中签：'+dayById(bd).date+'（只存在这台设备，不代表网页替你买了票）。' : '还没登记中签：行程里的 Museum 都是模拟安排。')+'</span>'
+    + (bd ? '已登记中签：'+dayById(bd).date+'（'+keptAt()+'，不代表网页替你买了票）。' : '还没登记中签：行程里的 Museum 都是模拟安排。')+'</span>'
     + (bd ? '<button type="button" class="btn sm ghost" data-act="booked-clear" data-card="'+c.id+'">取消中签登记</button>' : '')+'</div>'
     + '<fieldset class="opts pset"><legend>抽签结果</legend>'
     + ps.options.map(x => '<label class="opt"><input type="radio" name="ps-'+pid+'" data-act="preset-pick" data-preset="'+pid+'" data-opt="'+x.id+'"'+(x === o ? ' checked' : '')+'><span>'+esc(x.label)+(m === x ? '<small>当前就是这样排的</small>' : '')+'</span></label>').join('')
@@ -933,7 +963,7 @@ function renderPreset(pid){
         + checkLine(r.r)+'</li>').join('')
     + '</ul></div>';
   if (o.museum) h += '<label class="opt won"><input type="checkbox" data-act="preset-won" data-preset="'+pid+'"'+(ui.won ? ' checked' : '')+'><span>我已经中签，票面就是 '+dayById(o.museum).date
-    + '<small>只是在这台设备上登记；不勾就按模拟安排显示。网页不会替你买票或改票。'+(bd && bd !== o.museum ? '勾了会把登记从 '+dayById(bd).date+' 改成 '+dayById(o.museum).date+'。' : '')+'</small></span></label>';
+    + '<small>'+(shared() ? '登记在家里共用的方案里' : '只是在这台设备上登记')+'；不勾就按模拟安排显示。网页不会替你买票或改票。'+(bd && bd !== o.museum ? '勾了会把登记从 '+dayById(bd).date+' 改成 '+dayById(o.museum).date+'。' : '')+'</small></span></label>';
   if (bd && o.museum !== bd) h += '<ul class="warns"><li class="w-verify"><b>待核对</b><span>你登记过 '+dayById(bd).date+' 的票。按这个安排，那天不去 Museum：登记不会被删，实际的票要本人处理。</span></li></ul>';
   h += '<div class="pa">'+(changes.length || (won && bd !== o.museum)
       ? '<button type="button" class="btn" data-act="preset-apply" data-preset="'+pid+'" data-opt="'+o.id+'"'+(block ? ' disabled' : '')+'>'
@@ -1029,22 +1059,23 @@ function parseImport(text){
 }
 const sameMap = (a, b) => JSON.stringify(Object.entries(a || {}).sort()) === JSON.stringify(Object.entries(b || {}).sort());
 // What applying r would change, given the current device state and the two "also import" ticks.
-function importDiff(r){
+function importDiff(r, inBooked = io.inBooked, inVisited = io.inVisited){
   const days = slotDays().map(d => ({d, cur:cardOf(d), nxt:CARDS[r.final[d.id]]})).filter(x => x.cur.id !== x.nxt.id);
   const opts = D.cards.cards.filter(c => c.opts.length).flatMap(c => c.opts.filter(x => optOn(c, x) !== r.optsFinal[c.id][x.id])
     .map(x => ({c, x, on:r.optsFinal[c.id][x.id]})));
   const bookDiff = !!r.booked && !sameMap(r.booked, plan.booked), visDiff = !!r.visited && !sameMap(r.visited, plan.visited);
-  const booked = io.inBooked && bookDiff ? r.booked : plan.booked;
+  const booked = inBooked && bookDiff ? r.booked : plan.booked;
   // every ticket that will be kept, checked against the final day map
   const notes = Object.entries(booked).filter(([cid, bd]) => r.final[bd] !== cid).map(([cid, bd]) => {
     const at = Object.keys(r.final).filter(id => r.final[id] === cid).map(id => dayById(id).date);
     return '「'+CARDS[cid].name+'」登记的票是 '+dayById(bd).date+'，导入后那天排的是「'+CARDS[r.final[bd]].name+'」'
       + (at.length ? '，它在 '+at.join('、') : '，它不在行程里')+'；网页不会改票，实际票务要本人处理，登记会保留。';
   });
-  return {days, opts, bookDiff, visDiff, notes, any:days.length || opts.length || (bookDiff && io.inBooked) || (visDiff && io.inVisited)};
+  return {days, opts, bookDiff, visDiff, notes, any:days.length || opts.length || (bookDiff && inBooked) || (visDiff && inVisited)};
 }
 function ioResult(){
-  const r = io.res; if (!r) return '';
+  const r = io.res;
+  if (!r) return io.stale ? '<p class="ck w-verify"><b>共用</b>共用方案刚更新，预览作废了：请再“检查”一次。</p>' : '';
   if (r.errors.length) return '<ul class="warns">'+r.errors.map(t => '<li class="w-block"><b>不能导入</b><span>'+esc(t)+'</span></li>').join('')
     + r.warns.map(t => '<li class="w-pref"><b>提示</b><span>'+esc(t)+'</span></li>').join('')+'</ul><p class="small">文件有问题时整份都不导入，不会只导入一半。</p>';
   const x = importDiff(r);
@@ -1055,10 +1086,11 @@ function ioResult(){
     + (r.warns.length ? '<ul class="warns">'+r.warns.map(t => '<li class="w-pref"><b>提示</b><span>'+esc(t)+'</span></li>').join('')+'</ul>' : '')
     + (x.notes.length ? '<ul class="warns">'+x.notes.map(t => '<li class="w-verify"><b>票</b><span>'+esc(t)+'</span></li>').join('')+'</ul>' : '')
     + (x.bookDiff ? '<label class="opt"><input type="checkbox" data-act="io-inbooked"'+(io.inBooked?' checked':'')+'><span>也导入登记的票<small>文件里：'+esc(Object.entries(r.booked).map(([k, v]) => CARDS[k].name+' '+dayById(v).date).join('、') || '无')
-        + '；这台设备现在：'+esc(Object.entries(plan.booked).map(([k, v]) => CARDS[k].name+' '+dayById(v).date).join('、') || '无')+'。不勾就保留这台设备的登记。</small></span></label>' : '')
-    + (x.visDiff ? '<label class="opt"><input type="checkbox" data-act="io-invisited"'+(io.inVisited?' checked':'')+'><span>也导入“已逛过”<small>不勾就保留这台设备的记录。</small></span></label>' : '')
+        + '；'+(shared() ? '共用方案' : '这台设备')+'现在：'+esc(Object.entries(plan.booked).map(([k, v]) => CARDS[k].name+' '+dayById(v).date).join('、') || '无')+'。不勾就保留现在的登记。</small></span></label>' : '')
+    + (x.visDiff ? '<label class="opt"><input type="checkbox" data-act="io-invisited"'+(io.inVisited?' checked':'')+'><span>也导入“已逛过”<small>不勾就保留现在的记录。</small></span></label>' : '')
     + '<p class="small">清单勾选不在方案里，导入不会动它们。</p>'
-    + '<div class="pa">'+(x.any ? '<button type="button" class="btn" data-act="io-apply">导入这份方案</button>' : '<p class="small">没有要改的。</p>')+'</div></div>';
+    + (shared() && x.any ? '<p class="ck w-verify"><b>共用</b>导入会改两个人看到的行程。</p>' : '')
+    + '<div class="pa">'+(!x.any ? '<p class="small">没有要改的。</p>' : readOnly() ? '<p class="small">共用方案现在只能看，暂时不能导入。</p>' : '<button type="button" class="btn" data-act="io-apply">导入这份方案</button>')+'</div></div>';
 }
 // Editing the text after "检查" voids the preview and the two ticks: only previewed text can be applied.
 function ioInvalidate(){
@@ -1069,7 +1101,7 @@ function ioInvalidate(){
 function renderPlanIO(){
   const out = JSON.stringify(exportObj(io.visited), null, 1);
   const h = '<a class="back" href="#trip">← 全部行程</a>'
-    + '<div class="vhead"><h2>我的方案：导出／导入</h2><p>活动选择只存在这台设备。导出一段文字，可以在另一台设备导入，或者交给 Claude 写成网站的推荐方案。不包含清单勾选、证件、订单号。</p></div>' + planBanner()
+    + '<div class="vhead"><h2>和家里人共用 · 导出／导入</h2><p>登录后两个家长看到同一份方案和清单勾选。导出一段文字，可以在另一台设备导入，或者交给 Claude 写成网站的推荐方案；导出不包含清单勾选、证件、订单号。</p></div>' + planBanner() + shareBlock()
     + '<div class="blk"><div class="lbl">导出 <span class="en">EXPORT</span></div>'
     + '<label class="opt"><input type="checkbox" data-act="io-visited"'+(io.visited?' checked':'')+'><span>一起导出“已逛过”</span></label>'
     + '<textarea id="io-out" class="io" readonly rows="8" aria-label="导出的方案">'+esc(out)+'</textarea>'
@@ -1094,7 +1126,7 @@ function ioAction(a, b){
     document.body.appendChild(l); l.click(); l.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
     return;
   }
-  if (a === 'io-check'){ io.res = parseImport(io.text); io.checked = io.text; io.inBooked = false; io.inVisited = false; renderPlanIO(); $('#io-res').scrollIntoView({block:'nearest'}); return; }
+  if (a === 'io-check'){ io.stale = false; io.res = parseImport(io.text); io.checked = io.text; io.inBooked = false; io.inVisited = false; renderPlanIO(); $('#io-res').scrollIntoView({block:'nearest'}); return; }
   if (a === 'io-apply'){
     const r = io.res;
     if (!r || r.errors.length || io.text !== io.checked){ ioInvalidate(); return; }
@@ -1463,7 +1495,7 @@ function renderInfo(){
     + (parked.length ? '<p class="small">另有 '+parked.length+' 项只属于没排进行程的活动，收在卡片里：'
         + [...new Set(parked.map(t => t.card))].map(id => '<a class="ax" href="#card-'+id+'">'+esc(CARDS[id].name)+'</a>').join('、')+'。</p>' : '')
     + (legacyTodo() ? '<div class="legacy" role="note"><p>旧版本按列表位置记录过这里的勾选；列表顺序后来变过，无法可靠对应到现在的任务，所以没有沿用。请把上面的待办重新核对一遍。附录里的打包和 eVISA 勾选不受影响。</p><button type="button" class="legacy-ok">知道了</button></div>' : '')
-    + '<p class="small">勾选只保存在这台设备的浏览器里。</p></div>';
+    + '<p class="small">'+(shared() ? '勾选和家里人共用。' : '勾选只保存在这台设备的浏览器里。')+'</p></div>';
   D.apx.forEach(a => {
     h += '<div class="apx" id="info-'+a.id+'"><div class="id">APPENDIX '+a.id+'</div><h3>'+esc(a.title)+'</h3><p class="ld">'+esc(a.lead)+'</p>'
       + '<ol class="atiles">'+a.parts.map(p => { const [n, ...g] = p.h.split('：');
@@ -1608,9 +1640,10 @@ function onAction(e){
   if (a === 'reset' || a === 'reset-do'){
     const notes = Object.keys(plan.booked).map(cid => { const c = CARDS[cid], bd = plan.booked[cid];
       return dayById(bd).slot.card === cid ? null : ticketNote(c, slotDays().find(x => x.slot.card === cid) || null); }).filter(Boolean);
-    if (a === 'reset' && notes.length){
+    if (a === 'reset' && (notes.length || shared())){
+      if (shared()) notes.unshift('恢复推荐会改两个人看到的行程（已逛过、登记的票和勾选不变）。');
       b.hidden = true;
-      b.insertAdjacentHTML('afterend', '<div class="cf" role="group" aria-label="确认恢复推荐方案">'+notes.map(t => '<p class="ck w-verify"><b>票</b>'+esc(t)+'</p>').join('')
+      b.insertAdjacentHTML('afterend', '<div class="cf" role="group" aria-label="确认恢复推荐方案">'+notes.map(t => '<p class="ck w-verify"><b>'+(t.startsWith('恢复推荐会改') ? '共用' : '票')+'</b>'+esc(t)+'</p>').join('')
         + '<button type="button" class="btn" data-act="reset-do">仍然恢复推荐方案</button><button type="button" class="btn ghost" data-act="cancel-reset">取消</button></div>');
       return b.parentElement.querySelector('[data-act="reset-do"]').focus();
     }
@@ -1619,8 +1652,9 @@ function onAction(e){
   if (a === 'cancel-reset'){ const cf = b.closest('.cf'), r = cf.parentElement.querySelector('[data-act="reset"]'); cf.remove(); r.hidden = false; r.focus(); return; }
   if (a === 'base-ack'){ saveBase(currentBase()); baseNotes = []; const key = focusKey(b); route(true); restoreFocus(key); return toast('已知道推荐方案的更新', false); }
   if (a === 'book'){ const c = CARDS[b.dataset.card], d = dayById(b.dataset.day);
-    return commit(() => { plan.booked[c.id] = d.id; }, '已登记「'+c.name+'」票面 '+d.date+'（只存在这台设备）', {kind:'checked'}); }
+    return commit(() => { plan.booked[c.id] = d.id; }, '已登记「'+c.name+'」票面 '+d.date+'（'+keptAt()+'）', {kind:'checked'}); }
   if (a && a.startsWith('io-')) return ioAction(a, b);
+  if (a && (a.startsWith('sync-') || a === 'mig-apply')) return syncAction(a, b);
   if (a === 'toggle-swap'){ const p = $('#swap'), open = p.hidden; p.hidden = !open; b.setAttribute('aria-expanded', open); if (open) p.scrollIntoView({block:'start', behavior:'smooth'}); return; }
   if (a === 'cancel'){ const cf = b.closest('.cf'); const btn = cf.parentElement.querySelector('[data-act="pick"],[data-act="place"]'); cf.remove(); if (btn){ btn.hidden = false; btn.focus(); } return; }
   if (a === 'pick' || a === 'place'){
@@ -1644,7 +1678,11 @@ function onAction(e){
 function onChange(e){
   const t = e.target;
   if (t.dataset.checkKey){
-    store.tick(t.dataset.checkKey, t.checked); done = store.ticks;
+    const r = store.tick(t.dataset.checkKey, t.checked);
+    if (r && r.readonly){ t.checked = !t.checked; return toast('现在只能看：'+r.readonly+'。', false); }
+    if (r && r.pending) r.pending.catch(e => { sync.failed = e.code || e.message; refreshPlan(); rerender(); renderSync(false); toast('勾选没存上（'+sync.failed+'）', false); });
+    done = store.ticks;
+    if (shared()) done = {...done, [t.dataset.checkKey]: t.checked || undefined};
     document.querySelectorAll('input[data-check-key="'+CSS.escape(t.dataset.checkKey)+'"]').forEach(x => { x.checked = t.checked; });
     refreshTiles();
     return;
@@ -1669,6 +1707,12 @@ function onChange(e){
     if (t.dataset.act === 'io-invisited') io.inVisited = t.checked;
     const key = focusKey(t); renderPlanIO(); restoreFocus(key); return;
   }
+  if (['mig-booked','mig-visited','mig-tick'].includes(t.dataset.act)){
+    if (t.dataset.act === 'mig-booked') mig.inBooked = t.checked;
+    if (t.dataset.act === 'mig-visited') mig.inVisited = t.checked;
+    if (t.dataset.act === 'mig-tick') mig.ticks[t.dataset.key] = t.checked;
+    return;
+  }
   if (t.dataset.act === 'preset-pick' || t.dataset.act === 'preset-won'){
     const ps = presetSt(t.dataset.preset);
     if (t.dataset.act === 'preset-pick'){ if (ps.id !== t.dataset.opt) ps.won = false; ps.id = t.dataset.opt; } else ps.won = t.checked;
@@ -1680,6 +1724,293 @@ function onChange(e){
       (t.checked ? '已标记逛过：' : '已取消标记：')+TAGS[tag].label);
   }
 }
+/* ----- shared with the family (cloud.js) ----- */
+// Signed in with a Google account on the family list, the plan and the ticks live in Firestore
+// (trip/plan, trip/ticks) and both parents see the same thing. This device's own plan (jp27-plan,
+// jp27-todo) stays as it was: signing out goes back to it, and nothing is uploaded until asked.
+// cloud.js does the Firebase part; the rules about what a change may do stay here.
+const CLOUD_API = 1, MIRROR_KEY = 'jp27-cloud-cache', JOINED_KEY = 'jp27-cloud-joined', FORMAT = 1;
+// auth: off (no cloud.js) · out · checking · guest · unreachable · denied · member
+// phase (member): wait (no data yet) · empty (no shared plan yet) · choose (this device differs) · live
+const sync = {auth:'off', phase:'wait', user:null, cloud:null, data:null, mirror:false, failed:null, lastSync:null,
+  expect:null, why:'', loadErr:null};
+const readOnly = () => shared() && !!sync.why;
+const readJSON = k => { try { return JSON.parse(localStorage.getItem(k)); } catch(e){ return null; } };
+const writeJSON = (k, v) => { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch(e){} };
+// ticks this version knows: plain to-dos and appendix checklist items (old index keys never go up)
+const knownTick = k => (k.startsWith('todo:') && D.todo.some(t => 'todo:'+t.id === k)) || allChecks().some(x => x.id === k);
+const ticksOf = t => Object.fromEntries(own(t && t.items).filter(([k, v]) => v === true).map(([k]) => [k, true]));
+// Records this version cannot read (a card, branch or layout it doesn't know, a wrong type): a change
+// touching one is refused (update the page first) so it is never overwritten by mistake; other records stay editable.
+function unknownIn(raw, ch, whole){
+  const out = new Set(), w = new Set(whole || []), sec = k => isObj(raw && raw[k]) ? raw[k] : {};
+  const keys = k => w.has(k) ? Object.keys(sec(k)) : Object.keys(ch[k] || {});
+  const presets = D.cards.presets || [];
+  keys('days').forEach(id => { const r = sec('days')[id]; if (r === undefined) return;
+    if (!isObj(r) || Object.keys(r).some(k => !['card','via'].includes(k)) || (r.card !== undefined && !aliasCard(r.card))
+      || (r.via !== undefined && !presets.some(x => x.id === r.via)) || !dayById(id)) out.add((dayById(id) || {date:id}).date); });
+  keys('booked').forEach(k => { const v = sec('booked')[k]; if (v !== undefined && (!aliasCard(k) || typeof v !== 'string' || !dayById(v))) out.add('票'); });
+  keys('visited').forEach(k => { const v = sec('visited')[k]; if (v !== undefined && (!TAGS[k] || typeof v !== 'string' || !dayById(v))) out.add('已逛过'); });
+  ['opts','groups'].forEach(k => keys(k).forEach(cid => { const m = sec(k)[cid]; if (m === undefined) return;
+    const c = CARDS[aliasCard(cid)];
+    if (!c || !isObj(m) || own(m).some(([x, v]) => k === 'opts' ? !c.opts.some(o => o.id === x && !o.group) || typeof v !== 'boolean'
+      : !c.opts.some(o => o.group === x && o.id === v))) out.add('「'+(c ? c.name : cid)+'」的支线'); }));
+  return [...out];
+}
+// a change also clears the old keys a renamed card's choices were read from
+function withAliases(ch, src){
+  const o = JSON.parse(JSON.stringify(ch));
+  ['booked'].forEach(sec => own(ch[sec]).forEach(([cid]) => (src[sec][cid] || []).filter(k => k !== cid).forEach(k => { o[sec][k] = null; })));
+  ['opts','groups'].forEach(sec => own(ch[sec]).forEach(([cid, m]) => (src[sec][cid] || []).filter(k => k !== cid).forEach(k => {
+    own(m).forEach(([x]) => { ((o[sec][k] ||= {}))[x] = null; }); })));
+  return o;
+}
+function cloudStore(){
+  const raw = () => sync.data && sync.data.plan || emptyState();
+  return {kind:'cloud', where:'家里共用的方案里', notes:[],
+    get state(){ return raw(); }, get ticks(){ return ticksOf(sync.data && sync.data.ticks); },
+    apply(ch, o){
+      if (sync.why) return {readonly: sync.why};
+      if (!sync.cloud) return {readonly: '还没连上'};
+      const check = (p, t) => {
+        if (!p || p.v !== FORMAT) return {unknown: ['共用方案的格式']};
+        const unk = unknownIn(p, ch, o.guard && o.guard.whole ? Object.keys(o.guard.whole) : null);
+        if (unk.length) return {unknown: unk};
+        const why = guardFails(sanitize(p).state, o.guard);
+        if (why) return {conflict: why};
+        const on = (o.ticksOff || []).filter(k => t && t.items && t.items[k] === true);
+        return on.length ? {conflict: ['勾选']} : null;
+      };
+      const r = sanitize(raw());
+      sync.expect = canon(applyState(r.state, ch));
+      return sync.cloud.apply(withAliases(ch, r.src), {kind:o.kind, check});
+    },
+    tick(key, on){
+      if (sync.why || !sync.cloud) return {readonly: sync.why || '还没连上'};
+      return sync.cloud.apply({ticks:{[key]: on ? true : null}}, {kind:'plain'});
+    }
+  };
+}
+// the page's quick copy of the shared plan, for showing it straight away next time (read-only until
+// connected); only for the account that was confirmed on the list
+const readMirror = () => { const m = readJSON(MIRROR_KEY); return isObj(m) && m.v === FORMAT && isObj(m.plan) ? m : null; };
+function useStore(next, quiet){
+  const was = store;
+  store = next; undoRec = null;   // a change of source drops the undo step
+  refreshPlan();
+  if (was !== next || !quiet) rerender();
+}
+let cloudSt = null;
+const goCloud = () => useStore(cloudSt ||= cloudStore());
+const goLocal = () => { sync.why = ''; if (store !== local) useStore(local); };
+function onAuth(a){
+  sync.auth = a.state; sync.user = a.user || null; sync.loadErr = a.error || null;
+  if (['out','guest','denied'].includes(a.state)){ writeJSON(MIRROR_KEY, null); sync.data = null; sync.phase = 'wait'; goLocal(); }
+  else if (a.state === 'checking' || a.state === 'unreachable'){
+    const m = readMirror();
+    if (m && sync.user && m.uid === sync.user.uid && m.member){
+      sync.data = {plan:m.plan, ticks:m.ticks, pending:false, fromCache:true}; sync.lastSync = m.at || null; sync.mirror = true;
+      sync.why = a.state === 'checking' ? '正在连上家里的方案，先显示上次的副本' : '连不上（'+(a.error || '网络')+'），先显示上次的副本';
+      goCloud();
+    } else goLocal();
+  }
+  renderSync(true);
+}
+const joinedHere = uid => { const j = readJSON(JOINED_KEY); return isObj(j) && j[uid] === true; };
+const markJoined = uid => { const j = readJSON(JOINED_KEY); writeJSON(JOINED_KEY, {...(isObj(j) ? j : {}), [uid]: true}); };
+function onData(d){
+  const before = shared() && !sync.mirror ? {S: stateOf(plan), T: {...done}} : null;
+  sync.data = d; sync.mirror = false;
+  if (!d.fromCache && !d.pending) sync.lastSync = Date.now();
+  if (!d.plan){ sync.phase = 'empty'; sync.why = ''; if (store !== local) useStore(local); renderSync(true); return; }
+  sync.why = d.plan.v !== FORMAT ? '共用方案是更新的网页存的，刷新网页后才能改' : '';
+  if (!d.pending && !d.fromCache) writeJSON(MIRROR_KEY, {v:FORMAT, uid:sync.user.uid, member:true, plan:d.plan, ticks:d.ticks, at:sync.lastSync});
+  const uid = sync.user.uid;
+  if (!joinedHere(uid)){
+    if (!migrateCandidates(d).any){ markJoined(uid); sync.phase = 'live'; } else sync.phase = 'choose';
+  } else sync.phase = 'live';
+  if (!before){ goCloud(); renderSync(true); return; }
+  // an update while shared: re-render only when something shown changed; say so unless it was this phone's own
+  const r = refreshPlan(), S = r.state, moved = canon(before.S) !== canon(S), ticked = canon(before.T) !== canon(done);
+  const mine = d.pending || (sync.expect !== null && sync.expect === canon(S));
+  if (!d.pending) sync.expect = null;
+  if (moved){
+    const asked = !!document.querySelector('.cf');
+    Object.values(presetUI).forEach(p => { p.won = false; });
+    if (io.res){ io.res = null; io.checked = null; io.inBooked = io.inVisited = false; io.stale = true; }
+    mig.ticks = {}; mig.inBooked = mig.inVisited = false;
+    rerender();
+    if (!mine) toast('共用行程已更新：'+changeSummary(before.S, S)+(asked ? '。请再确认一次' : ''), false);
+  } else if (ticked){
+    document.querySelectorAll('input[data-check-key]').forEach(x => { x.checked = !!done[x.dataset.checkKey]; });
+    refreshTiles(); renderNext();
+    if (!mine) toast('共用行程已更新：清单勾选', false);
+  }
+  renderSync(false);
+}
+function changeSummary(a, b){
+  const pa = placed(a), pb = placed(b), out = [];
+  slotDays().forEach(d => { if (pa[d.id] !== pb[d.id]) out.push(d.date+' 换成'+CARDS[pb[d.id]].name); });
+  if (canon(a.opts) !== canon(b.opts) || canon(a.groups) !== canon(b.groups)) out.push('支线');
+  if (canon(a.booked) !== canon(b.booked)) out.push('登记的票');
+  if (canon(a.visited) !== canon(b.visited)) out.push('已逛过');
+  if (!out.length && canon(a.days) !== canon(b.days)) out.push('Museum 换日的记录');
+  return out.length > 3 ? out.slice(0, 3).join('、')+' 等 '+out.length+' 项' : out.join('、');
+}
+// the status mark beside the countdown (trip home): one short word, linking to #plan
+function syncMark(){
+  if (sync.auth === 'off' || sync.auth === 'out') return null;
+  if (!shared()) return sync.auth === 'member' || sync.auth === 'checking' || sync.auth === 'unreachable' ? ['local', '本机方案'] : null;
+  if (sync.failed) return ['fail', '保存失败'];
+  if (sync.why) return ['ro', '只能看'];
+  if (sync.data && sync.data.pending) return ['pend', '待同步'];
+  return ['on', '家里共用'];
+}
+function renderSync(full){
+  const el = $('#status'), m = syncMark();
+  el.querySelector('.sync')?.remove();
+  if (m) el.insertAdjacentHTML('beforeend', '<a class="sync s-'+m[0]+'" href="#plan">'+m[1]+'</a>');
+  offlineBanner();
+  if (full) rerender();
+}
+// what this device would bring into the shared plan: its choices as an import, and ticks the family lacks
+const mig = {open:false, inBooked:false, inVisited:false, ticks:{}};
+function migrateCandidates(d){
+  const cloudView = sanitize((d || sync.data).plan || emptyState()).view, keep = plan;
+  plan = local ? viewOf(local.state) : emptyView();
+  const text = JSON.stringify(exportObj(true));
+  plan = cloudView;
+  const r = parseImport(text);
+  const famTicks = ticksOf((d || sync.data).ticks);
+  const ticks = Object.keys(localTodo).filter(k => localTodo[k] === true && knownTick(k) && !famTicks[k]);
+  const x = r.errors.length ? null : importDiff(r, true, true);
+  plan = keep;
+  return {r, x, ticks, any: !!ticks.length || !!(x && (x.days.length || x.opts.length || x.bookDiff || x.visDiff))};
+}
+const tickName = k => { const t = k.startsWith('todo:') && D.todo.find(t => 'todo:'+t.id === k); if (t) return clause(t); const c = allChecks().find(x => x.id === k); return c ? c.text : k; };
+function localSummary(){
+  const S = local.state, n = Object.keys(S.days).filter(id => S.days[id].card).length, o = Object.keys(S.opts).length + Object.keys(S.groups).length;
+  const b = Object.keys(S.booked).length, t = Object.keys(localTodo).filter(k => localTodo[k] === true && knownTick(k)).length;
+  if (!n && !o && !b && !t) return '这台设备没有自己的选择和勾选，会以推荐方案开始。';
+  return '会用这台设备的方案开始：'+[n && n+' 天自己选的活动', o && o+' 张卡的支线', b && b+' 张登记的票', t && t+' 个清单勾选'].filter(Boolean).join('、')+'。';
+}
+function shareBlock(){
+  const u = sync.user, who = u ? '<p class="small">账号：'+esc(u.email || u.name || u.uid)+'</p>' : '';
+  const out = '<button type="button" class="btn sm ghost" data-act="sync-out">退出登录</button>';
+  let h = '<div class="blk" id="share"><div class="lbl">和家里人共用 <span class="en">SHARE</span></div>';
+  const note = '<p class="small">同一个浏览器里的「家里的饭」用同一个登录：这边登录或退出，那边也跟着。</p>';
+  if (sync.auth === 'off') h += '<p class="small">'+(sync.loadErr ? '共用功能这次没载入（'+esc(sync.loadErr)+'），先用这台设备的方案；有网时刷新一次。' : '正在载入共用功能…')+'</p>';
+  else if (sync.auth === 'out') h += '<p>登录家里名单上的 Google 账号，两个人就看到同一份行程：换卡、支线、登记的票、已逛过和清单勾选都同步。这台设备现在的方案留着，退出登录就回到它。</p>'
+    + '<div class="pa"><button type="button" class="btn" data-act="sync-in">用 Google 登录</button></div>'+note;
+  else if (sync.auth === 'checking' && !shared()) h += who+'<p class="small">正在确认是不是家里人…</p><div class="pa">'+out+'</div>';
+  else if (sync.auth === 'guest') h += who+'<p>这个账号还不在家里的名单里。把下面的编号发给管理的人，加进去之后刷新：</p><p><code class="uid">'+esc(u.uid)+'</code></p>'
+    + '<div class="pa"><button type="button" class="btn sm" data-act="sync-uid">复制编号</button>'+out+'</div>';
+  else if (sync.auth === 'denied') h += who+'<p>读家里的方案被拒了（可能已经不在名单里）。现在显示这台设备自己的方案。</p><div class="pa">'+out+'</div>';
+  else if (sync.auth === 'unreachable' && !shared()) h += who+'<p>连不上，查不了家里的名单（'+esc(sync.loadErr || '')+'）。现在显示这台设备自己的方案；有网时刷新。</p><div class="pa">'+out+'</div>';
+  else if (sync.phase === 'empty') h += who+'<p>家里还没有共用的行程。'+esc(localSummary())+'</p><p class="small">点了才会上传；另一台手机登录后可以选用家里的，或者把它自己的选择迁移进来。</p>'
+    + '<div class="pa"><button type="button" class="btn" data-act="sync-create">用这台设备的方案创建共用行程</button>'+out+'</div>';
+  else if (sync.phase === 'wait' && !shared()) h += who+'<p class="small">正在读家里的方案…</p>';
+  else {
+    const m = syncMark();
+    h += who+'<p><b>'+esc(m ? m[1] : '家里共用')+'</b>'+(sync.why ? '：'+esc(sync.why) : '')
+      + (sync.lastSync ? '<span class="small"> · 上次同步 '+stamp(sync.lastSync)+'</span>' : '')+'</p>'
+      + (sync.failed ? '<p class="ck w-block"><b>没存上</b>'+esc(sync.failed)+'：页面已回到家里方案里存好的样子。</p>' : '')
+      + (sync.phase === 'choose' ? chooseBlock() : '')
+      + (sync.signingOut ? '<div class="cf"><p class="ck w-verify"><b>待同步</b>还有改动没传上去：可以等它同步完再退出；'+(sync.cloud && sync.cloud.persistent ? '现在退出，这些改动等这个账号下次在这台设备登录、有网时再传。' : '这个浏览器不让存离线副本，现在退出这些改动会丢。')+'</p><button type="button" class="btn" data-act="sync-out-wait">等同步完再退出</button><button type="button" class="btn ghost" data-act="sync-out-now">现在退出</button></div>' : '')
+      + '<div class="pa">'+out+'</div>'
+      + '<p class="small">退出登录后显示这台设备原来的方案；家里的方案在退出后不显示。</p>';
+  }
+  return h+'</div>';
+}
+function chooseBlock(){
+  const c = migrateCandidates();
+  if (!c.any) return '';
+  let h = '<div class="pnote"><p><b>这台设备的方案和家里的有差异。</b>现在显示的是家里的方案；这台设备原来的方案还留着（退出登录就回到它）。</p>'
+    + '<div class="pa"><button type="button" class="btn sm" data-act="sync-family">用家里的</button>'
+    + '<button type="button" class="btn sm ghost" data-act="sync-mig" aria-expanded="'+mig.open+'">查看并迁移本机选择</button></div></div>';
+  if (!mig.open) return h;
+  const {r, x, ticks} = c;
+  if (!x) return h+'<ul class="warns">'+r.errors.map(t => '<li class="w-block"><b>不能迁移</b><span>'+esc(t)+'</span></li>').join('')+'</ul>';
+  h += '<div class="blk"><div class="lbl">迁移预览 <span class="en">MIGRATE</span></div><p class="small">按这台设备的方案改家里的方案（会改两个人看到的行程）。</p>'
+    + (x.days.length ? '<ul class="places">'+x.days.map(y => '<li class="place"><div class="pl"><b>'+y.d.date+' '+esc(y.d.dow)+'</b><span>'+esc(y.cur.name)+' → <b>'+esc(y.nxt.name)+'</b></span></div></li>').join('')+'</ul>' : '<p class="small">活动安排一样。</p>')
+    + (x.opts.length ? '<p class="small">支线变化 '+x.opts.length+' 项：'+esc(x.opts.map(y => y.c.name+'「'+y.x.label+'」'+(y.on ? '选上' : '取消')).join('，'))+'。</p>' : '')
+    + (x.bookDiff ? '<label class="opt"><input type="checkbox" data-act="mig-booked"'+(mig.inBooked ? ' checked' : '')+'><span>也用这台设备登记的票<small>这台设备：'+esc(Object.entries(r.booked || {}).map(([k, v]) => CARDS[k].name+' '+dayById(v).date).join('、') || '无')+'；家里：'+esc(Object.entries(plan.booked).map(([k, v]) => CARDS[k].name+' '+dayById(v).date).join('、') || '无')+'。</small></span></label>' : '')
+    + (x.visDiff ? '<label class="opt"><input type="checkbox" data-act="mig-visited"'+(mig.inVisited ? ' checked' : '')+'><span>也用这台设备的“已逛过”</span></label>' : '')
+    + (ticks.length ? '<p class="small">这台设备勾过、家里还没勾的（默认不加）：</p>'+ticks.map(k => '<label class="opt"><input type="checkbox" data-act="mig-tick" data-key="'+esc(k)+'"'+(mig.ticks[k] ? ' checked' : '')+'><span>'+esc(tickName(k))+'</span></label>').join('') : '')
+    + '<div class="pa"><button type="button" class="btn" data-act="mig-apply">迁移这些</button></div></div>';
+  return h;
+}
+function migrateApply(){
+  const c = migrateCandidates(), {r, x} = c;
+  if (!x) return;
+  const bookIn = x.bookDiff && mig.inBooked, visIn = x.visDiff && mig.inVisited;
+  const ticks = Object.fromEntries(c.ticks.filter(k => mig.ticks[k]).map(k => [k, true]));
+  const uid = sync.user.uid;
+  commit(() => {
+    plan.days = {}; plan.via = {};
+    slotDays().forEach(d => { if (r.final[d.id] !== d.slot.card) plan.days[d.id] = r.final[d.id]; });
+    plan.opts = {};
+    Object.entries(r.optsFinal).forEach(([cid, o]) => { const cc = CARDS[cid];
+      cc.opts.forEach(y => { if (!!y.on !== o[y.id]) (plan.opts[cid] ||= {})[y.id] = o[y.id]; }); });
+    if (bookIn) plan.booked = r.booked;
+    if (visIn) plan.visited = r.visited;
+  }, '已把这台设备的选择迁移进家里的方案', {kind:'online', noUndo:true, ticks, whole:['days','opts','groups', ...(bookIn ? ['booked'] : []), ...(visIn ? ['visited'] : [])],
+    after: () => { markJoined(uid); sync.phase = 'live'; mig.open = false; mig.ticks = {}; rerender(); }});
+}
+async function syncAction(a, b){
+  const cl = sync.cloud;
+  if (a === 'sync-in'){ try { await cl.signIn(); } catch(e){ if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') toast('没登录上（'+(e.code || e.message)+'）', false); } return; }
+  if (a === 'sync-out'){ if (sync.data && sync.data.pending && shared()){ sync.signingOut = true; return rerender(); } return cl.signOut(); }
+  if (a === 'sync-out-now'){ sync.signingOut = false; return cl.signOut(); }
+  if (a === 'sync-out-wait'){ toast('等改动同步完就退出…', false); try { await cl.waitForSync(); } catch(e){} sync.signingOut = false; return cl.signOut(); }
+  if (a === 'sync-uid'){ const t = sync.user.uid; if (navigator.clipboard) navigator.clipboard.writeText(t).then(() => toast('已复制编号', false), () => {}); return; }
+  if (a === 'sync-create'){
+    b.disabled = true;
+    const seed = {plan: JSON.parse(JSON.stringify(local.state)), ticks: Object.fromEntries(Object.keys(localTodo).filter(k => localTodo[k] === true && knownTick(k)).map(k => [k, true]))};
+    try { const r = await cl.create(seed); if (r.created) markJoined(sync.user.uid); toast(r.created ? '已创建家里共用的行程' : '家里已经有共用的行程了：用家里的，或者把这台设备的选择迁移进去', false); }
+    catch(e){ b.disabled = false; toast('没创建成功（'+(e.code || e.message)+'）：要联网，再试一次', false); }
+    return;
+  }
+  if (a === 'sync-family'){ markJoined(sync.user.uid); sync.phase = 'live'; mig.open = false; rerender(); return toast('用家里的方案', false); }
+  if (a === 'sync-mig'){ mig.open = !mig.open; return rerender(); }
+  if (a === 'mig-apply') return migrateApply();
+}
+// load cloud.js after the page is up; the offline copy is saved only once it came and speaks the same API
+// cloudReady: cloud.js came and speaks the same API (the offline copy is saved only then); connecting is separate
+let cloudReady = Promise.resolve(false);
+function startCloud(){
+  const mod = import('./cloud.js?api='+CLOUD_API).then(m => {
+    if (m.CLOUD_API === CLOUD_API) return m;
+    sync.loadErr = '网页版本还没更新完，稍后刷新'; renderSync(true); return null;
+  }, e => { sync.loadErr = e.message || '网络'; renderSync(true); return null; });
+  cloudReady = mod.then(m => !!m);
+  mod.then(m => m && m.connect({onAuth: a => safely(() => onAuth(a)), onData: d => safely(() => onData(d))}).then(cl => {
+    sync.cloud = cl;
+    if (sync.auth === 'off'){ sync.auth = 'out'; renderSync(true); }
+  }, e => { sync.auth = 'off'; sync.loadErr = '登录服务没载入（'+(e.message || '网络')+'）'; renderSync(true); }));
+  return cloudReady;
+}
+// a render error from shared data: offer the recommended plan for now (read-only) or a fresh connection
+function safely(fn){
+  try { fn(); }
+  catch(err){
+    show('trip');
+    $('#v-trip').innerHTML = '<p class="empty">共用方案显示出错（'+esc(err.message)+'）。这台设备原来的方案没有动。<br><button type="button" class="btn" id="cloud-rec">这次先看推荐方案</button> <button type="button" class="btn ghost" id="cloud-again">重新连接共用方案</button></p>';
+    $('#cloud-rec').addEventListener('click', () => { sync.why = '这次先看推荐方案，只能看'; cloudSt = null; store = {kind:'cloud', where:'家里共用的方案里', notes:[], state:emptyState(), ticks:{}, apply: () => ({readonly: sync.why}), tick: () => ({readonly: sync.why})}; refreshPlan(); rerender(); });
+    $('#cloud-again').addEventListener('click', () => { writeJSON(MIRROR_KEY, null); location.reload(); });
+  }
+}
+// re-render the current page in place: scroll, open branch summary and focus stay where they were
+function rerender(key){
+  if (!D || !store) return;
+  const a = document.activeElement, k = key !== undefined ? key : focusKey(a), id = a && a.id && a !== document.body ? a.id : null;
+  const sel = a && 'selectionStart' in a ? [a.selectionStart, a.selectionEnd] : null;
+  route(true);
+  const v = [...document.querySelectorAll('.view')].find(x => !x.hidden);
+  const el = (k && v && v.querySelector(k+':not([disabled])')) || (id && document.getElementById(id));
+  if (el){ el.focus({preventScroll:true}); if (sel && 'setSelectionRange' in el) try { el.setSelectionRange(...sel); } catch(e){} }
+  else if (key !== undefined) restoreFocus(null);
+}
 function boot(){
   D.cards.cards.forEach(c => { CARDS[c.id] = c; });
   TAGS = dict(D.cards.tags); D.cards.aliases = dict(D.cards.aliases);
@@ -1687,7 +2018,7 @@ function boot(){
   local = store = localStore(); refreshPlan();
   // for the local test scripts (.dev/): read-only peeks at the plan and the state helpers
   window.__trip = {get plan(){ return plan; }, get state(){ return store.state; }, get kind(){ return store.kind; }, get done(){ return done; },
-    sanitize, guardFails, stateOf, viewOf, diffState, applyState};
+    get sync(){ return {auth: sync.auth, phase: sync.phase, why: sync.why}; }, sanitize, guardFails, stateOf, viewOf, diffState, applyState};
   ['eat','shop','see'].forEach(renderBookShell);
   window.addEventListener('hashchange', () => route());
   // in-page links: set the hash directly so navigation never depends on a <base> URL
@@ -1710,6 +2041,7 @@ function boot(){
     e.target.closest('.legacy').remove();
   });
   route();
+  startCloud();
 }
 /* ----- offline copy (sw.js) ----- */
 // sw.js marks what it served from its saved copy (x-jp27-from-cache) and when that copy was saved
@@ -1727,14 +2059,16 @@ async function savedCache(){
 }
 const stamp = t => { const d = new Date(t); return (d.getMonth()+1)+'/'+d.getDate()+' '+pad(d.getHours())+':'+pad(d.getMinutes()); };
 function offlineBanner(){
-  const cached = src.filter(x => x.cache);
-  if (!cached.length) return;
+  const cached = src.filter(x => x.cache), el = $('#offline');
+  // the shared plan from this phone's copy (no connection): when it was last in sync
+  const cloudOff = shared() && sync.data && sync.data.fromCache;
+  const ls = cloudOff ? '家里方案上次同步 '+(sync.lastSync ? stamp(sync.lastSync) : '未知') : '';
+  if (!cached.length){ el.hidden = !ls; if (ls) el.textContent = ls+'（现在连不上，改动联网后同步）。'; return; }
   const times = cached.map(x => Date.parse(x.saved)).filter(n => !isNaN(n));
   const at = times.length ? stamp(Math.min(...times)) : '之前';
-  const el = $('#offline');
-  el.textContent = flaky ? '网络不稳，这次显示的是 '+at+' 保存的版本。有网时刷新一次。'
-    : cached.length === src.length ? '离线版本 · 保存于 '+at+'。地图和官方链接要有网络才能打开。'
-    : '网络不稳，部分资料来自 '+at+' 保存的版本。有网时刷新一次。';
+  el.textContent = (flaky ? '网络不稳，这次显示的是 '+at+' 保存的版本。'+(ls ? ls+'。' : '')+'有网时刷新一次。'
+    : cached.length === src.length ? '离线版本 · 保存于 '+at+(ls ? ' · '+ls : '')+'。地图和官方链接要有网络才能打开。'
+    : '网络不稳，部分资料来自 '+at+' 保存的版本。'+(ls ? ls+'。' : '')+'有网时刷新一次。');
   el.hidden = false;
 }
 // 可离线 once every file sw.js lists is saved; 正在保存 until then (first visit)
@@ -1778,9 +2112,9 @@ Promise.all(DATA.map(get)).then(oneRelease).then(got => {
   offlineBanner();
   try {
     boot();
-    // started cleanly on fresh data: this release becomes the saved offline copy
+    // started cleanly on fresh data, and cloud.js came with the same API: this release becomes the saved offline copy
     if (!src.some(x => x.cache) && navigator.serviceWorker && navigator.serviceWorker.controller)
-      navigator.serviceWorker.controller.postMessage({type:'jp27-commit'});
+      cloudReady.then(okApi => { if (okApi && navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage({type:'jp27-commit'}); });
   }
   catch(err){
     // a render bug or an unexpected saved plan: say so, and offer the way back to the recommended plan

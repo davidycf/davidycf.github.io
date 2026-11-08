@@ -6,8 +6,8 @@
 // or when a file joins FILES. A renamed CORE fills up next to the old one; the old copy is kept (and
 // answers offline requests) until the new one has every file.
 'use strict';
-const CORE = 'jp27-core-v3', FONTS = 'jp27-fonts', STAGE = 'jp27-next-', TIMEOUT = 4000, FONT_MAX = 300;
-const FILES = ['./', './app.js',
+const CORE = 'jp27-core-v4', FONTS = 'jp27-fonts', STAGE = 'jp27-next-', TIMEOUT = 4000, FONT_MAX = 300;
+const FILES = ['./', './app.js', './cloud.js',
   './data/days.json', './data/cards.json', './data/books.json', './data/base.json', './data/info.json',
   './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './favicon-32.png'];
 // the page reads this list back from the cache to tell whether every file is saved
