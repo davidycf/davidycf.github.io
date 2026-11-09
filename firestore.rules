@@ -16,6 +16,26 @@ service cloud.firestore {
       allow read, write: if member() && part in ['settings', 'plan', 'recipes', 'have'];
     }
 
+    // 日本行程：只有这两份文档，只有家里人能读写，不能删。
+    // 只查顶层：字段白名单、格式版本、各个 map 的类型和大小（现在的数据：10 个活动日、24 张卡、34 条支线、
+    // 7 个重叠标签、53 项待办和清单，上限留了余量）。map 里面每一项的 id 和值由网页按当前数据校验。
+    match /trip/{part} {
+      allow get: if member() && part in ['plan', 'ticks'];
+      allow create, update: if member() && (
+        part == 'plan'
+          && request.resource.data.keys().hasOnly(['v', 'days', 'opts', 'groups', 'booked', 'visited'])
+          && request.resource.data.v == 1
+          && request.resource.data.get('days', {}) is map    && request.resource.data.get('days', {}).size() <= 30
+          && request.resource.data.get('opts', {}) is map    && request.resource.data.get('opts', {}).size() <= 100
+          && request.resource.data.get('groups', {}) is map  && request.resource.data.get('groups', {}).size() <= 100
+          && request.resource.data.get('booked', {}) is map  && request.resource.data.get('booked', {}).size() <= 30
+          && request.resource.data.get('visited', {}) is map && request.resource.data.get('visited', {}).size() <= 50
+        || part == 'ticks'
+          && request.resource.data.keys().hasOnly(['v', 'items'])
+          && request.resource.data.v == 1
+          && request.resource.data.items is map && request.resource.data.items.size() < 500);
+    }
+
     // 其他一律不行
   }
 }

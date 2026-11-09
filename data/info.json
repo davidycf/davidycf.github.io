@@ -669,7 +669,7 @@
      "checklist": [
       {
        "id": "evisa-passport-self",
-       "text": "本人的护照资料页：彩色，完整显示底部两行机器识别码。"
+       "text": "主申请人的护照资料页：彩色，完整显示底部两行机器识别码。"
       },
       {
        "id": "evisa-passport-spouse",
@@ -677,7 +677,7 @@
       },
       {
        "id": "evisa-photo-self",
-       "text": "本人的电子证件照：近六个月、浅色纯背景、正面、不戴眼镜。"
+       "text": "主申请人的电子证件照：近六个月、浅色纯背景、正面、不戴眼镜。"
       },
       {
        "id": "evisa-photo-spouse",
