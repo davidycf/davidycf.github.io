@@ -1,7 +1,8 @@
 // Offline copy of the guide. Network first (4 s), the saved copy when the network fails.
 // The page, app.js and the data files belong together (one release): fresh copies wait in a per-tab
 // staging cache and replace the saved copy only when that tab reports it started up on all-fresh data
-// (message jp27-commit), so a half-arrived update never mixes into the saved copy.
+// (message jp27-commit), so a half-arrived update never mixes into the saved copy. Offline, those files
+// all come from one copy that has the whole group.
 // Content updates need no change here. Rename CORE only when this file's caching logic changes,
 // or when a file joins FILES. A renamed CORE fills up next to the old one; the old copy is kept (and
 // answers offline requests) until the new one has every file.
@@ -26,8 +27,15 @@ async function tagged(res, extra){
 const save = async (key, res, cache = CORE) => (await caches.open(cache)).put(key, await tagged(res, {'x-jp27-saved': new Date().toISOString()}));
 const KEPT = n => n.startsWith('jp27-core-') && n !== CORE;
 const complete = async c => (await Promise.all(FILES.map(f => c.match(abs(f))))).every(Boolean);
+const whole = async c => (await Promise.all([...RELEASE].map(k => c.match(k)))).every(Boolean);
 // the saved copies of earlier versions, newest first
 const older = async () => (await caches.keys()).filter(KEPT).reverse();
+// where offline requests for release files go: this version's copy once it has the whole release,
+// otherwise the newest earlier copy that has it
+async function home(){
+  for (const n of [CORE, ...await older()]){ const c = await caches.open(n); if (await whole(c)) return c; }
+  return null;
+}
 // once this version's copy has every file, the earlier ones go
 async function dropOlder(){
   if (!(await complete(await caches.open(CORE)))) return;
@@ -36,15 +44,21 @@ async function dropOlder(){
 // staged saves still being written, per tab: a commit waits for them
 const staging = new Map();
 
-// save every listed file the cache doesn't have yet. A file that fails now (a dropped request on the
-// first visit) is tried again after the next page load that reaches the network.
+// save what the cache doesn't have yet. Manifest and icons go in one by one; a file that fails now is
+// tried again after the next page load that reaches the network. The release files go in only as a whole
+// group: while an earlier copy has a whole release, they wait for a tab's commit (a clean start on fresh
+// data); with nothing to fall back on (first visit) they are fetched together and kept only if all arrive.
 async function fill(){
   const c = await caches.open(CORE);
-  await Promise.allSettled(FILES.map(async f => {
-    if (await c.match(abs(f))) return;
-    const res = await fetch(abs(f), {cache:'no-cache'});
-    if (res.ok) await save(abs(f), res);
+  await Promise.allSettled(FILES.map(abs).filter(k => !RELEASE.has(k)).map(async k => {
+    if (await c.match(k)) return;
+    const res = await fetch(k, {cache:'no-cache'});
+    if (res.ok) await save(k, res);
   }));
+  if (!(await whole(c)) && !(await home())){
+    const rs = await Promise.all([...RELEASE].map(k => fetch(k, {cache:'no-cache'}).then(r => r.ok ? r : null, () => null)));
+    if (rs.every(Boolean)) await Promise.all([...RELEASE].map((k, i) => save(k, rs[i])));
+  }
   await dropOlder();
 }
 
@@ -111,10 +125,12 @@ function networkFirst(e, key){
   };
   const net = fetch(e.request).then(res => { if (res.ok) saving = Promise.all([keep(res.clone()), key === ROOT && fill()]); return res; });
   e.waitUntil(net.then(() => saving, () => {}));
-  // this version's saved copy, or while it is still filling up, the newest earlier one that has the file
+  // release files from the one copy that has the whole release (so the five JSONs and app.js agree);
+  // otherwise this version's copy, or while it is still filling up, the newest earlier one that has the file
   const cached = async () => {
-    let r = await (await caches.open(CORE)).match(key);
-    for (const n of r ? [] : await older()){ r = await (await caches.open(n)).match(key); if (r) break; }
+    const h = RELEASE.has(key) && await home();
+    let r = h && await h.match(key);
+    for (const n of r ? [] : [CORE, ...await older()]){ r = await (await caches.open(n)).match(key); if (r) break; }
     return r && tagged(r, {'x-jp27-from-cache': '1'});
   };
   return new Promise((resolve, reject) => {
