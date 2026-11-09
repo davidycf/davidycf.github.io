@@ -1665,7 +1665,10 @@ function onAction(e){
   if (a === 'pick' || a === 'place'){
     const ch = placeChoices(b.dataset.card, b.dataset.day, a === 'pick');
     if (!ch) return;
-    if (!ch.length) return doPlace('set', b.dataset.card, b.dataset.day, null, 'plain');   // only when nothing needs saying
+    // only when nothing needs saying; a card that takes a ticket (in or out) is still checked against
+    // the tickets as seen, since one may have been registered on the other phone meanwhile
+    const tk = CARDS[b.dataset.card].ticket || cardOf(dayById(b.dataset.day)).ticket;
+    if (!ch.length) return doPlace('set', b.dataset.card, b.dataset.day, null, tk ? 'checked' : 'plain');
     b.hidden = true;
     b.insertAdjacentHTML('afterend', confirmHTML(b.dataset.card, b.dataset.day, ch));
     b.parentElement.querySelector('.cf button').focus();
@@ -1724,8 +1727,9 @@ function onChange(e){
   if (['mig-booked','mig-visited','mig-tick'].includes(t.dataset.act)){
     if (t.dataset.act === 'mig-booked') mig.inBooked = t.checked;
     if (t.dataset.act === 'mig-visited') mig.inVisited = t.checked;
-    if (t.dataset.act === 'mig-tick') mig.ticks[t.dataset.key] = t.checked;
-    return;
+    if (t.dataset.act === 'mig-tick'){ mig.ticks[t.dataset.key] = t.checked; return; }
+    // the ticket notes follow which tickets would be kept: show the preview again, focus back on the box
+    rerender(focusKey(t)); return;
   }
   if (t.dataset.act === 'preset-pick' || t.dataset.act === 'preset-won'){
     const ps = presetSt(t.dataset.preset);
