@@ -114,6 +114,14 @@ const staging = new Map();
 // tried again after the next page load that reaches the network. The release files go in only as a whole
 // group: while an earlier copy has a whole release, they wait for a tab's commit (a clean start on fresh
 // data); with nothing to fall back on (first visit) they are fetched together and kept only if all arrive.
+// app.js and cloud.js name the same CLOUD_API: the check a page makes before it sends jp27-commit, so a
+// first visit that got files from two releases (a deploy still spreading) keeps nothing
+const API = /\bCLOUD_API = (\d+)/;
+async function sameApi(rs){
+  const ks = [...RELEASE], api = f => rs[ks.indexOf(abs(f))].clone().text().then(t => (API.exec(t) || [])[1]);
+  const [a, c] = await Promise.all([api('./app.js'), api('./cloud.js')]);
+  return !!a && a === c;
+}
 async function fill(){
   const name = await cur(), c = await caches.open(name);
   await Promise.allSettled(FILES.map(abs).filter(k => !RELEASE.has(k)).map(async k => {
@@ -123,7 +131,7 @@ async function fill(){
   }));
   if (!(await home())){
     const rs = await Promise.all([...RELEASE].map(k => fetch(k, {cache:'no-cache'}).then(r => r.ok ? r : null, () => null)));
-    if (rs.every(Boolean)) await publish(await Promise.all([...RELEASE].map(async (k, i) => [k, await stamp(rs[i])])));
+    if (rs.every(Boolean) && await sameApi(rs)) await publish(await Promise.all([...RELEASE].map(async (k, i) => [k, await stamp(rs[i])])));
   }
   await dropOlder();
 }
