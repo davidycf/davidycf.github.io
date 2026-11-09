@@ -9,7 +9,7 @@
 // or when a file joins FILES. A renamed CORE fills up next to the old one; the old copy is kept (and
 // answers offline requests) until the new one has every file.
 'use strict';
-const CORE = 'jp27-core-v4', FONTS = 'jp27-fonts', STAGE = 'jp27-next-', TIMEOUT = 4000, FONT_MAX = 300;
+const CORE = 'jp27-core-v5', FONTS = 'jp27-fonts', SDK = 'jp27-sdk', STAGE = 'jp27-next-', TIMEOUT = 4000, FONT_MAX = 300;
 const FILES = ['./', './app.js', './cloud.js',
   './data/days.json', './data/cards.json', './data/books.json', './data/base.json', './data/info.json',
   './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './favicon-32.png'];
@@ -60,6 +60,37 @@ async function dropOlder(){
   if (!(await complete(await caches.open(await cur())))) return;
   await Promise.all((await older()).map(n => caches.delete(n)));
 }
+// Firebase SDK modules (exact versions, so a URL never changes): saved first-come, served from the copy.
+// Only versions the saved cloud.js uses are kept. Sign-in pages and Firestore requests always go to the network.
+const SDK_RX = /^https:\/\/www\.gstatic\.com\/firebasejs\/(\d+\.\d+\.\d+)\/[\w.-]+\.js$/;
+async function sdkFirst(e){
+  const c = await caches.open(SDK), hit = await c.match(e.request.url);
+  if (hit) return hit;
+  const res = await fetch(e.request);
+  if (res.ok && res.type === 'cors') e.waitUntil(c.put(e.request.url, res.clone()));
+  return res;
+}
+// fetch the modules the page names and every module they import (same version), so a later offline start has them all
+async function sdkWarm(urls){
+  const c = await caches.open(SDK), seen = new Set(), todo = urls.filter(u => SDK_RX.test(u));
+  while (todo.length){
+    const u = todo.pop(); if (seen.has(u)) continue; seen.add(u);
+    let res = await c.match(u);
+    if (!res){ res = await fetch(u, {mode:'cors'}).catch(() => null); if (!res || !res.ok) continue; await c.put(u, res.clone()); }
+    const src = await res.text(), dir = u.slice(0, u.lastIndexOf('/') + 1);
+    for (const m of src.matchAll(/(?:from|import)\s*\(?\s*["']([^"']+\.js)["']/g)){
+      const next = new URL(m[1], u).href;
+      if (next.startsWith(dir) && SDK_RX.test(next)) todo.push(next);
+    }
+  }
+}
+// drop SDK versions the saved cloud.js no longer uses
+async function sdkPrune(){
+  const r = await (await caches.open(await cur())).match(abs('./cloud.js')), v = r && (await r.text()).match(/\bV = '(\d+\.\d+\.\d+)'/);
+  const keep = v && v[1]; if (!keep) return;
+  const c = await caches.open(SDK);
+  await Promise.all((await c.keys()).filter(k => { const m = k.url.match(SDK_RX); return m && m[1] !== keep; }).map(k => c.delete(k)));
+}
 const listRes = () => new Response(JSON.stringify(FILES.map(abs)), {headers:{'content-type':'application/json'}});
 // one release at a time ([[key, response]], every release file): into a new cache with the list, manifest
 // and icons of the copy in use; only when every write went in does it replace this version's other copies
@@ -83,6 +114,14 @@ const staging = new Map();
 // tried again after the next page load that reaches the network. The release files go in only as a whole
 // group: while an earlier copy has a whole release, they wait for a tab's commit (a clean start on fresh
 // data); with nothing to fall back on (first visit) they are fetched together and kept only if all arrive.
+// app.js and cloud.js name the same CLOUD_API: the check a page makes before it sends jp27-commit, so a
+// first visit that got files from two releases (a deploy still spreading) keeps nothing
+const API = /\bCLOUD_API = (\d+)/;
+async function sameApi(rs){
+  const ks = [...RELEASE], api = f => rs[ks.indexOf(abs(f))].clone().text().then(t => (API.exec(t) || [])[1]);
+  const [a, c] = await Promise.all([api('./app.js'), api('./cloud.js')]);
+  return !!a && a === c;
+}
 async function fill(){
   const name = await cur(), c = await caches.open(name);
   await Promise.allSettled(FILES.map(abs).filter(k => !RELEASE.has(k)).map(async k => {
@@ -92,7 +131,7 @@ async function fill(){
   }));
   if (!(await home())){
     const rs = await Promise.all([...RELEASE].map(k => fetch(k, {cache:'no-cache'}).then(r => r.ok ? r : null, () => null)));
-    if (rs.every(Boolean)) await publish(await Promise.all([...RELEASE].map(async (k, i) => [k, await stamp(rs[i])])));
+    if (rs.every(Boolean) && await sameApi(rs)) await publish(await Promise.all([...RELEASE].map(async (k, i) => [k, await stamp(rs[i])])));
   }
   await dropOlder();
 }
@@ -110,7 +149,7 @@ self.addEventListener('activate', e => {
   e.waitUntil((async () => {
     // staging and other leftovers go; an earlier saved copy stays until this one is complete
     const names = await caches.keys();
-    await Promise.all(names.filter(n => n.startsWith('jp27-') && !MINE(n) && n !== FONTS && !KEPT(n)).map(n => caches.delete(n)));
+    await Promise.all(names.filter(n => n.startsWith('jp27-') && !MINE(n) && n !== FONTS && n !== SDK && !KEPT(n)).map(n => caches.delete(n)));
     await dropOlder();
     await self.clients.claim();
   })());
@@ -120,6 +159,10 @@ self.addEventListener('activate', e => {
 // them is written and the whole release is there (a slow or failed file keeps the previous copy as it is).
 // Staging left by tabs that are gone is dropped.
 self.addEventListener('message', e => {
+  if (e.data && e.data.type === 'jp27-sdk' && Array.isArray(e.data.urls)){
+    const port = e.ports && e.ports[0];
+    return e.waitUntil(sdkWarm(e.data.urls).catch(() => {}).then(() => port && port.postMessage({type:'jp27-sdk-done'})));
+  }
   if (!e.data || e.data.type !== 'jp27-commit' || !e.source) return;
   e.waitUntil((async () => {
     const name = STAGE+e.source.id;
@@ -128,7 +171,7 @@ self.addEventListener('message', e => {
     if (await caches.has(name)){
       const st = await caches.open(name);
       const got = await Promise.all([...RELEASE].map(k => st.match(k)));
-      if (got.every(Boolean) && await publish([...RELEASE].map((k, i) => [k, got[i]]))) await dropOlder();
+      if (got.every(Boolean) && await publish([...RELEASE].map((k, i) => [k, got[i]]))){ await dropOlder(); await sdkPrune(); }
     }
     const live = new Set((await self.clients.matchAll()).map(c => STAGE+c.id));
     await Promise.all((await caches.keys()).filter(n => n.startsWith(STAGE) && (n === name || !live.has(n))).map(n => caches.delete(n)));
@@ -201,5 +244,7 @@ self.addEventListener('fetch', e => {
     if (key) e.respondWith(networkFirst(e, key));
   } else if (u.hostname === 'fonts.googleapis.com' || u.hostname === 'fonts.gstatic.com'){
     e.respondWith(fontFirst(e, u));
+  } else if (SDK_RX.test(e.request.url)){
+    e.respondWith(sdkFirst(e));
   }
 });
