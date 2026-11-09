@@ -2,7 +2,9 @@
 // The page, app.js and the data files belong together (one release): fresh copies wait in a per-tab
 // staging cache and replace the saved copy only when that tab reports it started up on all-fresh data
 // (message jp27-commit), so a half-arrived update never mixes into the saved copy. Offline, those files
-// all come from one copy that has the whole group.
+// all come from one copy that has the whole group. A release is written into a cache of its own
+// (CORE@<time>) and replaces the earlier copy only once every file is in, so a write that fails halfway
+// (no space) leaves the earlier copy as it was.
 // Content updates need no change here. Rename CORE only when this file's caching logic changes,
 // or when a file joins FILES. A renamed CORE fills up next to the old one; the old copy is kept (and
 // answers offline requests) until the new one has every file.
@@ -25,8 +27,13 @@ async function tagged(res, extra){
   Object.entries(extra).forEach(([k, v]) => h.set(k, v));
   return new Response(await res.blob(), {status:res.status, statusText:res.statusText, headers:h});
 }
-const save = async (key, res, cache = CORE) => (await caches.open(cache)).put(key, await tagged(res, {'x-jp27-saved': new Date().toISOString()}));
-const KEPT = n => n.startsWith('jp27-core-') && n !== CORE;
+const stamp = res => tagged(res, {'x-jp27-saved': new Date().toISOString()});
+// this version's copies: CORE (made at install) and CORE@<time>, one per saved release; the others
+// starting jp27-core- are earlier versions'
+const MINE = n => n === CORE || n.startsWith(CORE+'@');
+const KEPT = n => n.startsWith('jp27-core-') && !MINE(n);
+const mine = async () => (await caches.keys()).filter(MINE).reverse();   // newest first
+const save = async (key, res, cache) => (await caches.open(cache || await cur())).put(key, await stamp(res));
 const complete = async c => (await Promise.all(FILES.map(f => c.match(abs(f))))).every(Boolean);
 // a copy has a whole release when every release file on its own list is there (an earlier version's
 // list may name fewer files than this one's)
@@ -36,15 +43,21 @@ async function whole(c){
 }
 // the saved copies of earlier versions, newest first
 const older = async () => (await caches.keys()).filter(KEPT).reverse();
+// this version's copy in use: the newest one with a whole release, else the newest one
+async function cur(){
+  const ns = await mine();
+  for (const n of ns) if (await whole(await caches.open(n))) return n;
+  return ns[0] || CORE;
+}
 // where offline requests for release files go: this version's copy once it has the whole release,
 // otherwise the newest earlier copy that has it
 async function home(){
-  for (const n of [CORE, ...await older()]){ const c = await caches.open(n); if (await whole(c)) return c; }
+  for (const n of [...await mine(), ...await older()]){ const c = await caches.open(n); if (await whole(c)) return c; }
   return null;
 }
 // once this version's copy has every file, the earlier ones go
 async function dropOlder(){
-  if (!(await complete(await caches.open(CORE)))) return;
+  if (!(await complete(await caches.open(await cur())))) return;
   await Promise.all((await older()).map(n => caches.delete(n)));
 }
 // Firebase SDK modules (exact versions, so a URL never changes): saved first-come, served from the copy.
@@ -73,11 +86,27 @@ async function sdkWarm(urls){
 }
 // drop SDK versions the saved cloud.js no longer uses
 async function sdkPrune(){
-  const r = await (await caches.open(CORE)).match(abs('./cloud.js')), v = r && (await r.text()).match(/\bV = '(\d+\.\d+\.\d+)'/);
+  const r = await (await caches.open(await cur())).match(abs('./cloud.js')), v = r && (await r.text()).match(/\bV = '(\d+\.\d+\.\d+)'/);
   const keep = v && v[1]; if (!keep) return;
   const c = await caches.open(SDK);
   await Promise.all((await c.keys()).filter(k => { const m = k.url.match(SDK_RX); return m && m[1] !== keep; }).map(k => c.delete(k)));
 }
+const listRes = () => new Response(JSON.stringify(FILES.map(abs)), {headers:{'content-type':'application/json'}});
+// one release at a time ([[key, response]], every release file): into a new cache with the list, manifest
+// and icons of the copy in use; only when every write went in does it replace this version's other copies
+let chain = Promise.resolve();
+const serial = f => (chain = chain.then(f, f));
+const publish = got => serial(async () => {
+  const from = await caches.open(await cur()), name = CORE+'@'+Date.now()+'-'+Math.random().toString(36).slice(2, 6);
+  const c = await caches.open(name);
+  try {
+    await c.put(abs(LIST), listRes());
+    for (const k of await from.keys()) if (KEYS.has(k.url) && !RELEASE.has(k.url)) await c.put(k, await from.match(k));
+    await Promise.all(got.map(([k, r]) => c.put(k, r)));
+  } catch(e){ await caches.delete(name); return false; }
+  await Promise.all((await mine()).filter(n => n !== name).map(n => caches.delete(n)));
+  return true;
+});
 // staged saves still being written, per tab: a commit waits for them
 const staging = new Map();
 
@@ -86,23 +115,23 @@ const staging = new Map();
 // group: while an earlier copy has a whole release, they wait for a tab's commit (a clean start on fresh
 // data); with nothing to fall back on (first visit) they are fetched together and kept only if all arrive.
 async function fill(){
-  const c = await caches.open(CORE);
+  const name = await cur(), c = await caches.open(name);
   await Promise.allSettled(FILES.map(abs).filter(k => !RELEASE.has(k)).map(async k => {
     if (await c.match(k)) return;
     const res = await fetch(k, {cache:'no-cache'});
-    if (res.ok) await save(k, res);
+    if (res.ok) await save(k, res, name);
   }));
-  if (!(await whole(c)) && !(await home())){
+  if (!(await home())){
     const rs = await Promise.all([...RELEASE].map(k => fetch(k, {cache:'no-cache'}).then(r => r.ok ? r : null, () => null)));
-    if (rs.every(Boolean)) await Promise.all([...RELEASE].map((k, i) => save(k, rs[i])));
+    if (rs.every(Boolean)) await publish(await Promise.all([...RELEASE].map(async (k, i) => [k, await stamp(rs[i])])));
   }
   await dropOlder();
 }
 
 self.addEventListener('install', e => {
   e.waitUntil((async () => {
-    const c = await caches.open(CORE);
-    await c.put(abs(LIST), new Response(JSON.stringify(FILES.map(abs)), {headers:{'content-type':'application/json'}}));
+    const c = await caches.open(await cur());
+    await c.put(abs(LIST), listRes());
     await fill();
     await self.skipWaiting();
   })());
@@ -112,7 +141,7 @@ self.addEventListener('activate', e => {
   e.waitUntil((async () => {
     // staging and other leftovers go; an earlier saved copy stays until this one is complete
     const names = await caches.keys();
-    await Promise.all(names.filter(n => n.startsWith('jp27-') && n !== CORE && n !== FONTS && n !== SDK && !KEPT(n)).map(n => caches.delete(n)));
+    await Promise.all(names.filter(n => n.startsWith('jp27-') && !MINE(n) && n !== FONTS && n !== SDK && !KEPT(n)).map(n => caches.delete(n)));
     await dropOlder();
     await self.clients.claim();
   })());
@@ -132,13 +161,9 @@ self.addEventListener('message', e => {
     await Promise.allSettled(staging.get(e.source.id) || []);
     staging.delete(e.source.id);
     if (await caches.has(name)){
-      const st = await caches.open(name), core = await caches.open(CORE);
+      const st = await caches.open(name);
       const got = await Promise.all([...RELEASE].map(k => st.match(k)));
-      if (got.every(Boolean)){
-        await Promise.all([...RELEASE].map((k, i) => core.put(k, got[i])));
-        await dropOlder();
-        await sdkPrune();
-      }
+      if (got.every(Boolean) && await publish([...RELEASE].map((k, i) => [k, got[i]]))){ await dropOlder(); await sdkPrune(); }
     }
     const live = new Set((await self.clients.matchAll()).map(c => STAGE+c.id));
     await Promise.all((await caches.keys()).filter(n => n.startsWith(STAGE) && (n === name || !live.has(n))).map(n => caches.delete(n)));
@@ -172,7 +197,7 @@ function networkFirst(e, key){
   const cached = async () => {
     const h = RELEASE.has(key) && await home();
     let r = h && await h.match(key);
-    for (const n of r ? [] : [CORE, ...await older()]){ r = await (await caches.open(n)).match(key); if (r) break; }
+    for (const n of r ? [] : [...await mine(), ...await older()]){ r = await (await caches.open(n)).match(key); if (r) break; }
     return r && tagged(r, {'x-jp27-from-cache': '1'});
   };
   return new Promise((resolve, reject) => {
