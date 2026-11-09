@@ -18,6 +18,13 @@ const CONFIG = {
 const FORMAT = 1;   // trip/plan 和 trip/ticks 的 v
 const own = o => o && typeof o === 'object' && !Array.isArray(o) ? Object.entries(o) : [];
 const netErr = e => !!e && ['unavailable', 'deadline-exceeded', 'failed-precondition'].includes(e.code);
+// Firestore opens IndexedDB on first use, not in initializeFirestore(); when that fails in a way it can live
+// with (no space, storage blocked) it quietly keeps a memory cache and only logs this warning. Its logger is
+// its own copy (onLog from firebase-app doesn't reach it), so watch the console for the line.
+let fellBack = false;
+const FALLBACK = 'Falling back to memory cache';
+const warn0 = console.warn;
+console.warn = function(...a){ if (a.some(x => typeof x === 'string' && x.includes(FALLBACK))) fellBack = true; return warn0.apply(this, a); };
 
 // h.onAuth({state, user, error})
 //   state: out 没登录 · checking 正在看是不是家里人 · guest 不在名单里 · member 是家里人（随后来数据；
@@ -29,9 +36,12 @@ const netErr = e => !!e && ['unavailable', 'deadline-exceeded', 'failed-precondi
 export async function connect(h){
   const [{initializeApp}, A, F] = await Promise.all(SDK_URLS.map(u => import(u)));
   const app = initializeApp(CONFIG), auth = A.getAuth(app);
-  let db, persistent = true;
+  let db, persistent = true, opened = false, onOpened;
   try { db = F.initializeFirestore(app, {localCache: F.persistentLocalCache({tabManager: F.persistentMultipleTabManager()})}); }
   catch(e){ db = F.getFirestore(app); persistent = false; }   // 浏览器不让存（比如无痕模式）就不带离线副本
+  // the first snapshot comes after the local cache is set up: by then a fallback to memory has been logged
+  const persisted = new Promise(r => { onOpened = r; });
+  const opening = () => { if (!opened){ opened = true; onOpened(); } };
   const ref = {plan: F.doc(db, 'trip', 'plan'), ticks: F.doc(db, 'trip', 'ticks')};
   // 每次账号变化开一个新连接；旧连接的查询、事务和快照回来时已经作废，不再碰页面
   let conn = 0, unsubs = [], cur = null, user = null;
@@ -43,6 +53,7 @@ export async function connect(h){
       cur = {plan: parts.plan, ticks: parts.ticks, pending: !!(meta.plan.pending || meta.ticks.pending), fromCache: !!(meta.plan.cache || meta.ticks.cache)};
       h.onData(cur); };
     ['plan', 'ticks'].forEach(p => unsubs.push(F.onSnapshot(ref[p], {includeMetadataChanges: true}, snap => {
+      opening();
       if (my !== conn) return;
       parts[p] = snap.exists() ? snap.data() : null;
       meta[p] = {pending: snap.metadata.hasPendingWrites, cache: snap.metadata.fromCache};
@@ -109,7 +120,10 @@ export async function connect(h){
   const data = s => s.exists() ? s.data() : null;
 
   return {
-    persistent,
+    // yes: Firestore keeps its copy and unsent changes in IndexedDB; no: only in this page's memory;
+    // unknown: not opened yet (no snapshot so far)
+    get persistence(){ return !persistent || fellBack ? 'no' : opened ? 'yes' : 'unknown'; },
+    persisted,
     signIn: () => A.signInWithPopup(auth, new A.GoogleAuthProvider()),
     signOut: () => A.signOut(auth),
     waitForSync: () => F.waitForPendingWrites(db),

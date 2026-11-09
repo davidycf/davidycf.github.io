@@ -122,7 +122,10 @@ self.addEventListener('activate', e => {
 // them is written and the whole release is there (a slow or failed file keeps the previous copy as it is).
 // Staging left by tabs that are gone is dropped.
 self.addEventListener('message', e => {
-  if (e.data && e.data.type === 'jp27-sdk' && Array.isArray(e.data.urls)) return e.waitUntil(sdkWarm(e.data.urls).catch(() => {}));
+  if (e.data && e.data.type === 'jp27-sdk' && Array.isArray(e.data.urls)){
+    const port = e.ports && e.ports[0];
+    return e.waitUntil(sdkWarm(e.data.urls).catch(() => {}).then(() => port && port.postMessage({type:'jp27-sdk-done'})));
+  }
   if (!e.data || e.data.type !== 'jp27-commit' || !e.source) return;
   e.waitUntil((async () => {
     const name = STAGE+e.source.id;
