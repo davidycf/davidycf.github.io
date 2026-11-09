@@ -105,8 +105,9 @@ const dowOf = d => { const [m, dd] = d.date.split('/').map(Number); return new D
 // The recommended plan as last seen on this device (jp27-base) tells the user when the repo's
 // recommendation changed; their own choices are never overwritten by such a change.
 const PLAN_KEY = 'jp27-plan', PLAN_V = 1, BASE_KEY = 'jp27-base', TODO_KEY = 'jp27-todo';
-const emptyView = () => ({days:{}, opts:{}, visited:{}, booked:{}, via:{}});
-const emptyState = () => ({days:{}, opts:{}, groups:{}, booked:{}, visited:{}});
+// maps keyed by stored ids have no prototype: a key like __proto__ is just an unknown id
+const emptyView = () => ({days:dict(), opts:dict(), visited:dict(), booked:dict(), via:dict()});
+const emptyState = () => ({days:dict(), opts:dict(), groups:dict(), booked:dict(), visited:dict()});
 let plan = emptyView(), store = null, local = null, base = null;
 let canSave = true, planNotes = [], baseNotes = [];
 const isObj = v => !!v && typeof v === 'object' && !Array.isArray(v);
@@ -172,14 +173,14 @@ function viewOf(S){
 // plan → state. In a pick-one group the first branch turned on (card order) is the pick; none on = the default
 function stateOf(v, lenient){
   const S = emptyState();
-  own(v.days).forEach(([id, c]) => { (S.days[id] ||= {}).card = c; });
-  own(v.via).forEach(([id, p]) => { (S.days[id] ||= {}).via = p; });
+  own(v.days).forEach(([id, c]) => { (S.days[id] ||= dict()).card = c; });
+  own(v.via).forEach(([id, p]) => { (S.days[id] ||= dict()).via = p; });
   own(v.opts).forEach(([cid, o]) => { const c = CARDS[aliasCard(cid)]; if (!isObj(o)) return;
     own(o).forEach(([oid, val]) => { const x = c && c.opts.find(x => x.id === oid);
-      if (!x || !x.group) (S.opts[cid] ||= {})[oid] = lenient ? !!val : val; });
-    if (c) groupsOf(c).forEach(g => { const on = c.opts.find(x => x.group === g && o[x.id] === true); if (on) (S.groups[cid] ||= {})[g] = on.id; });
+      if (!x || !x.group) (S.opts[cid] ||= dict())[oid] = lenient ? !!val : val; });
+    if (c) groupsOf(c).forEach(g => { const on = c.opts.find(x => x.group === g && o[x.id] === true); if (on) (S.groups[cid] ||= dict())[g] = on.id; });
   });
-  S.booked = isObj(v.booked) ? {...v.booked} : {}; S.visited = isObj(v.visited) ? {...v.visited} : {};
+  S.booked = dict(isObj(v.booked) ? v.booked : {}); S.visited = dict(isObj(v.visited) ? v.visited : {});
   return S;
 }
 // the change that turns state a into state b: only the records that differ
@@ -455,7 +456,8 @@ function commit(fn, msg, o){
   const key = focusKey(document.activeElement);
   if (emptyCh(ch)){ rerender(key); toast(msg, false); return; }
   const guard = kind === 'plain' ? null : guardFor(before, ch, o);
-  const seq = ++opSeq, rec = o.noUndo ? null : {ch: valuesAt(before, ch), at: valuesAt(after, ch)};
+  // undo checks the same records the change was checked against (as it left them)
+  const seq = ++opSeq, rec = o.noUndo ? null : {ch: valuesAt(before, ch), at: guard ? valuesAt(after, mergeCh(ch, guard.at)) : valuesAt(after, ch), skip: (o.cover && o.cover.days) || []};
   write(ch, {kind, guard, ticksOff: o.ticks ? Object.keys(o.ticks) : null}, r => {
     // a plain write still on its way to the shared copy can be undone once it is confirmed
     const later = shared() && kind === 'plain' && r.pending;
@@ -469,8 +471,8 @@ function commit(fn, msg, o){
 function guardFor(before, ch, o){
   const cover = mergeCh(ch, {days: Object.fromEntries((o.cover && o.cover.days || []).map(id => [id, null])),
     booked: Object.fromEntries((o.cover && o.cover.booked || []).map(id => [id, null]))});
-  const days = Object.keys(ch.days || {}), pl = placed(applyState(before, ch));
-  return {at: valuesAt(before, cover), free: {cards: [...new Set(days.map(id => pl[id]))], skip: days},
+  const days = Object.keys(ch.days || {}), pl = placed(applyState(before, ch)), kept = (o.cover && o.cover.days) || [];
+  return {at: valuesAt(before, cover), free: {cards: [...new Set(days.map(id => pl[id]))], skip: [...days, ...kept]},
     whole: o.whole ? Object.fromEntries(o.whole.map(sec => [sec, before[sec]])) : null};
 }
 // hand a change to the store; then re-render in place, focus back, and done(result), or say why it didn't go
@@ -496,7 +498,7 @@ function undo(){
   if (!undoRec) return;
   const u = undoRec; undoRec = null;
   const days = Object.keys(u.ch.days || {}), pl = placed(applyState(stateOf(plan), u.ch));
-  write(u.ch, {kind:'checked', undo:true, guard:{at: u.at, free: {cards: [...new Set(days.map(id => pl[id]))], skip: days}}},
+  write(u.ch, {kind:'checked', undo:true, guard:{at: u.at, free: {cards: [...new Set(days.map(id => pl[id]))], skip: [...days, ...(u.skip || [])]}}},
     () => toast('已撤销上一步', false), null);
 }
 // Re-rendering replaces the DOM, so remember the focused control by its stable data-* ids
@@ -557,7 +559,10 @@ function doPlace(op, cid, dayId, srcId, kind){
     if (op === 'move'){ plan.days[srcId] = restCard(c.city).id; }
     plan.days[dayId] = cid;
     delete plan.via[dayId]; if (srcId) delete plan.via[srcId];   // hand-made from now on
-  }, d.date+' 改成'+nm(c) + (op === 'swap' ? '，'+dayById(srcId).date+' 改成'+nm(cur) : op === 'move' ? '，'+dayById(srcId).date+' 改成留白' : ''), {kind: kind || 'checked'});
+  }, d.date+' 改成'+nm(c) + (op === 'swap' ? '，'+dayById(srcId).date+' 改成'+nm(cur) : op === 'move' ? '，'+dayById(srcId).date+' 改成留白' : ''),
+  // checked against what the choice was shown with: the tickets of both cards (a ticket registered since
+  // brings its warning first), and the other days the card is on (kept as they are, so they may stay)
+  {kind: kind || 'checked', cover: {booked: [cid, cur.id], days: c.multi ? [] : placedOn(cid).map(x => x.id).filter(id => id !== dayId && id !== srcId)}});
 }
 function confirmHTML(cid, dayId, ch){
   return '<div class="cf" role="group" aria-label="确认怎么安排">'+(ch.notes || []).map(t => '<p class="ck w-verify"><b>票</b>'+esc(t)+'</p>').join('')+ch.map(x => '<button type="button" class="btn" data-act="do" data-op="'+x.op+'" data-card="'+cid+'" data-day="'+dayId+'"'+(x.src ? ' data-src="'+x.src+'"' : '')+(x.dis ? ' disabled' : '')+'>'+esc(x.label)+'</button>'
@@ -1140,7 +1145,7 @@ function ioAction(a, b){
         c.opts.forEach(x => { if (!!x.on !== o[x.id]) (plan.opts[cid] ||= {})[x.id] = o[x.id]; }); });
       if (bookIn) plan.booked = r.booked;
       if (visIn) plan.visited = r.visited;
-    }, '已导入方案'+(bookIn ? '（含登记的票）' : '')+(visIn ? '（含已逛过）' : ''), {kind:'online', whole:['days','opts','groups', ...(bookIn ? ['booked'] : []), ...(visIn ? ['visited'] : [])]});
+    }, '已导入方案'+(bookIn ? '（含登记的票）' : '')+(visIn ? '（含已逛过）' : ''), {kind:'online', whole:['days','opts','groups','booked', ...(visIn ? ['visited'] : [])]});
   }
 }
 
@@ -1647,7 +1652,7 @@ function onAction(e){
         + '<button type="button" class="btn" data-act="reset-do">仍然恢复推荐方案</button><button type="button" class="btn ghost" data-act="cancel-reset">取消</button></div>');
       return b.parentElement.querySelector('[data-act="reset-do"]').focus();
     }
-    return commit(() => { plan.days = {}; plan.opts = {}; plan.via = {}; }, '已恢复推荐方案（已逛过、登记的票和勾选不变）', {kind:'online', whole:['days','opts','groups']});
+    return commit(() => { plan.days = {}; plan.opts = {}; plan.via = {}; }, '已恢复推荐方案（已逛过、登记的票和勾选不变）', {kind:'online', whole:['days','opts','groups','booked']});
   }
   if (a === 'cancel-reset'){ const cf = b.closest('.cf'), r = cf.parentElement.querySelector('[data-act="reset"]'); cf.remove(); r.hidden = false; r.focus(); return; }
   if (a === 'base-ack'){ saveBase(currentBase()); baseNotes = []; const key = focusKey(b); route(true); restoreFocus(key); return toast('已知道推荐方案的更新', false); }
@@ -1678,9 +1683,18 @@ function onAction(e){
 function onChange(e){
   const t = e.target;
   if (t.dataset.checkKey){
-    const r = store.tick(t.dataset.checkKey, t.checked);
-    if (r && r.readonly){ t.checked = !t.checked; return toast('现在只能看：'+r.readonly+'。', false); }
-    if (r && r.pending) r.pending.catch(e => { sync.failed = e.code || e.message; refreshPlan(); rerender(); renderSync(false); toast('勾选没存上（'+sync.failed+'）', false); });
+    const key = t.dataset.checkKey, on = t.checked;
+    // the shared store answers later (a promise of {ok, pending} or {readonly}); this device's at once
+    const failed = e => { sync.failed = e && (e.code || e.message) || '出错'; refreshPlan(); rerender(); renderSync(false); toast('勾选没存上（'+sync.failed+'）', false); };
+    const result = r => {
+      if (r && r.readonly){ done = store.ticks; document.querySelectorAll('input[data-check-key="'+CSS.escape(key)+'"]').forEach(x => { x.checked = !!done[key]; });
+        refreshTiles(); return toast('现在只能看：'+(r.readonly === true ? '共用方案还没读到' : r.readonly)+'。', false); }
+      if (r && r.pending) r.pending.then(() => { if (sync.failed){ sync.failed = null; renderSync(false); } }, failed);
+    };
+    let r;
+    try { r = store.tick(key, on); } catch(e){ failed(e); return; }
+    if (r && typeof r.then === 'function') r.then(result, failed);
+    else { result(r); if (r && r.readonly) return; }
     done = store.ticks;
     if (shared()) done = {...done, [t.dataset.checkKey]: t.checked || undefined};
     document.querySelectorAll('input[data-check-key="'+CSS.escape(t.dataset.checkKey)+'"]').forEach(x => { x.checked = t.checked; });
@@ -1899,7 +1913,7 @@ function migrateCandidates(d){
   const r = parseImport(text);
   const famTicks = ticksOf((d || sync.data).ticks);
   const ticks = Object.keys(localTodo).filter(k => localTodo[k] === true && knownTick(k) && !famTicks[k]);
-  const x = r.errors.length ? null : importDiff(r, true, true);
+  const x = r.errors.length ? null : importDiff(r, mig.inBooked, mig.inVisited);
   plan = keep;
   return {r, x, ticks, any: !!ticks.length || !!(x && (x.days.length || x.opts.length || x.bookDiff || x.visDiff))};
 }
@@ -1954,6 +1968,7 @@ function chooseBlock(){
     + (x.opts.length ? '<p class="small">支线变化 '+x.opts.length+' 项：'+esc(x.opts.map(y => y.c.name+'「'+y.x.label+'」'+(y.on ? '选上' : '取消')).join('，'))+'。</p>' : '')
     + (x.bookDiff ? '<label class="opt"><input type="checkbox" data-act="mig-booked"'+(mig.inBooked ? ' checked' : '')+'><span>也用这台设备登记的票<small>这台设备：'+esc(Object.entries(r.booked || {}).map(([k, v]) => CARDS[k].name+' '+dayById(v).date).join('、') || '无')+'；家里：'+esc(Object.entries(plan.booked).map(([k, v]) => CARDS[k].name+' '+dayById(v).date).join('、') || '无')+'。</small></span></label>' : '')
     + (x.visDiff ? '<label class="opt"><input type="checkbox" data-act="mig-visited"'+(mig.inVisited ? ' checked' : '')+'><span>也用这台设备的“已逛过”</span></label>' : '')
+    + (x.notes.length ? '<ul class="warns">'+x.notes.map(t => '<li class="w-verify"><b>票</b><span>'+esc(t)+'</span></li>').join('')+'</ul>' : '')
     + (ticks.length ? '<p class="small">这台设备勾过、家里还没勾的（默认不加）：</p>'+ticks.map(k => '<label class="opt"><input type="checkbox" data-act="mig-tick" data-key="'+esc(k)+'"'+(mig.ticks[k] ? ' checked' : '')+'><span>'+esc(tickName(k))+'</span></label>').join('') : '')
     + '<div class="pa"><button type="button" class="btn" data-act="mig-apply">迁移这些</button></div></div>';
   return h;
@@ -1972,7 +1987,7 @@ function migrateApply(){
       cc.opts.forEach(y => { if (!!y.on !== o[y.id]) (plan.opts[cid] ||= {})[y.id] = o[y.id]; }); });
     if (bookIn) plan.booked = r.booked;
     if (visIn) plan.visited = r.visited;
-  }, '已把这台设备的选择迁移进家里的方案', {kind:'online', noUndo:true, ticks, whole:['days','opts','groups', ...(bookIn ? ['booked'] : []), ...(visIn ? ['visited'] : [])],
+  }, '已把这台设备的选择迁移进家里的方案', {kind:'online', noUndo:true, ticks, whole:['days','opts','groups','booked', ...(visIn ? ['visited'] : [])],
     after: () => { markJoined(uid); sync.phase = 'live'; mig.open = false; mig.ticks = {}; rerender(); }});
 }
 async function syncAction(a, b){
