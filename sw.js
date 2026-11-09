@@ -15,8 +15,9 @@ const FILES = ['./', './app.js',
 const LIST = './jp27-core.json';
 const abs = f => new URL(f, self.registration.scope).href;
 const ROOT = abs('./'), KEYS = new Set(FILES.map(abs));
+const isRelease = u => u === ROOT || /\.(js|json)$/.test(new URL(u).pathname);
 // files that change with a release; the rest (manifest, icons) are saved as they come
-const RELEASE = new Set(FILES.filter(f => f === './' || /\.(js|json)$/.test(f)).map(abs));
+const RELEASE = new Set(FILES.map(abs).filter(isRelease));
 
 // copy a response with the time it was saved (and, when served from the cache, a flag)
 async function tagged(res, extra){
@@ -27,7 +28,12 @@ async function tagged(res, extra){
 const save = async (key, res, cache = CORE) => (await caches.open(cache)).put(key, await tagged(res, {'x-jp27-saved': new Date().toISOString()}));
 const KEPT = n => n.startsWith('jp27-core-') && n !== CORE;
 const complete = async c => (await Promise.all(FILES.map(f => c.match(abs(f))))).every(Boolean);
-const whole = async c => (await Promise.all([...RELEASE].map(k => c.match(k)))).every(Boolean);
+// a copy has a whole release when every release file on its own list is there (an earlier version's
+// list may name fewer files than this one's)
+async function whole(c){
+  const l = await c.match(abs(LIST)), list = l ? (await l.json()).filter(isRelease) : [...RELEASE];
+  return (await Promise.all(list.map(k => c.match(k)))).every(Boolean);
+}
 // the saved copies of earlier versions, newest first
 const older = async () => (await caches.keys()).filter(KEPT).reverse();
 // where offline requests for release files go: this version's copy once it has the whole release,
