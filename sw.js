@@ -49,10 +49,10 @@ async function cur(){
   for (const n of ns) if (await whole(await caches.open(n))) return n;
   return ns[0] || CORE;
 }
-// where offline requests for release files go: this version's copy once it has the whole release,
-// otherwise the newest earlier copy that has it
+// where offline requests for release files go (a cache name): this version's copy once it has the whole
+// release, otherwise the newest earlier copy that has it
 async function home(){
-  for (const n of [...await mine(), ...await older()]){ const c = await caches.open(n); if (await whole(c)) return c; }
+  for (const n of [...await mine(), ...await older()]) if (await whole(await caches.open(n))) return n;
   return null;
 }
 // once this version's copy has every file, the earlier ones go
@@ -158,12 +158,13 @@ function networkFirst(e, key){
   const net = fetch(e.request).then(res => { if (res.ok) saving = Promise.all([keep(res.clone()), key === ROOT && fill()]); return res; });
   e.waitUntil(net.then(() => saving, () => {}));
   // release files from the one copy that has the whole release (so the five JSONs and app.js agree);
-  // otherwise this version's copy, or while it is still filling up, the newest earlier one that has the file
+  // otherwise this version's copy, or while it is still filling up, the newest earlier one that has the file.
+  // x-jp27-copy names the copy: another tab can save a release between two requests of one start, and the
+  // page then reads all five again from one copy
   const cached = async () => {
-    const h = RELEASE.has(key) && await home();
-    let r = h && await h.match(key);
-    for (const n of r ? [] : [...await mine(), ...await older()]){ r = await (await caches.open(n)).match(key); if (r) break; }
-    return r && tagged(r, {'x-jp27-from-cache': '1'});
+    let from = RELEASE.has(key) && await home(), r = from && await (await caches.open(from)).match(key);
+    for (const n of r ? [] : [...await mine(), ...await older()]){ r = await (await caches.open(n)).match(key); if (r){ from = n; break; } }
+    return r && tagged(r, {'x-jp27-from-cache': '1', 'x-jp27-copy': from});
   };
   return new Promise((resolve, reject) => {
     let done = false;
