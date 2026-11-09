@@ -1573,19 +1573,21 @@ if ('serviceWorker' in navigator && 'caches' in window) addEventListener('load',
   }).catch(() => {});
 });
 
-const meta = r => ({cache: r.headers.get('x-jp27-from-cache') === '1', saved: r.headers.get('x-jp27-saved')});
+const meta = r => ({cache: r.headers.get('x-jp27-from-cache') === '1', saved: r.headers.get('x-jp27-saved'), copy: r.headers.get('x-jp27-copy')});
 const get = f => fetch('data/'+f+'.json', {cache:'no-cache'}).then(r => {
   if (!r.ok) throw new Error(f+'.json '+r.status);
   return r.json().then(j => [j, meta(r)]);
 });
 // Some files fresh, some from the saved copy: the two may come from different releases (fresh days.json
 // naming a card the old cards.json lacks). Use the saved copy for all five, which were saved together.
+// The same when all five are saved ones but from two copies (another tab saved a release meanwhile).
 async function oneRelease(got){
-  if (!got.some(([, m]) => m.cache) || got.every(([, m]) => m.cache) || !('caches' in window)) return got;
+  const all = got.every(([, m]) => m.cache);
+  if (!got.some(([, m]) => m.cache) || all && new Set(got.map(([, m]) => m.copy)).size === 1 || !('caches' in window)) return got;
   try {
     const c = await savedCache(), rs = c && await Promise.all(DATA.map(f => c.match(new URL('data/'+f+'.json', location.href).href)));
     if (!rs || !rs.every(Boolean)) return got;
-    flaky = true;
+    if (!all) flaky = true;
     return Promise.all(rs.map(r => r.json().then(j => [j, {...meta(r), cache:true}])));
   } catch(e){ return got; }
 }
