@@ -105,8 +105,9 @@ const dowOf = d => { const [m, dd] = d.date.split('/').map(Number); return new D
 // The recommended plan as last seen on this device (jp27-base) tells the user when the repo's
 // recommendation changed; their own choices are never overwritten by such a change.
 const PLAN_KEY = 'jp27-plan', PLAN_V = 1, BASE_KEY = 'jp27-base', TODO_KEY = 'jp27-todo';
-const emptyView = () => ({days:{}, opts:{}, visited:{}, booked:{}, via:{}});
-const emptyState = () => ({days:{}, opts:{}, groups:{}, booked:{}, visited:{}});
+// maps keyed by stored ids have no prototype: a key like __proto__ is just an unknown id
+const emptyView = () => ({days:dict(), opts:dict(), visited:dict(), booked:dict(), via:dict()});
+const emptyState = () => ({days:dict(), opts:dict(), groups:dict(), booked:dict(), visited:dict()});
 let plan = emptyView(), store = null, local = null, base = null;
 let canSave = true, planNotes = [], baseNotes = [];
 const isObj = v => !!v && typeof v === 'object' && !Array.isArray(v);
@@ -172,14 +173,14 @@ function viewOf(S){
 // plan → state. In a pick-one group the first branch turned on (card order) is the pick; none on = the default
 function stateOf(v, lenient){
   const S = emptyState();
-  own(v.days).forEach(([id, c]) => { (S.days[id] ||= {}).card = c; });
-  own(v.via).forEach(([id, p]) => { (S.days[id] ||= {}).via = p; });
+  own(v.days).forEach(([id, c]) => { (S.days[id] ||= dict()).card = c; });
+  own(v.via).forEach(([id, p]) => { (S.days[id] ||= dict()).via = p; });
   own(v.opts).forEach(([cid, o]) => { const c = CARDS[aliasCard(cid)]; if (!isObj(o)) return;
     own(o).forEach(([oid, val]) => { const x = c && c.opts.find(x => x.id === oid);
-      if (!x || !x.group) (S.opts[cid] ||= {})[oid] = lenient ? !!val : val; });
-    if (c) groupsOf(c).forEach(g => { const on = c.opts.find(x => x.group === g && o[x.id] === true); if (on) (S.groups[cid] ||= {})[g] = on.id; });
+      if (!x || !x.group) (S.opts[cid] ||= dict())[oid] = lenient ? !!val : val; });
+    if (c) groupsOf(c).forEach(g => { const on = c.opts.find(x => x.group === g && o[x.id] === true); if (on) (S.groups[cid] ||= dict())[g] = on.id; });
   });
-  S.booked = isObj(v.booked) ? {...v.booked} : {}; S.visited = isObj(v.visited) ? {...v.visited} : {};
+  S.booked = dict(isObj(v.booked) ? v.booked : {}); S.visited = dict(isObj(v.visited) ? v.visited : {});
   return S;
 }
 // the change that turns state a into state b: only the records that differ
