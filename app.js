@@ -1747,7 +1747,7 @@ function onChange(e){
 // (trip/plan, trip/ticks) and both parents see the same thing. This device's own plan (jp27-plan,
 // jp27-todo) stays as it was: signing out goes back to it, and nothing is uploaded until asked.
 // cloud.js does the Firebase part; the rules about what a change may do stay here.
-const CLOUD_API = 1, MIRROR_KEY = 'jp27-cloud-cache', JOINED_KEY = 'jp27-cloud-joined', FORMAT = 1;
+const CLOUD_API = 2, MIRROR_KEY = 'jp27-cloud-cache', JOINED_KEY = 'jp27-cloud-joined', FORMAT = 1;
 // auth: off (no cloud.js) · out · checking · guest · unreachable · denied · member
 // phase (member): wait (no data yet) · empty (no shared plan yet) · choose (this device differs) · live
 const sync = {auth:'off', phase:'wait', user:null, cloud:null, data:null, mirror:false, failed:null, lastSync:null,
@@ -1900,7 +1900,7 @@ async function checkReady(){
   const miss = [];
   const ps = sync.cloud ? sync.cloud.persistence : 'no';
   if (ps === 'no') miss.push('这个浏览器没能存离线数据（可能是存储空间不够或被关），改动只在这个页面里，要等同步完再关');
-  else if (ps === 'unknown') miss.push('还没确认这个浏览器能存离线数据，改动要在这个页面等到同步完');
+  else if (ps !== 'yes') miss.push('还没确认这个浏览器能存离线数据，改动要在这个页面等到同步完');
   try { const c = 'caches' in window && await caches.open('jp27-sdk');
     if (!c || !(await Promise.all((sync.sdk || []).map(u => c.match(u)))).every(Boolean) || !(sync.sdk || []).length) miss.push('登录用的程序还没存好'); }
   catch(e){ miss.push('登录用的程序还没存好'); }

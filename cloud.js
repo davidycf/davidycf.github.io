@@ -3,7 +3,7 @@
 // 访问规则在仓库根目录 firestore.rules。这份配置本来就是公开的，不是密码。
 // app.js 只通过 connect() 返回的几个函数用它。两边的调用方式改了就把 CLOUD_API 加 1（app.js 里有同名常量）；
 // 只改这里面的做法不用动。
-export const CLOUD_API = 1;
+export const CLOUD_API = 2;
 // sw.js reads the version from this line (V = 'x.y.z') to keep only the SDK files in use
 const V = '13.1.0', SDK = 'https://www.gstatic.com/firebasejs/'+V+'/';
 export const SDK_URLS = ['app', 'auth', 'firestore'].map(m => SDK+'firebase-'+m+'.js');
