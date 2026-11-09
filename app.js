@@ -1535,6 +1535,14 @@ function boot(){
 let src = [], flaky = false;
 const DATA = ['days','cards','books','base','info'];
 const coreCache = async () => { const n = (await caches.keys()).filter(k => k.startsWith('jp27-core-')).pop(); return n && caches.open(n); };
+// while a new version's copy is still filling up, sw.js keeps the earlier one: the newest copy with every file
+async function savedCache(){
+  for (const n of (await caches.keys()).filter(k => k.startsWith('jp27-core-')).reverse()){
+    const c = await caches.open(n), list = await c.match('jp27-core.json');
+    if (list && (await Promise.all((await list.json()).map(u => c.match(u, {ignoreSearch:true})))).every(Boolean)) return c;
+  }
+  return null;
+}
 const stamp = t => { const d = new Date(t); return (d.getMonth()+1)+'/'+d.getDate()+' '+pad(d.getHours())+':'+pad(d.getMinutes()); };
 function offlineBanner(){
   const cached = src.filter(x => x.cache);
@@ -1565,19 +1573,21 @@ if ('serviceWorker' in navigator && 'caches' in window) addEventListener('load',
   }).catch(() => {});
 });
 
-const meta = r => ({cache: r.headers.get('x-jp27-from-cache') === '1', saved: r.headers.get('x-jp27-saved')});
+const meta = r => ({cache: r.headers.get('x-jp27-from-cache') === '1', saved: r.headers.get('x-jp27-saved'), copy: r.headers.get('x-jp27-copy')});
 const get = f => fetch('data/'+f+'.json', {cache:'no-cache'}).then(r => {
   if (!r.ok) throw new Error(f+'.json '+r.status);
   return r.json().then(j => [j, meta(r)]);
 });
 // Some files fresh, some from the saved copy: the two may come from different releases (fresh days.json
 // naming a card the old cards.json lacks). Use the saved copy for all five, which were saved together.
+// The same when all five are saved ones but from two copies (another tab saved a release meanwhile).
 async function oneRelease(got){
-  if (!got.some(([, m]) => m.cache) || got.every(([, m]) => m.cache) || !('caches' in window)) return got;
+  const all = got.every(([, m]) => m.cache);
+  if (!got.some(([, m]) => m.cache) || all && new Set(got.map(([, m]) => m.copy)).size === 1 || !('caches' in window)) return got;
   try {
-    const c = await coreCache(), rs = c && await Promise.all(DATA.map(f => c.match(new URL('data/'+f+'.json', location.href).href)));
+    const c = await savedCache(), rs = c && await Promise.all(DATA.map(f => c.match(new URL('data/'+f+'.json', location.href).href)));
     if (!rs || !rs.every(Boolean)) return got;
-    flaky = true;
+    if (!all) flaky = true;
     return Promise.all(rs.map(r => r.json().then(j => [j, {...meta(r), cache:true}])));
   } catch(e){ return got; }
 }
