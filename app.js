@@ -1617,6 +1617,14 @@ function route(keep){
     if (!st) renderBookBody(m[1]);
     v.querySelector('.idx').hidden = !!st; v.querySelector('.stp').hidden = !st;
   }
+  else if (h === 'info-booking-check'){
+    tab = 'info'; show('info');
+    $('#v-info').innerHTML = '<nav class="crumb" aria-label="位置"><a href="#info">附录</a></nav>'
+      + '<article class="apx apage"><h2>东京与海游馆预约</h2><div class="lk">'
+      + '<a href="#card-teamlab">teamLab Planets 与丰洲水上巴士 →</a>'
+      + '<a href="#card-ueno-akiba">上野场馆 →</a>'
+      + '<a href="#card-kaiyukan">海游馆 →</a></div></article>';
+  }
   else if ((m = h.match(/^info(?:-([A-Za-z0-9-]+))?$/))){
     const k = m[1];
     // an appendix card id that was renamed goes to its new id; anything unknown goes to the index
