@@ -68,11 +68,11 @@
   },
   {
    "id": "tax-refund",
-   "text": "出发前看一遍新离境退税流程（先付含税价，离境海关查验后退款）",
+   "text": "出发前备好 Visit Japan Web 与 Global Blue 绑卡（新退税：先付含税价，离境核验后退款）",
    "ref": "info-tax-free",
    "due": "2027-03-10",
    "from": "2027-02-20",
-   "short": "看一遍离境退税新流程"
+   "short": "备好 VJW 与 Global Blue 退税"
   },
   {
    "id": "water-bus",
@@ -137,6 +137,22 @@
    "text": "3/12 O'Hare 机场旁酒店",
    "ref": "info-ord-eve",
    "due": "2027-01-31"
+  },
+  {
+   "id": "vjw",
+   "text": "Visit Japan Web 网页端（无官方 App）一家四口挂同一账号，填 JL55 与首晚酒店，截屏 4 张入境+海关二合一码",
+   "ref": "info-landing",
+   "due": "2027-03-08",
+   "from": "2027-02-20",
+   "short": "填 Visit Japan Web 并截屏 QR"
+  },
+  {
+   "id": "pokemon-cafe",
+   "text": "Pokémon Cafe（东京日本桥 / 大阪心斋桥）：前一个月 1 号 18:00 JST 放整月，3 月场预计 2/1 18:00 JST（芝加哥 2/1 凌晨 3:00）开抢，1 月底复核官网公告",
+   "ref": "base-O01",
+   "due": "2027-02-01",
+   "from": "2027-01-20",
+   "short": "Pokémon Cafe 抢 3 月座位"
   }
  ],
  "aliases": {
@@ -193,8 +209,9 @@
     {
      "id": "landing",
      "short": "落地第一天",
-     "h": "落地第一天：上网、交通卡、现金与儿童票",
+     "h": "落地第一天：入境码、上网、交通卡、现金与儿童票",
      "p": [
+      "**入境 QR（Visit Japan Web）**：官方网页服务（无官方 App），一家四口挂在同一个账号下，填好 JL55 与首晚 MONday 上野地址，截屏保存 4 张入境+海关二合一码。成田 T2 联合自助机限 135 cm 以上，带两孩走人工/家庭通道，提前填好省掉机上手写纸质表。",
       "**上网**：日本 eSIM 在家装好先不开，落地开数据漫游。起飞前用主屏幕图标打开一次本攻略，离线副本会自动存好。",
       "**交通卡**：大人在 iPhone 钱包加 Suica 或 ICOCA，出发前试充一小笔；刷不过就换张卡，到日本也能在机器或 ATM 用现金充。",
       "**儿童票**：两个孩子都未满 6 岁，坐 JR、东京/大阪地铁跟大人免费（每大人最多带 2 个，坐腿上或挤一座）。只有给孩子单独占指定席时才买儿童票（如 3/21 给哥哥的新干线座）。",
@@ -215,7 +232,7 @@
       },
       {
        "id": "land-vjw",
-       "text": "Visit Japan Web 的入境 QR 已截图"
+       "text": "Visit Japan Web 四人入境 QR 已截图"
       },
       {
        "id": "land-offline",
@@ -223,6 +240,10 @@
       }
      ],
      "links": [
+      {
+       "label": "Visit Japan Web 官网",
+       "url": "https://services.digital.go.jp/en/visit-japan-web/"
+      },
       {
        "label": "Apple：添加日本交通卡",
        "url": "https://support.apple.com/en-us/108772"
@@ -406,7 +427,7 @@
       },
       {
        "id": "pack-teamlab",
-       "text": "teamLab 用：能卷起裤腿的裤子、孩子整套换洗和装湿衣服的袋子",
+       "text": "teamLab 用：全家穿运动鞋（森林区全程穿鞋）；进水区再备能卷裤腿的裤子、孩子整套换洗和湿衣袋",
        "card": "teamlab"
       }
      ],
@@ -485,19 +506,28 @@
     {
      "id": "tax-free",
      "short": "新退税",
-     "h": "新退税：先付含税价，离境海关查验后退款",
+     "h": "新退税：先付含税价，离境海关核验后退款",
      "p": [
-      "自 2026/11/1 起，免税购物改为先付含税价，90 天内离境经海关确认商品带出日本后，再由商家或受托机构退款。",
-      "购物时问清退款方式、保留凭证，把需查验的商品单独收在随身包里（不要装进寄走的箱子），也别默认在机场能现场领现金。"
+      "**规则**：免税购物先付含税价（同店同日不含税满 ¥5,000），90 天内离境经海关核验后退款。一般品与消耗品合并、无 50 万上限、无密封袋，离境前保持完整未拆封即可。",
+      "**App 怎么准备**：海关核验统一走一套流程，打款由各店签约的退税运营商处理（常见 Global Blue、J-Tax Refund、PIE VAT 等）。出发前备好 Visit Japan Web 与 Global Blue 绑卡即可，遇 PIE VAT 等再现场补。资生堂、SK-II、CPB 等大牌美妆直接走羽田 T3 出境后免税店（TIAT DUTY FREE 提前网订），当场免税价、省去退税排队。",
+      "**羽田 T3 动线**：退税核验在国际线出发大厅、行李托运之前。3/26 晚先在酒店取回寄送的大箱子，把退税商品集中放在箱子最上层；3/27 早上托运前多留约 30 分钟，直接在手机端 Visit Japan Web（或现场自助机）完成核验——绿灯直接去 JAL 托运，红灯带物品去旁边海关人工台查验后再托运。"
      ],
      "links": [
       {
-       "label": "日本国税厅：新退税制度说明（英文 PDF）",
-       "url": "https://www.nta.go.jp/publication/pamph/shohi/menzei/202506/pdf/0025006-106.pdf"
+       "label": "日本观光厅：新退税制度说明",
+       "url": "https://www.mlit.go.jp/kankocho/tax-free/page01_000001_00028.html"
       },
       {
-       "label": "日本国税厅：制度更新与后续说明",
-       "url": "https://www.nta.go.jp/publication/pamph/shohi/menzei/201805/format/002.htm"
+       "label": "Visit Japan Web：手机端退税核验说明",
+       "url": "https://services.digital.go.jp/en/visit-japan-web/news/20261102-01/"
+      },
+      {
+       "label": "Global Blue：日本退税指南",
+       "url": "https://www.globalblue.com/en/shoppers/how-to-shop-tax-free/guides/japan/japan-tax-free-shopping-2026"
+      },
+      {
+       "label": "羽田 T3 免税品预约（TIAT DUTY FREE）",
+       "url": "https://duty-free-japan.jp/haneda/jp/"
       }
      ]
     },
@@ -506,8 +536,8 @@
      "short": "收尾与离境",
      "h": "收尾打包与 3/27 离境",
      "p": [
-      "**3/25–3/26 大阪收尾**：大件采购在大阪完成，按航司额度称重。3/26 住羽田 T3 直连的 Villa Fontaine（标准 11:00 退房，学龄前同床及早餐免费），专柜大牌如在羽田免税网预约了，最晚 3/26 13:10 前下单。",
-      "**3/27 离境顺序**：10:00–10:30 退房直接走去 T3。到机场先确认海关退税查验和托运行李的先后顺序，保持需查验商品随时可出示。核对四人护照、登机牌和箱数；过了安检只取预约品或补小件。JL10 13:10 起飞，同日 11:00 到 ORD。"
+      "**3/25–3/26 大阪收尾**：大件采购在大阪完成，按航司额度称重。3/26 住羽田 T3 直连的 Villa Fontaine（标准 11:00 退房，学龄前同床及早餐免费），当晚取回寄来的大箱子，把退税商品集中码在最上层。专柜大牌如在羽田免税网预约了，最晚 3/26 13:10 前下单。",
+      "**3/27 离境顺序**：9:45–10:15 退房走去 T3（多留约 30 分钟给退税核验）。托运前先用手机端 Visit Japan Web 或出发大厅自助机核验——绿灯直接去 JAL 托运，红灯带物品去海关台查验后再托运。核对四人护照、登机牌和箱数；过了安检只取预约品或补小件。JL10 13:10 起飞，同日 11:00 到 ORD。"
      ]
     }
    ]

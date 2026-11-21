@@ -898,8 +898,12 @@
     "walk": "约 5–7 分",
     "hours": "10:00–20:00；B2 美食区、10F 餐厅到 22:00",
     "body": "9F 是宝可梦中心 OSAKA DX 和宝可梦咖啡，离酒店最近的“孩子目的地”。B2 地下美食街有熟食和便当，买回房用厨房热一热，就是一顿晚饭。",
-    "note": "宝可梦咖啡只能网上预约，商店随时可进。",
+    "note": "宝可梦咖啡须网上预约：前一个月 1 号 18:00 JST 一次性放整月（3 月场预计 2/1 18:00 JST，与东京日本桥店同步抢，抢到哪家去哪家；6 岁以下免强制点单，前一日 22:00 前可免费取消）；商店随时可进。",
     "links": [
+     {
+      "label": "Pokémon Cafe 官网与预约",
+      "url": "https://www.pokemon-cafe.jp/en/cafe/"
+     },
      {
       "label": "宝可梦中心 & 咖啡",
       "url": "https://www.daimaru.co.jp/shinsaibashi/shop/pokemon.html"
