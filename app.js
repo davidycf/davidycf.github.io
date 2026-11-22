@@ -593,6 +593,8 @@ function checkbox(id, key, text, ref, t){
   return '<li><label><input type="checkbox" id="'+esc(id)+'" data-check-key="'+esc(key)+'"'+(done[key]?' checked':'')+'><span>'+fmt(text)+(t ? dueMark(t) : '')+'</span></label>'
     + (rl ? '<a class="tref" href="#'+esc(to)+'" aria-label="详情：'+esc(rl)+'">详情</a>' : '')+'</li>';
 }
+// A checklist item promoted to a dated to-do can keep its existing saved key.
+const todoKey = t => t.checkKey || 'todo:'+t.id;
 const allChecks = () => D.apx.flatMap(a => a.parts.flatMap(p => p.checklist || []));
 // extra: to-do ids owned by the date itself (days.json `todos`, e.g. the 今半 booking), listed first
 function prepTodos(c, sel, extra){
@@ -611,7 +613,7 @@ function prepList(c, sel, extra, fold){
   const ts = prepTodos(c, sel, extra);
   const cs = ((c && c.checks) || []).map(id => allChecks().find(x => x.id === id)).filter(Boolean);
   if (!ts.length && !cs.length) return '';
-  const rows = [...ts.map(t => ({key:'todo:'+t.id, html:checkbox('p-todo-'+t.id, 'todo:'+t.id, t.text, t.ref, t)})),
+  const rows = [...ts.map(t => ({key:todoKey(t), html:checkbox('p-todo-'+t.id, todoKey(t), t.text, t.ref, t)})),
     ...cs.map(x => ({key:x.id, html:checkbox('p-'+x.id, x.id, x.text)}))];
   return fold ? foldDone(rows) : '<ul class="todo">'+rows.map(r => r.html).join('')+'</ul>';
 }
@@ -628,7 +630,7 @@ function dueOf(t){
 }
 // over (past due), next (in its window), later; null for ticked to-dos and those without a date
 function dueState(t){
-  if (!t.due || done['todo:'+t.id]) return null;
+  if (!t.due || done[todoKey(t)]) return null;
   const today = isoDay(new Date()), {due, from} = dueOf(t);
   return today > due ? 'over' : today >= from ? 'next' : 'later';
 }
@@ -1467,7 +1469,7 @@ function refLabel(ref){
 const apxChecks = p => (p.checklist || []).filter(t => !t.card || activeRef(t.card));
 const apxTodos = id => D.todo.filter(t => refApx(t.ref) === id);
 function tileBadges(id){
-  const cl = apxChecks(APX[id].p), open = apxTodos(id).filter(t => todoActive(t) && !done['todo:'+t.id]);
+  const cl = apxChecks(APX[id].p), open = apxTodos(id).filter(t => todoActive(t) && !done[todoKey(t)]);
   return (open.length ? '<span class="bdg pend">待办 '+open.length+'</span>' : '')
     + (cl.length ? '<span class="bdg">已勾 '+cl.filter(t => done[t.id]).length+'/'+cl.length+'</span>' : '');
 }
@@ -1496,7 +1498,7 @@ function renderInfo(){
   const rank = t => ({over:0, next:0, later:1})[dueState(t)] ?? 2;
   const sorted = live.map((t, i) => [t, i]).sort(([a, i], [b, j]) => rank(a) - rank(b) || (rank(a) < 2 ? byDue(a, b) : 0) || i - j).map(([t]) => t);
   h += '<div class="apx c-osaka" id="info-todo"><div class="id">TO DO</div><h3>尚待确认</h3>'
-    + foldDone(sorted.map(t => ({key:'todo:'+t.id, html:checkbox('todo-'+t.id, 'todo:'+t.id, t.text, t.ref, t)})))
+    + foldDone(sorted.map(t => ({key:todoKey(t), html:checkbox('todo-'+t.id, todoKey(t), t.text, t.ref, t)})))
     + (parked.length ? '<p class="small">另有 '+parked.length+' 项只属于没排进行程的活动，收在卡片里：'
         + [...new Set(parked.map(t => t.card))].map(id => '<a class="ax" href="#card-'+id+'">'+esc(CARDS[id].name)+'</a>').join('、')+'。</p>' : '')
     + (legacyTodo() ? '<div class="legacy" role="note"><p>旧版本按列表位置记录过这里的勾选；列表顺序后来变过，无法可靠对应到现在的任务，所以没有沿用。请把上面的待办重新核对一遍。附录里的打包和 eVISA 勾选不受影响。</p><button type="button" class="legacy-ok">知道了</button></div>' : '')
@@ -1529,7 +1531,7 @@ function renderApx(id){
     + off.map(t => '<p class="small">'+esc(CARDS[t.card].name)+' 不在当前行程，相关一项收在<a class="ax" href="#card-'+t.card+'">卡片</a>里。</p>').join('')
     + (p.links && p.links.length ? '<div class="lk">'+extLinks(p.links)+'</div>' : '')+'</article>';
   if (ts.length || parked.length) h += '<div class="blk"><div class="lbl">相关待办 <span class="en">TO DO</span></div>'
-    + (ts.length ? '<ul class="todo">'+ts.map(t => checkbox('a-todo-'+t.id, 'todo:'+t.id, t.text, null, t)).join('')+'</ul><p class="small">和「附录 · 尚待确认」是同一份勾选。</p>' : '')
+    + (ts.length ? '<ul class="todo">'+ts.map(t => checkbox('a-todo-'+t.id, todoKey(t), t.text, null, t)).join('')+'</ul><p class="small">和「附录 · 尚待确认」是同一份勾选。</p>' : '')
     + (parked.length ? '<p class="small">另有 '+parked.length+' 项只属于没排进行程的活动，收在卡片里：'
         + [...new Set(parked.map(t => t.card))].map(c => '<a class="ax" href="#card-'+c+'">'+esc(CARDS[c].name)+'</a>').join('、')+'。</p>' : '')+'</div>';
   if (used.length) h += '<div class="blk"><div class="lbl">哪天会用到 <span class="en">DAYS</span></div>'+dayChips(used)+'</div>';
@@ -1764,7 +1766,7 @@ const readOnly = () => shared() && !!sync.why;
 const readJSON = k => { try { return JSON.parse(localStorage.getItem(k)); } catch(e){ return null; } };
 const writeJSON = (k, v) => { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch(e){} };
 // ticks this version knows: plain to-dos and appendix checklist items (old index keys never go up)
-const knownTick = k => (k.startsWith('todo:') && D.todo.some(t => 'todo:'+t.id === k)) || allChecks().some(x => x.id === k);
+const knownTick = k => D.todo.some(t => todoKey(t) === k) || allChecks().some(x => x.id === k);
 const ticksOf = t => Object.fromEntries(own(t && t.items).filter(([k, v]) => v === true).map(([k]) => [k, true]));
 // Records this version cannot read (a card, branch or layout it doesn't know, a wrong type): a change
 // touching one is refused (update the page first) so it is never overwritten by mistake; other records stay editable.
@@ -1932,7 +1934,7 @@ function migrateCandidates(d){
   plan = keep;
   return {r, x, ticks, any: !!ticks.length || !!(x && (x.days.length || x.opts.length || x.bookDiff || x.visDiff))};
 }
-const tickName = k => { const t = k.startsWith('todo:') && D.todo.find(t => 'todo:'+t.id === k); if (t) return clause(t); const c = allChecks().find(x => x.id === k); return c ? c.text : k; };
+const tickName = k => { const t = D.todo.find(t => todoKey(t) === k); if (t) return clause(t); const c = allChecks().find(x => x.id === k); return c ? c.text : k; };
 function localSummary(){
   const S = local.state, n = Object.keys(S.days).filter(id => S.days[id].card).length, o = Object.keys(S.opts).length + Object.keys(S.groups).length;
   const b = Object.keys(S.booked).length, t = Object.keys(localTodo).filter(k => localTodo[k] === true && knownTick(k)).length;
