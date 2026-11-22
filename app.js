@@ -1429,7 +1429,7 @@ function renderStation(b, code){
     + '</div><div class="under"><span class="zh"'+langAttr(s.area)+'>'+esc(s.area)+'</span><span class="zh">'+entCount(s)+'</span></div></div>'
     + '<div class="dtitle"><h2>'+esc(s.head)+'</h2>'+(s.lead ? '<p>'+fmt(s.lead)+'</p>' : '')
     + (s.tip ? '<div class="tip"><span class="tl">今天这样挑</span><span>'+fmt(s.tip)+'</span></div>' : '')
-    + '<p class="hint"'+langAttr(s.hint)+'>'+esc(s.hint)+'</p></div>'
+    + (s.hint ? '<p class="hint"'+langAttr(s.hint)+'>'+esc(s.hint)+'</p>' : '')+'</div>'
     + entsHTML(s, s.entries, '', b)
     + (dn.length ? '<div class="blk"><div class="lbl">哪天会经过 <span class="en">ON DAYS</span></div>'+dayChips(dn)+'</div>' : '<div class="blk"><p class="small">当前行程里没有哪天经过这一站；资料照常可查。</p></div>')
     + '<div class="pager">'
