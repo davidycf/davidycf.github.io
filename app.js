@@ -893,7 +893,7 @@ function renderCard(id){
     + '<div class="dtitle"><h2>'+esc(c.title)+'</h2><p>'+fmt(c.summary)+'</p></div>'
     + '<dl class="facts">'+fact('时间', c.time)+fact('交通', c.transit+'（'+LOAD[c.load]+'）')+fact('家庭', c.family)+fact('预约', c.booking)+fact('雨天', c.rain)
       + fact('营业', c.hours)+fact('休馆', c.closed && c.closed.text)+fact('待核对', c.calendar)
-      + (c.ticket ? fact('票', bookedDay(c) ? '已登记票面 '+dayById(bookedDay(c)).date+'（本机）' : '还没登记；订好后在安排到的那一天页面上登记') : '')+'</dl>'
+      + (c.ticket ? fact('票', bookedDay(c) ? '已登记票面 '+dayById(bookedDay(c)).date+'（'+keptAt()+'）' : '还没登记；订好后在安排到的那一天页面上登记') : '')+'</dl>'
     + '<div class="blk"><div class="lbl">安排到哪天 <span class="en">PLACE</span></div>'
     + (days.length ? '' : '<p class="small">这次行程没有住'+esc(CITY[c.city][0])+'的日子，这张卡只作资料保留。</p>')
     + '<ul class="places">'
@@ -913,7 +913,7 @@ function renderCard(id){
   const rel = [...new Set(c.rel.map(r => refOn(r, all)).filter(Boolean))];
   if (rel.length) h += '<div class="blk"><div class="lbl">资料 <span class="en">REFERENCE</span></div><div class="rel">'+rel.map(relCard).join('')+'</div></div>';
   if (c.links.length) h += '<div class="lk">'+extLinks(c.links)+'</div>';
-  h += '<p class="small">核对于 '+esc(c.checked)+'；营业日、票价和时段出发前再看官网。</p></div>';
+  h += (c.checked ? '<p class="small">信息核对：'+esc(c.checked)+'</p>' : '') + '</div>';
   $('#v-card').innerHTML = h;
   return true;
 }
@@ -1485,7 +1485,7 @@ function apxDays(id){
 function renderInfo(){
   // To-dos tied to a card only show while that card (and branch) is in the plan; ticks are never dropped.
   const live = D.todo.filter(todoActive), parked = D.todo.filter(t => !todoActive(t));
-  let h = '<div class="vhead"><h2><span class="k" lang="ja">要</span>附录 · 执行细节</h2><p>'+D.apx.map(secName).join('、')+'。每一节分成几张卡，点开一张只看这一件事；各卡标注核对时间，出发前再开官方入口复核。各城市的备选活动在「行程 · 活动卡片」，Museum 抽签结果在「Museum 换日」。</p></div>';
+  let h = '<div class="vhead"><h2><span class="k" lang="ja">要</span>附录 · 执行细节</h2><p>'+D.apx.map(secName).join('、')+'。点开卡片只看这一件事；各城市的备选活动在「行程 · 活动卡片」，Museum 抽签结果在「Museum 换日」。</p></div>';
   // quick nav: one short chip per section (title before "｜"), scrolls sideways, follows the reading position
   const nav = [['todo', '', '待办 '+live.length], ...D.apx.map(a => [a.id, a.id, secName(a)]), ['ref', '', '怎么用']];
   const due = upcoming().length ? '<i class="dot" title="有到期或快到期的待办"></i>' : '';
@@ -1495,7 +1495,7 @@ function renderInfo(){
   // due or coming up first, then later dates, then undated in data order; ticked ones folded at the end
   const rank = t => ({over:0, next:0, later:1})[dueState(t)] ?? 2;
   const sorted = live.map((t, i) => [t, i]).sort(([a, i], [b, j]) => rank(a) - rank(b) || (rank(a) < 2 ? byDue(a, b) : 0) || i - j).map(([t]) => t);
-  h += '<div class="apx c-osaka" id="info-todo"><div class="id">TO DO</div><h3>尚待确认</h3><div class="lk"><a href="#info-E">日本 eVISA 材料与办理</a></div>'
+  h += '<div class="apx c-osaka" id="info-todo"><div class="id">TO DO</div><h3>尚待确认</h3>'
     + foldDone(sorted.map(t => ({key:'todo:'+t.id, html:checkbox('todo-'+t.id, 'todo:'+t.id, t.text, t.ref, t)})))
     + (parked.length ? '<p class="small">另有 '+parked.length+' 项只属于没排进行程的活动，收在卡片里：'
         + [...new Set(parked.map(t => t.card))].map(id => '<a class="ax" href="#card-'+id+'">'+esc(CARDS[id].name)+'</a>').join('、')+'。</p>' : '')
@@ -1616,6 +1616,14 @@ function route(keep){
     if (st && m[3]){ target = document.getElementById('ee-'+m[3]); target.classList.add('flash'); const dt = target.querySelector('details'); if (dt) dt.open = true; }
     if (!st) renderBookBody(m[1]);
     v.querySelector('.idx').hidden = !!st; v.querySelector('.stp').hidden = !st;
+  }
+  else if (h === 'info-booking-check'){
+    tab = 'info'; show('info');
+    $('#v-info').innerHTML = '<nav class="crumb" aria-label="位置"><a href="#info">附录</a></nav>'
+      + '<article class="apx apage"><h2>东京与海游馆预约</h2><div class="lk">'
+      + '<a href="#card-teamlab">teamLab Planets 与丰洲水上巴士 →</a>'
+      + '<a href="#card-ueno-akiba">上野场馆 →</a>'
+      + '<a href="#card-kaiyukan">海游馆 →</a></div></article>';
   }
   else if ((m = h.match(/^info(?:-([A-Za-z0-9-]+))?$/))){
     const k = m[1];
