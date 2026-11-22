@@ -504,8 +504,8 @@
         "url": "https://toriton-kita1.jp/shop/"
        },
        {
-        "label": "ソラマチ餐饮目录",
-        "url": "https://www.tokyo-solamachi.jp/restaurant/"
+        "label": "ソラマチ楼层图与店铺目录",
+        "url": "https://www.tokyo-solamachi.jp/pdf/floorguide/floorguide_ja.pdf"
        }
       ],
       "map": "https://www.google.com/maps/search/?api=1&query=%E5%9B%9E%E8%BB%A2%E5%AF%BF%E3%81%97%E3%83%88%E3%83%AA%E3%83%88%E3%83%B3+%E6%9D%B1%E4%BA%AC%E3%82%BD%E3%83%A9%E3%83%9E%E3%83%81%E5%BA%97"
@@ -519,8 +519,8 @@
       "fam": "六厘舎可能要排队。仲见世点心在店家指定位置吃，正餐后再尝人形烧、仙贝。",
       "links": [
        {
-        "label": "ソラマチ餐饮目录",
-        "url": "https://www.tokyo-solamachi.jp/restaurant/"
+        "label": "ソラマチ楼层图与店铺目录",
+        "url": "https://www.tokyo-solamachi.jp/pdf/floorguide/floorguide_ja.pdf"
        }
       ],
       "map": "https://www.google.com/maps/search/?api=1&query=%E6%9D%B1%E4%BA%AC%E3%82%BD%E3%83%A9%E3%83%9E%E3%83%81+%E3%82%BF%E3%83%99%E3%83%86%E3%83%A9%E3%82%B9"
@@ -1325,7 +1325,7 @@
       "name": "天保山マーケットプレース餐饮与美食区",
       "tag": "海游馆旁／当天目录优先",
       "body": "看完海游馆就近吃饭；出馆前先看当日店铺目录挑好营业的餐厅或美食区，免得四个人一起饿着找。",
-      "fam": "“浪花贪吃横丁”从2026/9/29装修，计划2027年3月重开，具体日子尚未明确；出发前复核。必要时先吃午饭再按时段入馆。",
+      "fam": "“浪花贪吃横丁”从2026/9/29装修，预计2027年3月下旬重开，具体日子尚未明确；出发前复核。必要时先吃午饭再按时段入馆。",
       "links": [
        {
         "label": "天保山マーケットプレース",
@@ -1716,8 +1716,8 @@
       "fam": "具体店铺和楼层看当前目录。角色周边留给大阪。",
       "links": [
        {
-        "label": "ソラマチ楼层与店铺目录",
-        "url": "https://www.tokyo-solamachi.jp/floor/"
+        "label": "ソラマチ楼层图与店铺目录",
+        "url": "https://www.tokyo-solamachi.jp/pdf/floorguide/floorguide_ja.pdf"
        }
       ],
       "map": "https://www.google.com/maps/search/?api=1&query=%E6%9D%B1%E4%BA%AC%E3%82%BD%E3%83%A9%E3%83%9E%E3%83%81"
