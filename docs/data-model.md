@@ -9,8 +9,9 @@
 
 ## 活动卡片
 - `id` 永久稳定，不用下标、标题或日期；删除或合并时在 `aliases` 里留映射。`city`、`size`（half/full）、`name`（列表里的名字）、`ja`/`ro`（站牌大字与罗马字：只写地名——车站或街区，不写景点名，景点名留给旁边的 name／title，日文景点名（例如 東京タワー）要留在 name/title/summary 等会被搜索的字段里，卡片库才能用日文搜到；跨两地可写「上野・秋葉原」，留白卡例外）、`area`、`title`、`summary`。
-- 事实：`time`、`transit`（写“估计”，不要伪造精确分钟）、`load`（near/mid/far）、`family`、`booking`、`rain`、`hours`、`closed`{dow: 0=周日…6=周六, text}（每周固定休馆＝硬性不可安排）、`calendar`（日历未发布等待核对文字，只提示不阻止）、`late`（回酒店晚，和当天晚上的固定事项冲突时提示）、`avoid`{dow, text}（能去但不该去的星期，例如 Skywalk 周末，只提示不禁止）、`multi`（可以放在多天，例如留白卡）、`checked`（核对日期）。
-- `opts` 支线：{id, label, on 默认是否勾, group 同组互斥单选, who:"dad" 爸爸单独, covers 重叠标签, closed 按星期不可行}。`route`/`eat`/`shop`/`see` 的每条是 {text, at(am/noon/pm/eve，仅 route), opt 选了才显示, unless 没选才显示, who, dinner, lunch, withFixedDinner, closed, alt}：`dinner:true` 是卡片的晚饭建议，当天日期有固定晚饭时不显示并给出说明；`lunch:true` 同理对应固定午饭；`withFixedDinner:true` 只在当天有固定晚饭时显示（例如“直接回去赶上晚上的安排”）；`closed`{dow,text} 加可选 `alt` 表示这一段在某个星期不可行（例如 2k540 周三休业），那天显示 alt 或跳过并提示，不禁止整张卡。
+- 事实：`time`、`transit`（写“估计”，不要伪造精确分钟）、`load`（near/mid/far）、`family`、`booking`、`rain`、`hours`、`closed`{dow: number[], text: string}（每周固定休馆＝硬性不可安排）、`calendar`（日历未发布等待核对文字，只提示不阻止）、`late`（回酒店晚，和当天晚上的固定事项冲突时提示）、`avoid`{dow: number[], text: string}（能去但不该去的星期，例如 Skywalk 周末，只提示不禁止）、`multi`（可以放在多天，例如留白卡）、`checked`（核对日期）。
+- `opts` 支线：{id, label, on 默认是否勾, group 同组互斥单选, who:"dad" 爸爸单独, covers 重叠标签, closed 按星期不可行（同下方结构）}。`route`/`eat`/`shop`/`see` 的每条是 {text, at(am/noon/pm/eve，仅 route), opt 选了才显示, unless 没选才显示, who, dinner, lunch, withFixedDinner, closed, alt}：`dinner:true` 是卡片的晚饭建议，当天日期有固定晚饭时不显示并给出说明；`lunch:true` 同理对应固定午饭；`withFixedDinner:true` 只在当天有固定晚饭时显示（例如“直接回去赶上晚上的安排”）；`closed`{dow: number[], text: string} 加可选 `alt` 表示这一段在某个星期不可行（例如 2k540 周三休业），那天显示 alt 或跳过并提示，不禁止整张卡。
+- 卡片、支线与路线等条目的 `closed`，以及卡片的 `avoid`，均使用 `{dow: number[], text: string}`：`dow` 必须是整数数组（0=周日…6=周六），即使只有一天也写成数组，例如 `{dow: [2], text: "周二休馆"}`，不能写 `dow: 2`。
 - `covers` 卡片级重叠标签；`rel` 是 "eat:T5" 这类资料引用，"shop:T8@ginza" 表示选了该支线才算经过；`todos` 是 info.todo 的 id，"water-bus@pm-boat" 同理；`checks` 是附录 checklist 的 id；`links` 官方链接。
 - route 和 fixed.plan 的文字不以 `上午：`、`中午：`、`下午：`、`午后：`、`晚上：` 开头（时间段由 `at` 显示成小标题），具体时刻（`10:00 前后：`）可以写。需要备用方案或细节的步骤用 `\n` 分段：第一段写要做的事，后面的段落显示成小字；日期页的 plan 字符串同样可以分段。
 - 卡片文字不能假定日期：星期、休馆按实际日期算；“哪天晚饭”“今天是第一天”这类写在日期的 ctx/fixed 里。
